@@ -1,0 +1,1182 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+    <meta charset="utf-8">
+    <meta name="generator" content="quarto-1.5.22">
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+    <meta name="author" content="Emily Nebergall and Sarah Menz">
+    <meta name="dcterms.date" content="2024-03-06">
+
+    <title>Roster Compile</title>
+    <style>
+      code{white-space: pre-wrap;}
+      span.smallcaps{font-variant: small-caps;}
+      div.columns{display: flex; gap: min(4vw, 1.5em);}
+      div.column{flex: auto; overflow-x: auto;}
+      div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+      ul.task-list{list-style: none;}
+      ul.task-list li input[type="checkbox"] {
+        width: 0.8em;
+        margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+        vertical-align: middle;
+      }
+      /* CSS for syntax highlighting */
+      pre > code.sourceCode { white-space: pre; position: relative; }
+      pre > code.sourceCode > span { line-height: 1.25; }
+      pre > code.sourceCode > span:empty { height: 1.2em; }
+      .sourceCode { overflow: visible; }
+      code.sourceCode > span { color: inherit; text-decoration: inherit; }
+      div.sourceCode { margin: 1em 0; }
+      pre.sourceCode { margin: 0; }
+      @media screen {
+      div.sourceCode { overflow: auto; }
+      }
+      @media print {
+      pre > code.sourceCode { white-space: pre-wrap; }
+      pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+      }
+      pre.numberSource code
+        { counter-reset: source-line 0; }
+      pre.numberSource code > span
+        { position: relative; left: -4em; counter-increment: source-line; }
+      pre.numberSource code > span > a:first-child::before
+        { content: counter(source-line);
+          position: relative; left: -1em; text-align: right; vertical-align: baseline;
+          border: none; display: inline-block;
+          -webkit-touch-callout: none; -webkit-user-select: none;
+          -khtml-user-select: none; -moz-user-select: none;
+          -ms-user-select: none; user-select: none;
+          padding: 0 4px; width: 4em;
+        }
+      pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+      div.sourceCode
+        {   }
+      @media screen {
+      pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+      }
+    </style>
+
+    <style>
+      body.hypothesis-enabled #quarto-embed-header {
+        padding-right: 36px;
+      }
+
+      #quarto-embed-header {
+        height: 3em;
+        width: 100%;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border-bottom: solid 1px;
+      }
+
+      #quarto-embed-header h6 {
+        font-size: 1.1em;
+        padding-top: 0.6em;
+        margin-left: 1em;
+        margin-right: 1em;
+        font-weight: 400;
+      }
+
+      #quarto-embed-header a.quarto-back-link,
+      #quarto-embed-header a.quarto-download-embed {
+        font-size: 0.8em;
+        margin-top: 1em;
+        margin-bottom: 1em;
+        margin-left: 1em;
+        margin-right: 1em;
+      }
+
+      .quarto-back-container {
+        padding-left: 0.5em;
+        display: flex;
+      }
+
+      .headroom {
+          will-change: transform;
+          transition: transform 200ms linear;
+      }
+
+      .headroom--pinned {
+          transform: translateY(0%);
+      }
+
+      .headroom--unpinned {
+          transform: translateY(-100%);
+      }      
+    </style>
+
+    <script>
+    window.document.addEventListener("DOMContentLoaded", function () {
+
+      var header = window.document.querySelector("#quarto-embed-header");
+      const titleBannerEl = window.document.querySelector("body > #title-block-header");
+      if (titleBannerEl) {
+        titleBannerEl.style.paddingTop = header.clientHeight + "px";
+      }
+      const contentEl = window.document.getElementById('quarto-content');
+      for (const child of contentEl.children) {
+        child.style.paddingTop = header.clientHeight + "px";
+        child.style.marginTop = "1em";
+      }
+
+      // Use the article root if the `back` call doesn't work. This isn't perfect
+      // but should typically work
+      window.quartoBackToArticle = () => {
+        var currentUrl = window.location.href;
+        window.history.back();
+        setTimeout(() => {
+            // if location was not changed in 100 ms, then there is no history back
+            if(currentUrl === window.location.href){              
+                // redirect to site root
+                window.location.href = "../index.html";
+            }
+        }, 100);
+      }
+
+      const headroom = new window.Headroom(header, {
+        tolerance: 5,
+        onPin: function () {
+        },
+        onUnpin: function () {
+        },
+      });
+      headroom.init();
+    });
+    </script>
+
+    
+<script src="../site_libs/manuscript-notebook/headroom.min.js"></script>
+<script src="../site_libs/clipboard/clipboard.min.js"></script>
+<script src="../site_libs/quarto-html/quarto.js"></script>
+<script src="../site_libs/quarto-html/popper.min.js"></script>
+<script src="../site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="../site_libs/quarto-html/anchor.min.js"></script>
+<link href="../site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="../site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="../site_libs/bootstrap/bootstrap.min.css" rel="stylesheet" id="quarto-bootstrap" data-mode="light">
+     <script async="" src="https://hypothes.is/embed.js"></script>
+<script>
+  window.document.addEventListener("DOMContentLoaded", function (_event) {
+    document.body.classList.add('hypothesis-enabled');
+  });
+</script>  
+      </head>
+
+  <body class="quarto-notebook">
+    <div id="quarto-embed-header" class="headroom fixed-top bg-primary">
+      
+      <a onclick="window.quartoBackToArticle(); return false;" class="btn btn-primary quarto-back-link" href=""><i class="bi bi-caret-left"></i> Back to Article</a>
+      <h6><i class="bi bi-journal-code"></i> Roster Compile</h6>
+
+            <a href="../notebooks/ROSTER_COMPILE.Rmd" class="btn btn-primary quarto-download-embed" download="ROSTER_COMPILE.Rmd">Download Notebook</a>
+          </div>
+
+     <header id="title-block-header" class="quarto-title-block default toc-left page-columns page-full">
+  <div class="quarto-title-banner page-columns page-full">
+    <div class="quarto-title column-body">
+      <h1 class="title">Roster Compile</h1>
+          </div>
+
+    
+    <div class="quarto-title-meta-container">
+      <div class="quarto-title-meta-column-start">
+        
+        <div class="quarto-title-meta">
+
+                <div>
+            <div class="quarto-title-meta-heading">Author</div>
+            <div class="quarto-title-meta-contents">
+                        <p>Emily Nebergall and Sarah Menz </p>
+                      </div>
+          </div>
+                
+                <div>
+            <div class="quarto-title-meta-heading">Published</div>
+            <div class="quarto-title-meta-contents">
+              <p class="date">March 6, 2024</p>
+            </div>
+          </div>
+          
+                
+              </div>
+      </div>
+      <div class="quarto-title-meta-column-end quarto-other-formats-target">
+      </div>
+    </div>
+
+
+
+    <div class="quarto-other-links-text-target">
+    </div>  </div>
+</header><div id="quarto-content" class="page-columns page-rows-contents page-layout-article toc-left">
+<div id="quarto-sidebar-toc-left" class="sidebar toc-left">
+  <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">Table of contents</h2>
+   
+  <ul>
+  <li><a href="#setup" id="toc-setup" class="nav-link active" data-scroll-target="#setup">Setup</a>
+  <ul class="collapse">
+  <li><a href="#libraries" id="toc-libraries" class="nav-link" data-scroll-target="#libraries">Libraries</a></li>
+  <li><a href="#read-in-rds-objects" id="toc-read-in-rds-objects" class="nav-link" data-scroll-target="#read-in-rds-objects">Read in RDS objects</a></li>
+  <li><a href="#connect-to-wdrs" id="toc-connect-to-wdrs" class="nav-link" data-scroll-target="#connect-to-wdrs">Connect to WDRS</a></li>
+  <li><a href="#wdrs-query" id="toc-wdrs-query" class="nav-link" data-scroll-target="#wdrs-query">WDRS Query</a></li>
+  <li><a href="#wdrs-sequence-accession-values" id="toc-wdrs-sequence-accession-values" class="nav-link" data-scroll-target="#wdrs-sequence-accession-values">WDRS Sequence Accession values</a></li>
+  <li><a href="#wdrs-sequence-clinical-accession-values" id="toc-wdrs-sequence-clinical-accession-values" class="nav-link" data-scroll-target="#wdrs-sequence-clinical-accession-values">WDRS Sequence Clinical Accession values</a></li>
+  </ul></li>
+  <li><a href="#compile-records" id="toc-compile-records" class="nav-link" data-scroll-target="#compile-records">Compile records</a>
+  <ul class="collapse">
+  <li><a href="#read-in-files-from-write_roster_here" id="toc-read-in-files-from-write_roster_here" class="nav-link" data-scroll-target="#read-in-files-from-write_roster_here">Read in files from write_roster_here</a></li>
+  <li><a href="#wdrs-column-order" id="toc-wdrs-column-order" class="nav-link" data-scroll-target="#wdrs-column-order">WDRS column order</a></li>
+  </ul></li>
+  <li><a href="#compile-rosters-addition-of-sequence_epi_isl-and-sequence_roster_prepare_date-columns-cleansing" id="toc-compile-rosters-addition-of-sequence_epi_isl-and-sequence_roster_prepare_date-columns-cleansing" class="nav-link" data-scroll-target="#compile-rosters-addition-of-sequence_epi_isl-and-sequence_roster_prepare_date-columns-cleansing">Compile rosters, addition of SEQUENCE_EPI_ISL and SEQUENCE_ROSTER_PREPARE_DATE columns, cleansing</a>
+  <ul class="collapse">
+  <li><a href="#remove-true-duplicates-and-empty-rows" id="toc-remove-true-duplicates-and-empty-rows" class="nav-link" data-scroll-target="#remove-true-duplicates-and-empty-rows">Remove true duplicates and empty rows</a></li>
+  </ul></li>
+  <li><a href="#change-missing-sequence_reason-to-the-appropriate-reason-by-lab" id="toc-change-missing-sequence_reason-to-the-appropriate-reason-by-lab" class="nav-link" data-scroll-target="#change-missing-sequence_reason-to-the-appropriate-reason-by-lab">Change missing SEQUENCE_REASON to the appropriate reason by lab</a>
+  <ul class="collapse">
+  <li><a href="#first-quality-check" id="toc-first-quality-check" class="nav-link" data-scroll-target="#first-quality-check">First Quality Check</a></li>
+  <li><a href="#save-flagged-records-to-for_review-folder" id="toc-save-flagged-records-to-for_review-folder" class="nav-link" data-scroll-target="#save-flagged-records-to-for_review-folder">Save flagged records to For_Review folder</a></li>
+  </ul></li>
+  <li><a href="#final-roster" id="toc-final-roster" class="nav-link" data-scroll-target="#final-roster">Final Roster</a>
+  <ul class="collapse">
+  <li><a href="#final-quality-checks" id="toc-final-quality-checks" class="nav-link" data-scroll-target="#final-quality-checks">Final Quality Checks</a></li>
+  <li><a href="#check-number-of-columns" id="toc-check-number-of-columns" class="nav-link" data-scroll-target="#check-number-of-columns">Check number of columns</a></li>
+  </ul></li>
+  <li><a href="#prep-file-for-wdrs" id="toc-prep-file-for-wdrs" class="nav-link" data-scroll-target="#prep-file-for-wdrs">Prep file for WDRS</a>
+  <ul class="collapse">
+  <li><a href="#split-files" id="toc-split-files" class="nav-link" data-scroll-target="#split-files">Split files</a></li>
+  <li><a href="#save-files-for-script-runners-review" id="toc-save-files-for-script-runners-review" class="nav-link" data-scroll-target="#save-files-for-script-runners-review">Save files for script runner’s review</a></li>
+  <li><a href="#save-files-for-data-support" id="toc-save-files-for-data-support" class="nav-link" data-scroll-target="#save-files-for-data-support">Save files for Data Support</a></li>
+  <li><a href="#send-email" id="toc-send-email" class="nav-link" data-scroll-target="#send-email">Send email</a></li>
+  </ul></li>
+  </ul>
+</nav>
+</div>
+<div id="quarto-margin-sidebar" class="sidebar margin-sidebar zindex-bottom">
+</div>
+<main class="content quarto-banner-title-block" id="quarto-document-content">      
+
+       <div class="cell-container"><div class="cell-decorator"><pre>In [1]:</pre></div><div class="cell">
+<div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a>knitr<span class="sc">::</span>opts_chunk<span class="sc">$</span><span class="fu">set</span>(</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a>  <span class="at">eval =</span> F,</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">echo =</span> T,</span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a>  <span class="at">message =</span> F,</span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>  <span class="at">warning =</span> F</span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div></div>
+<p>The Roster Compile script processes records from PHL, Template Submitters, fuzzy matching, for review, keep na, and ad hoc files to create the sequencing roster. This script imports the files that are ready to be rostered, performs QA checks, and outputs the files that are ready to be added to WDRS.</p>
+<section id="setup" class="level1 tabset tabset-pills">
+<h1 class="tabset tabset-pills">Setup</h1>
+<section id="libraries" class="level2">
+<h2 class="anchored" data-anchor-id="libraries">Libraries</h2>
+<div class="cell-container"><div class="cell-decorator"><pre>In [2]:</pre></div><div class="cell">
+<div class="sourceCode cell-code" id="cb2"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(lubridate)</span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(tidyverse)</span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(readxl)</span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(openxlsx)</span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(fs)</span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(here)</span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(sendmailR)</span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(DBI)</span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(odbc)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div></div>
+</section>
+<section id="read-in-rds-objects" class="level2">
+<h2 class="anchored" data-anchor-id="read-in-rds-objects">Read in RDS objects</h2>
+<p>All of these are used within the roster_filters function for quality checks.<br>
+The lab_variables.rds file is created in Roster_scripts/write_lab_variables.R. It includes valid sequence reasons and lab names and is used across multiple scripts. Please refer to the tables on the GitHub wiki for updates.<br>
+The lineages.csv file contains all lineages, both active and withdrawn.<br>
+The valid years vector starts with 2020 and continues to the present year.</p>
+<div class="cell-container"><div class="cell-decorator"><pre>In [3]:</pre></div><div class="cell">
+<div class="sourceCode cell-code" id="cb3"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="co"># read in r_creds.RDS</span></span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>r_creds <span class="ot">&lt;-</span><span class="fu">readRDS</span>(<span class="fu">file.path</span>(<span class="fu">Sys.getenv</span>(<span class="st">"USERPROFILE"</span>), <span class="st">"Projects/Sequencing/Data_Objects"</span>, <span class="st">"r_creds.RDS"</span>)) </span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Bring in object with sequence reasons and sequence laboratories</span></span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a>lab_vars <span class="ot">&lt;-</span> <span class="fu">readRDS</span>(<span class="st">"Data_Objects/lab_variables.rds"</span>)</span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a><span class="co"># Bring in file with all lineages (active or withdrawn)</span></span>
+<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a>lineages <span class="ot">&lt;-</span> <span class="fu">read_csv</span>(<span class="st">"Data_Objects/Lineages/Lineages.csv"</span>,</span>
+<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a>                   <span class="at">col_names =</span> <span class="cn">TRUE</span>,</span>
+<span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a>                   <span class="at">col_types =</span> <span class="fu">cols</span>(<span class="at">.default =</span> <span class="st">"c"</span>),</span>
+<span id="cb3-11"><a href="#cb3-11" aria-hidden="true" tabindex="-1"></a>                   <span class="at">na =</span> <span class="fu">c</span>(<span class="st">""</span>, <span class="st">"NA"</span>, <span class="st">"N/A"</span>)) </span>
+<span id="cb3-12"><a href="#cb3-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-13"><a href="#cb3-13" aria-hidden="true" tabindex="-1"></a><span class="co">#Bring in GISAID_</span></span>
+<span id="cb3-14"><a href="#cb3-14" aria-hidden="true" tabindex="-1"></a>wa_gisaid <span class="ot">&lt;-</span> <span class="fu">read_rds</span>(<span class="st">"GISAID Data/wa_gisaid.rds"</span>)</span>
+<span id="cb3-15"><a href="#cb3-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-16"><a href="#cb3-16" aria-hidden="true" tabindex="-1"></a><span class="co"># Read in quality_filters</span></span>
+<span id="cb3-17"><a href="#cb3-17" aria-hidden="true" tabindex="-1"></a><span class="fu">source</span>(<span class="fu">file.path</span>(<span class="fu">Sys.getenv</span>(<span class="st">"USERPROFILE"</span>), <span class="st">"Projects/Sequencing/Roster_scripts/quality_filters.R"</span>))</span>
+<span id="cb3-18"><a href="#cb3-18" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-19"><a href="#cb3-19" aria-hidden="true" tabindex="-1"></a><span class="co"># Append Unassigned lineage to lineages list</span></span>
+<span id="cb3-20"><a href="#cb3-20" aria-hidden="true" tabindex="-1"></a>df <span class="ot">&lt;-</span> <span class="fu">data.frame</span> (<span class="at">lineage_extracted =</span> <span class="st">"Unassigned"</span>,</span>
+<span id="cb3-21"><a href="#cb3-21" aria-hidden="true" tabindex="-1"></a><span class="at">description =</span> <span class="cn">NA</span>,</span>
+<span id="cb3-22"><a href="#cb3-22" aria-hidden="true" tabindex="-1"></a><span class="at">status =</span> <span class="cn">NA</span></span>
+<span id="cb3-23"><a href="#cb3-23" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb3-24"><a href="#cb3-24" aria-hidden="true" tabindex="-1"></a>lineages <span class="ot">&lt;-</span> <span class="fu">bind_rows</span>(lineages,df)</span>
+<span id="cb3-25"><a href="#cb3-25" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-26"><a href="#cb3-26" aria-hidden="true" tabindex="-1"></a><span class="co"># Create vector of years</span></span>
+<span id="cb3-27"><a href="#cb3-27" aria-hidden="true" tabindex="-1"></a>years <span class="ot">&lt;-</span> <span class="fu">year</span>(<span class="fu">seq</span>(<span class="fu">ymd</span>(<span class="st">"2020-01-01"</span>), <span class="fu">today</span>(), <span class="at">by =</span> <span class="st">"years"</span>))</span>
+<span id="cb3-28"><a href="#cb3-28" aria-hidden="true" tabindex="-1"></a>valid_years <span class="ot">&lt;-</span> <span class="fu">paste</span>(years, <span class="at">collapse =</span> <span class="st">"|"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div></div>
+</section>
+<section id="connect-to-wdrs" class="level2">
+<h2 class="anchored" data-anchor-id="connect-to-wdrs">Connect to WDRS</h2>
+<p><strong>IMPORTANT</strong> the variables used to connect to WDRS are held within conn_list.RDS. All .RDS objects in this repository except for VOC.RDS are excluded from Git commits by declaring *.RDS in the .gitignore file because they are often used to hold our “secrets” such as credential and server connections. We do not include server connections in code uploaded to GitHub. <strong>WHY?</strong> We have been asked by HTS to ensure our use of GitHub does not raise any security red flags. This server is an internal server containing confidential/restricted PHI. We want to hide this server information to reduce our possible “attack surface”. This connection may seem benign but it tells someone information they can use to “hack” into WDRS. SQL Server Native Client is now deprecated software and version 11 was the last release. Unsupported software is at higher risk of having security breaches. Additionally, someone would know the server name. <strong>So: DO NOT alter the code used to open the connection to WDRS in any way that creates a security risk. Continue to treat this connection as a secret and store its variables in a .RDS object (or other external object that is excluded from Git commits) rather than calling them directly here.</strong></p>
+<div class="cell-container"><div class="cell-decorator"><pre>In [4]:</pre></div><div class="cell">
+<div class="sourceCode cell-code" id="cb4"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="co"># connect</span></span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>connection <span class="ot">&lt;-</span> DBI<span class="sc">::</span><span class="fu">dbConnect</span>(odbc<span class="sc">::</span><span class="fu">odbc</span>(), </span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>                             <span class="at">Driver =</span> r_creds<span class="sc">$</span>conn_list[<span class="dv">1</span>], </span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>                             <span class="at">Server =</span> r_creds<span class="sc">$</span>conn_list[<span class="dv">2</span>], </span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a>                             <span class="at">Database =</span> r_creds<span class="sc">$</span>conn_list[<span class="dv">3</span>], </span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a>                             <span class="at">Trusted_connection =</span> r_creds<span class="sc">$</span>conn_list[<span class="dv">4</span>], </span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a>                             <span class="at">ApplicationIntent =</span> r_creds<span class="sc">$</span>conn_list[<span class="dv">5</span>])</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div></div>
+</section>
+<section id="wdrs-query" class="level2">
+<h2 class="anchored" data-anchor-id="wdrs-query">WDRS Query</h2>
+<p>This queries the WDRS sequencing table for all SEQUENCE_ACCESSION and SEQUENCE_CLINICAL_ACCESSION values.</p>
+<div class="cell-container"><div class="cell-decorator"><pre>In [5]:</pre></div><div class="cell">
+<div class="sourceCode cell-code" id="cb5"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>wdrs_seq <span class="ot">&lt;-</span> <span class="fu">dbGetQuery</span>(connection, <span class="st">"</span></span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a><span class="st">                    SELECT DISTINCT SEQUENCE_ACCESSION_NUMBER,</span></span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a><span class="st">                    SEQUENCE_CLINICAL_ACCESSION_NUMBER</span></span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a><span class="st">                    FROM [WDRS].[dbo].[DD_GCD_COVID19_SEQUENCING]</span></span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a><span class="st">                    WHERE CASE_STATUS != 6</span></span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a><span class="st">                    "</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div></div>
+</section>
+<section id="wdrs-sequence-accession-values" class="level2">
+<h2 class="anchored" data-anchor-id="wdrs-sequence-accession-values">WDRS Sequence Accession values</h2>
+<p>The list of SA values is used in the roster_filters function to check if a record’s SA already exists in WDRS.</p>
+<div class="cell-container"><div class="cell-decorator"><pre>In [6]:</pre></div><div class="cell">
+<div class="sourceCode cell-code" id="cb6"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Omit any NA's</span></span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>wdrs_sa_seq_clean <span class="ot">&lt;-</span> wdrs_seq[[<span class="st">'SEQUENCE_ACCESSION_NUMBER'</span>]][<span class="sc">!</span><span class="fu">is.na</span>(wdrs_seq[[<span class="st">'SEQUENCE_ACCESSION_NUMBER'</span>]])] <span class="sc">%&gt;%</span></span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>  <span class="co"># For fields that have "hCoV-19/" appended to the beginning of the SEQUENCE_ACCESSION remove it by str_replace() with ""</span></span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">str_replace</span>(<span class="st">"hCoV-19/"</span>, <span class="st">""</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Trim off the white space resulting from str_split, this also gets rid of " " values</span></span>
+<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">str_trim</span>(<span class="st">"both"</span>)</span>
+<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-8"><a href="#cb6-8" aria-hidden="true" tabindex="-1"></a><span class="co"># Remove any values that are ""</span></span>
+<span id="cb6-9"><a href="#cb6-9" aria-hidden="true" tabindex="-1"></a>wdrs_sa_seq_values <span class="ot">&lt;-</span> wdrs_sa_seq_clean[wdrs_sa_seq_clean <span class="sc">!=</span> <span class="st">""</span>]</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div></div>
+</section>
+<section id="wdrs-sequence-clinical-accession-values" class="level2">
+<h2 class="anchored" data-anchor-id="wdrs-sequence-clinical-accession-values">WDRS Sequence Clinical Accession values</h2>
+<p>The SEQUENCE_CLINICAL_ACCESSION values are split at each “,” to create a single vector of values. The list of SCA values is used in the roster_filters function to check if a record’s SCA already exists in WDRS.</p>
+<div class="cell-container"><div class="cell-decorator"><pre>In [7]:</pre></div><div class="cell">
+<div class="sourceCode cell-code" id="cb7"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Omit any NA's</span></span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>wdrs_sca_seq_clean <span class="ot">&lt;-</span> wdrs_seq[[<span class="st">'SEQUENCE_CLINICAL_ACCESSION_NUMBER'</span>]][<span class="sc">!</span><span class="fu">is.na</span>(wdrs_seq[[<span class="st">'SEQUENCE_CLINICAL_ACCESSION_NUMBER'</span>]])] <span class="sc">%&gt;%</span></span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a><span class="co"># For fields that have "hCoV-19/" appended to the beginning of the SEQUENCE_ACCESSION remove it by str_replace() with ""</span></span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">str_replace</span>(<span class="st">"hCoV-19/"</span>, <span class="st">""</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a><span class="co"># Trim off the white space resulting from str_split, this also gets rid of " " values  </span></span>
+<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">str_trim</span>(<span class="st">"both"</span>)</span>
+<span id="cb7-7"><a href="#cb7-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-8"><a href="#cb7-8" aria-hidden="true" tabindex="-1"></a><span class="co"># Remove any values that are ""</span></span>
+<span id="cb7-9"><a href="#cb7-9" aria-hidden="true" tabindex="-1"></a>wdrs_sca_seq_values <span class="ot">&lt;-</span> wdrs_sca_seq_clean[wdrs_sca_seq_clean <span class="sc">!=</span> <span class="st">""</span>]</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div></div>
+</section>
+</section>
+<section id="compile-records" class="level1 tabset tabset-pills">
+<h1 class="tabset tabset-pills">Compile records</h1>
+<section id="read-in-files-from-write_roster_here" class="level2">
+<h2 class="anchored" data-anchor-id="read-in-files-from-write_roster_here">Read in files from write_roster_here</h2>
+<p>Files that are ready to be compiled for the roster are saved to the write_roster_here folder. A new file with today’s date is created in the Archive folder. All files are read in and moved to the Archive folder for future reference. The index column is added when files are read in. The column includes the name of the file and can be used in troubleshooting. This column should not be included in the final file.</p>
+<div class="cell-container"><div class="cell-decorator"><pre>In [8]:</pre></div><div class="cell">
+<div class="sourceCode cell-code" id="cb8"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="co"># List all rosters that were outputted to the write_roster_here folder</span></span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>compile_files <span class="ot">&lt;-</span> <span class="fu">dir_ls</span>(<span class="st">"write_roster_here"</span>,<span class="at">type =</span> <span class="st">"file"</span>, <span class="at">pattern =</span> <span class="st">"*.csv"</span>)</span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Initialize list</span></span>
+<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a>Compile_Rosters <span class="ot">&lt;-</span> <span class="fu">list</span>()</span>
+<span id="cb8-6"><a href="#cb8-6" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span>(<span class="fu">length</span>(compile_files) <span class="sc">&gt;</span> <span class="dv">0</span>){</span>
+<span id="cb8-7"><a href="#cb8-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-8"><a href="#cb8-8" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Create folder in Archive</span></span>
+<span id="cb8-9"><a href="#cb8-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">dir_create</span>(<span class="fu">paste0</span>(<span class="fu">file.path</span>(<span class="st">"write_roster_here/Archive"</span>, <span class="fu">today</span>())))</span>
+<span id="cb8-10"><a href="#cb8-10" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Files saved in vector format</span></span>
+<span id="cb8-11"><a href="#cb8-11" aria-hidden="true" tabindex="-1"></a>  roster_files <span class="ot">&lt;-</span> <span class="fu">dput</span>(<span class="fu">as.vector</span>(compile_files))</span>
+<span id="cb8-12"><a href="#cb8-12" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Set names</span></span>
+<span id="cb8-13"><a href="#cb8-13" aria-hidden="true" tabindex="-1"></a>  <span class="fu">names</span>(roster_files) <span class="ot">&lt;-</span> roster_files</span>
+<span id="cb8-14"><a href="#cb8-14" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb8-15"><a href="#cb8-15" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Read in files, all columns as character</span></span>
+<span id="cb8-16"><a href="#cb8-16" aria-hidden="true" tabindex="-1"></a>  Compile_Rosters <span class="ot">&lt;-</span> roster_files <span class="sc">%&gt;%</span></span>
+<span id="cb8-17"><a href="#cb8-17" aria-hidden="true" tabindex="-1"></a>    <span class="fu">map_df</span>(<span class="sc">~</span><span class="fu">read_csv</span>(., <span class="at">col_types =</span> <span class="fu">cols</span>(</span>
+<span id="cb8-18"><a href="#cb8-18" aria-hidden="true" tabindex="-1"></a>      <span class="at">CASE_ID =</span> <span class="fu">col_character</span>(),</span>
+<span id="cb8-19"><a href="#cb8-19" aria-hidden="true" tabindex="-1"></a>      <span class="at">SEQUENCE_SGTF =</span> <span class="fu">col_character</span>(),</span>
+<span id="cb8-20"><a href="#cb8-20" aria-hidden="true" tabindex="-1"></a>      <span class="at">SEQUENCE_SPECIMEN =</span> <span class="fu">col_character</span>(),</span>
+<span id="cb8-21"><a href="#cb8-21" aria-hidden="true" tabindex="-1"></a>      <span class="at">SEQUENCE_REASON =</span> <span class="fu">col_character</span>(),</span>
+<span id="cb8-22"><a href="#cb8-22" aria-hidden="true" tabindex="-1"></a>      <span class="at">SEQUENCE_DATE =</span> <span class="fu">col_character</span>(),</span>
+<span id="cb8-23"><a href="#cb8-23" aria-hidden="true" tabindex="-1"></a>      <span class="at">SEQUENCE_LAB =</span> <span class="fu">col_character</span>(),</span>
+<span id="cb8-24"><a href="#cb8-24" aria-hidden="true" tabindex="-1"></a>      <span class="at">SEQUENCE_STATUS =</span> <span class="fu">col_character</span>(),</span>
+<span id="cb8-25"><a href="#cb8-25" aria-hidden="true" tabindex="-1"></a>      <span class="at">SEQUENCE_REPOSITORY =</span> <span class="fu">col_character</span>(),</span>
+<span id="cb8-26"><a href="#cb8-26" aria-hidden="true" tabindex="-1"></a>      <span class="at">SEQUENCE_ACCESSION =</span> <span class="fu">col_character</span>(),</span>
+<span id="cb8-27"><a href="#cb8-27" aria-hidden="true" tabindex="-1"></a>      <span class="at">SEQUENCE_VARIANT_OPEN_TEXT =</span> <span class="fu">col_character</span>(),</span>
+<span id="cb8-28"><a href="#cb8-28" aria-hidden="true" tabindex="-1"></a>      <span class="at">SEQUENCE_CLINICAL_ACCESSION =</span> <span class="fu">col_character</span>(),</span>
+<span id="cb8-29"><a href="#cb8-29" aria-hidden="true" tabindex="-1"></a>      <span class="at">SEQUENCE_SPECIMEN_COLLECTION_DATE =</span> <span class="fu">col_character</span>(),</span>
+<span id="cb8-30"><a href="#cb8-30" aria-hidden="true" tabindex="-1"></a>      <span class="at">SEQUENCE_NOTES =</span> <span class="fu">col_character</span>(),</span>
+<span id="cb8-31"><a href="#cb8-31" aria-hidden="true" tabindex="-1"></a>      <span class="at">SEQUENCE_REVIEWED =</span> <span class="fu">col_character</span>(),</span>
+<span id="cb8-32"><a href="#cb8-32" aria-hidden="true" tabindex="-1"></a>      <span class="at">Case.Note =</span> <span class="fu">col_character</span>()</span>
+<span id="cb8-33"><a href="#cb8-33" aria-hidden="true" tabindex="-1"></a>    ), </span>
+<span id="cb8-34"><a href="#cb8-34" aria-hidden="true" tabindex="-1"></a>     <span class="co"># Read as missing</span></span>
+<span id="cb8-35"><a href="#cb8-35" aria-hidden="true" tabindex="-1"></a>     <span class="at">na =</span> <span class="fu">c</span>(<span class="st">""</span>, <span class="st">"NA"</span>, <span class="st">"N/A"</span>, <span class="st">"None"</span>, <span class="st">"NONE"</span>)</span>
+<span id="cb8-36"><a href="#cb8-36" aria-hidden="true" tabindex="-1"></a>    ), </span>
+<span id="cb8-37"><a href="#cb8-37" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Add index column to store file path</span></span>
+<span id="cb8-38"><a href="#cb8-38" aria-hidden="true" tabindex="-1"></a>    <span class="at">.id =</span> <span class="st">"index"</span>)</span>
+<span id="cb8-39"><a href="#cb8-39" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-40"><a href="#cb8-40" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Move files to archive</span></span>
+<span id="cb8-41"><a href="#cb8-41" aria-hidden="true" tabindex="-1"></a>  <span class="fu">file_move</span>(roster_files, <span class="fu">paste0</span>(<span class="st">"write_roster_here/Archive/"</span>, <span class="fu">today</span>()))</span>
+<span id="cb8-42"><a href="#cb8-42" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb8-43"><a href="#cb8-43" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-44"><a href="#cb8-44" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-45"><a href="#cb8-45" aria-hidden="true" tabindex="-1"></a><span class="co"># There are two versions of the roster columns in various places, remove EPI_ISL and Roster Prepared date from any file in write_roster_here</span></span>
+<span id="cb8-46"><a href="#cb8-46" aria-hidden="true" tabindex="-1"></a>Compile_Rosters <span class="ot">&lt;-</span> Compile_Rosters <span class="sc">%&gt;%</span> <span class="fu">select</span>(<span class="sc">-</span><span class="fu">matches</span>(<span class="st">"SEQUENCE_EPI_ISL|SEQUENCE_ROSTER_PREPARE_DATE"</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div></div>
+</section>
+<section id="wdrs-column-order" class="level2">
+<h2 class="anchored" data-anchor-id="wdrs-column-order">WDRS column order</h2>
+<p>The key_cols vector is the correct order of column names for WDRS upload. <strong>DO NOT CHANGE THESE!</strong> WDRS uploads the file based on this order, not on the column name. If the order is changed, the file will be uploaded to WDRS as is, and the WDRS data won’t be in the correct columns. The key_cols_index vector includes the roster columns and the index column and is used to remove extra columns from the input files.</p>
+<div class="cell-container"><div class="cell-decorator"><pre>In [9]:</pre></div><div class="cell">
+<div class="sourceCode cell-code" id="cb9"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Columns that are included in roster (this is the correct order for WDRS upload)</span></span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>key_cols <span class="ot">=</span> <span class="fu">c</span>(</span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a>          <span class="st">"CASE_ID"</span>,</span>
+<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a>          <span class="st">"SEQUENCE_SGTF"</span>,</span>
+<span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a>          <span class="st">"SEQUENCE_SPECIMEN"</span>,</span>
+<span id="cb9-6"><a href="#cb9-6" aria-hidden="true" tabindex="-1"></a>          <span class="st">"SEQUENCE_DATE"</span>,</span>
+<span id="cb9-7"><a href="#cb9-7" aria-hidden="true" tabindex="-1"></a>          <span class="st">"SEQUENCE_REASON"</span>,</span>
+<span id="cb9-8"><a href="#cb9-8" aria-hidden="true" tabindex="-1"></a>          <span class="st">"SEQUENCE_LAB"</span>,</span>
+<span id="cb9-9"><a href="#cb9-9" aria-hidden="true" tabindex="-1"></a>          <span class="st">"SEQUENCE_STATUS"</span>,</span>
+<span id="cb9-10"><a href="#cb9-10" aria-hidden="true" tabindex="-1"></a>          <span class="st">"SEQUENCE_REPOSITORY"</span>,</span>
+<span id="cb9-11"><a href="#cb9-11" aria-hidden="true" tabindex="-1"></a>          <span class="st">"SEQUENCE_ACCESSION"</span>,</span>
+<span id="cb9-12"><a href="#cb9-12" aria-hidden="true" tabindex="-1"></a>          <span class="st">"SEQUENCE_EPI_ISL"</span>,</span>
+<span id="cb9-13"><a href="#cb9-13" aria-hidden="true" tabindex="-1"></a>          <span class="st">"SEQUENCE_VARIANT_OPEN_TEXT"</span>,</span>
+<span id="cb9-14"><a href="#cb9-14" aria-hidden="true" tabindex="-1"></a>          <span class="st">"SEQUENCE_CLINICAL_ACCESSION"</span>, </span>
+<span id="cb9-15"><a href="#cb9-15" aria-hidden="true" tabindex="-1"></a>          <span class="st">"SEQUENCE_SPECIMEN_COLLECTION_DATE"</span>,</span>
+<span id="cb9-16"><a href="#cb9-16" aria-hidden="true" tabindex="-1"></a>          <span class="st">"SEQUENCE_ROSTER_PREPARE_DATE"</span>,</span>
+<span id="cb9-17"><a href="#cb9-17" aria-hidden="true" tabindex="-1"></a>          <span class="st">"SEQUENCE_NOTES"</span>,</span>
+<span id="cb9-18"><a href="#cb9-18" aria-hidden="true" tabindex="-1"></a>          <span class="st">"SEQUENCE_REVIEWED"</span>,</span>
+<span id="cb9-19"><a href="#cb9-19" aria-hidden="true" tabindex="-1"></a>          <span class="st">"Case.Note"</span>)</span>
+<span id="cb9-20"><a href="#cb9-20" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-21"><a href="#cb9-21" aria-hidden="true" tabindex="-1"></a><span class="co"># Columns that are included in roster, plus index</span></span>
+<span id="cb9-22"><a href="#cb9-22" aria-hidden="true" tabindex="-1"></a>key_cols_index <span class="ot">=</span> <span class="fu">c</span>(</span>
+<span id="cb9-23"><a href="#cb9-23" aria-hidden="true" tabindex="-1"></a>          <span class="st">"CASE_ID"</span>,</span>
+<span id="cb9-24"><a href="#cb9-24" aria-hidden="true" tabindex="-1"></a>          <span class="st">"SEQUENCE_SGTF"</span>,</span>
+<span id="cb9-25"><a href="#cb9-25" aria-hidden="true" tabindex="-1"></a>          <span class="st">"SEQUENCE_SPECIMEN"</span>,</span>
+<span id="cb9-26"><a href="#cb9-26" aria-hidden="true" tabindex="-1"></a>          <span class="st">"SEQUENCE_DATE"</span>,</span>
+<span id="cb9-27"><a href="#cb9-27" aria-hidden="true" tabindex="-1"></a>          <span class="st">"SEQUENCE_REASON"</span>,</span>
+<span id="cb9-28"><a href="#cb9-28" aria-hidden="true" tabindex="-1"></a>          <span class="st">"SEQUENCE_LAB"</span>,</span>
+<span id="cb9-29"><a href="#cb9-29" aria-hidden="true" tabindex="-1"></a>          <span class="st">"SEQUENCE_STATUS"</span>,</span>
+<span id="cb9-30"><a href="#cb9-30" aria-hidden="true" tabindex="-1"></a>          <span class="st">"SEQUENCE_REPOSITORY"</span>,</span>
+<span id="cb9-31"><a href="#cb9-31" aria-hidden="true" tabindex="-1"></a>          <span class="st">"SEQUENCE_ACCESSION"</span>,</span>
+<span id="cb9-32"><a href="#cb9-32" aria-hidden="true" tabindex="-1"></a>          <span class="st">"SEQUENCE_EPI_ISL"</span>,</span>
+<span id="cb9-33"><a href="#cb9-33" aria-hidden="true" tabindex="-1"></a>          <span class="st">"SEQUENCE_VARIANT_OPEN_TEXT"</span>,</span>
+<span id="cb9-34"><a href="#cb9-34" aria-hidden="true" tabindex="-1"></a>          <span class="st">"SEQUENCE_CLINICAL_ACCESSION"</span>, </span>
+<span id="cb9-35"><a href="#cb9-35" aria-hidden="true" tabindex="-1"></a>          <span class="st">"SEQUENCE_SPECIMEN_COLLECTION_DATE"</span>,</span>
+<span id="cb9-36"><a href="#cb9-36" aria-hidden="true" tabindex="-1"></a>          <span class="st">"SEQUENCE_ROSTER_PREPARE_DATE"</span>,</span>
+<span id="cb9-37"><a href="#cb9-37" aria-hidden="true" tabindex="-1"></a>          <span class="st">"SEQUENCE_NOTES"</span>,</span>
+<span id="cb9-38"><a href="#cb9-38" aria-hidden="true" tabindex="-1"></a>          <span class="st">"SEQUENCE_REVIEWED"</span>,</span>
+<span id="cb9-39"><a href="#cb9-39" aria-hidden="true" tabindex="-1"></a>          <span class="st">"Case.Note"</span>, </span>
+<span id="cb9-40"><a href="#cb9-40" aria-hidden="true" tabindex="-1"></a>          <span class="st">"index"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div></div>
+</section>
+</section>
+<section id="compile-rosters-addition-of-sequence_epi_isl-and-sequence_roster_prepare_date-columns-cleansing" class="level1">
+<h1>Compile rosters, addition of SEQUENCE_EPI_ISL and SEQUENCE_ROSTER_PREPARE_DATE columns, cleansing</h1>
+<div class="cell-container"><div class="cell-decorator"><pre>In [10]:</pre></div><div class="cell">
+<div class="sourceCode cell-code" id="cb10"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Bind rosters</span></span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a>Compiled_Roster <span class="ot">&lt;-</span> <span class="fu">bind_rows</span>(Compile_Rosters) </span>
+<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a>wa_gisaid <span class="ot">&lt;-</span> <span class="fu">as_tibble</span>(wa_gisaid)</span>
+<span id="cb10-5"><a href="#cb10-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-6"><a href="#cb10-6" aria-hidden="true" tabindex="-1"></a><span class="co"># Join the "Accession ID" from wa_gisaid to populate the new vars: "SEQUENCE_EPI_ISL". Create the new var SEQUENCE_ROSTER_PREPARE_DATE with today's date in mm/dd/yyyy format. Trim SEQUENCE_SPECIMEN_COLLECTION_DATE. Remove duplicates and index columns</span></span>
+<span id="cb10-7"><a href="#cb10-7" aria-hidden="true" tabindex="-1"></a>Compiled_Roster_Add_Cols <span class="ot">&lt;-</span> Compiled_Roster <span class="sc">%&gt;%</span></span>
+<span id="cb10-8"><a href="#cb10-8" aria-hidden="true" tabindex="-1"></a>  <span class="co"># join "virus_name_clean", "Accession ID", "gisaid_epi_isl" columns from wa_gisaid</span></span>
+<span id="cb10-9"><a href="#cb10-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">left_join</span>(wa_gisaid[<span class="fu">c</span>(<span class="st">"virus_name_clean"</span>, <span class="st">"Accession ID"</span>, <span class="st">"gisaid_epi_isl"</span>)], <span class="at">by =</span> <span class="fu">c</span>(<span class="st">"SEQUENCE_ACCESSION"</span> <span class="ot">=</span> <span class="st">"virus_name_clean"</span>)) <span class="sc">%&gt;%</span></span>
+<span id="cb10-10"><a href="#cb10-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="st">"SEQUENCE_EPI_ISL"</span> <span class="ot">=</span> <span class="fu">case_when</span>(</span>
+<span id="cb10-11"><a href="#cb10-11" aria-hidden="true" tabindex="-1"></a>    <span class="co"># 'Accession ID' is populated and 'gisaid_epi_isl' is missing</span></span>
+<span id="cb10-12"><a href="#cb10-12" aria-hidden="true" tabindex="-1"></a>    (<span class="sc">!</span><span class="fu">is.na</span>(<span class="st">`</span><span class="at">Accession ID</span><span class="st">`</span>) <span class="sc">&amp;</span> <span class="fu">is.na</span>(gisaid_epi_isl)) <span class="sc">~</span> <span class="st">`</span><span class="at">Accession ID</span><span class="st">`</span>,</span>
+<span id="cb10-13"><a href="#cb10-13" aria-hidden="true" tabindex="-1"></a>    <span class="co"># 'Accession ID' is missing and 'gisaid_epi_isl' is populated</span></span>
+<span id="cb10-14"><a href="#cb10-14" aria-hidden="true" tabindex="-1"></a>    (<span class="fu">is.na</span>(<span class="st">`</span><span class="at">Accession ID</span><span class="st">`</span>) <span class="sc">&amp;</span> <span class="sc">!</span><span class="fu">is.na</span>(gisaid_epi_isl)) <span class="sc">~</span> gisaid_epi_isl,</span>
+<span id="cb10-15"><a href="#cb10-15" aria-hidden="true" tabindex="-1"></a>    <span class="co"># 'Accession ID' is populated and 'gisaid_epi_isl' is populated and 'Accession ID' != 'gisaid_epi_isl'</span></span>
+<span id="cb10-16"><a href="#cb10-16" aria-hidden="true" tabindex="-1"></a>    ((<span class="sc">!</span><span class="fu">is.na</span>(<span class="st">`</span><span class="at">Accession ID</span><span class="st">`</span>) <span class="sc">&amp;</span> <span class="sc">!</span><span class="fu">is.na</span>(gisaid_epi_isl)) <span class="sc">&amp;</span> (<span class="st">`</span><span class="at">Accession ID</span><span class="st">`</span> <span class="sc">!=</span> gisaid_epi_isl)) <span class="sc">~</span> gisaid_epi_isl,</span>
+<span id="cb10-17"><a href="#cb10-17" aria-hidden="true" tabindex="-1"></a>    <span class="cn">TRUE</span> <span class="sc">~</span> gisaid_epi_isl</span>
+<span id="cb10-18"><a href="#cb10-18" aria-hidden="true" tabindex="-1"></a>  )) <span class="sc">%&gt;%</span></span>
+<span id="cb10-19"><a href="#cb10-19" aria-hidden="true" tabindex="-1"></a>  <span class="co"># mutate(SEQUENCE_EPI_ISL = "") %&gt;%</span></span>
+<span id="cb10-20"><a href="#cb10-20" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">SEQUENCE_ROSTER_PREPARE_DATE =</span> <span class="fu">format</span>(<span class="fu">today</span>(), <span class="st">"%m/%d/%Y"</span>)) <span class="sc">%&gt;%</span></span>
+<span id="cb10-21"><a href="#cb10-21" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">SEQUENCE_SPECIMEN_COLLECTION_DATE =</span> <span class="fu">str_trim</span>(SEQUENCE_SPECIMEN_COLLECTION_DATE, <span class="at">side =</span> <span class="st">"both"</span>)) <span class="sc">%&gt;%</span></span>
+<span id="cb10-22"><a href="#cb10-22" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Exclude index when comparing rows in case there are 2 copies of a file</span></span>
+<span id="cb10-23"><a href="#cb10-23" aria-hidden="true" tabindex="-1"></a>  <span class="fu">distinct</span>(<span class="fu">across</span>(<span class="fu">all_of</span>(key_cols)), <span class="at">.keep_all =</span> <span class="cn">TRUE</span>) <span class="sc">%&gt;%</span> </span>
+<span id="cb10-24"><a href="#cb10-24" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Remove extra columns</span></span>
+<span id="cb10-25"><a href="#cb10-25" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(<span class="fu">all_of</span>(key_cols_index))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div></div>
+<section id="remove-true-duplicates-and-empty-rows" class="level2">
+<h2 class="anchored" data-anchor-id="remove-true-duplicates-and-empty-rows">Remove true duplicates and empty rows</h2>
+<p>Exact duplicates are removed at this point. If an upstream process is run twice and outputs multiple files, this will remove identical records. Empty rows are sometimes introduced after manually opening a csv file. These rows are removed, so they aren’t flagged in the QA checks.</p>
+<div class="cell-container"><div class="cell-decorator"><pre>In [11]:</pre></div><div class="cell">
+<div class="sourceCode cell-code" id="cb11"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Creating copy of roster before adding filters and warning columns in case need to rerun anything in the script</span></span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a>Compiled_Roster_before_filters <span class="ot">&lt;-</span> Compiled_Roster_Add_Cols</span>
+<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Identify rows that are completely blank</span></span>
+<span id="cb11-5"><a href="#cb11-5" aria-hidden="true" tabindex="-1"></a>empty_rows_in_roster <span class="ot">&lt;-</span> Compiled_Roster_Add_Cols <span class="sc">%&gt;%</span> <span class="fu">filter_at</span>(<span class="fu">vars</span>(key_cols),  <span class="fu">all_vars</span>(<span class="fu">is.na</span>(.)))</span>
+<span id="cb11-6"><a href="#cb11-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-7"><a href="#cb11-7" aria-hidden="true" tabindex="-1"></a><span class="co"># Remove empty rows</span></span>
+<span id="cb11-8"><a href="#cb11-8" aria-hidden="true" tabindex="-1"></a>Compiled_Roster <span class="ot">&lt;-</span> Compiled_Roster_Add_Cols <span class="sc">%&gt;%</span> <span class="fu">anti_join</span>(empty_rows_in_roster)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div></div>
+</section>
+</section>
+<section id="change-missing-sequence_reason-to-the-appropriate-reason-by-lab" class="level1">
+<h1>Change missing SEQUENCE_REASON to the appropriate reason by lab</h1>
+<div class="cell-container"><div class="cell-decorator"><pre>In [12]:</pre></div><div class="cell">
+<div class="sourceCode cell-code" id="cb12"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a>Compiled_Roster <span class="ot">&lt;-</span> Compiled_Roster <span class="sc">%&gt;%</span></span>
+<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">SEQUENCE_REASON =</span> <span class="fu">case_when</span>(</span>
+<span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a>    <span class="fu">is.na</span>(SEQUENCE_REASON) <span class="sc">&amp;</span> <span class="fu">str_detect</span>(<span class="fu">toupper</span>(SEQUENCE_LAB),<span class="st">"CDC"</span>) <span class="sc">~</span> <span class="st">"SENTINEL SURVEILLANCE"</span>,</span>
+<span id="cb12-4"><a href="#cb12-4" aria-hidden="true" tabindex="-1"></a>    <span class="fu">is.na</span>(SEQUENCE_REASON) <span class="sc">&amp;</span> <span class="fu">str_detect</span>(<span class="fu">toupper</span>(SEQUENCE_LAB),<span class="st">"LAURING LAB"</span>) <span class="sc">~</span> <span class="st">"OTHER"</span>,</span>
+<span id="cb12-5"><a href="#cb12-5" aria-hidden="true" tabindex="-1"></a>    <span class="fu">is.na</span>(SEQUENCE_REASON) <span class="sc">&amp;</span> <span class="fu">str_detect</span>(<span class="fu">toupper</span>(SEQUENCE_LAB),<span class="st">"GRUBAUGH"</span>) <span class="sc">~</span> <span class="st">"OTHER"</span>,</span>
+<span id="cb12-6"><a href="#cb12-6" aria-hidden="true" tabindex="-1"></a>    <span class="fu">is.na</span>(SEQUENCE_REASON) <span class="sc">&amp;</span> <span class="fu">str_detect</span>(<span class="fu">toupper</span>(SEQUENCE_LAB),<span class="st">"PHL"</span>) <span class="sc">~</span> <span class="cn">NA_character_</span>,</span>
+<span id="cb12-7"><a href="#cb12-7" aria-hidden="true" tabindex="-1"></a>    <span class="fu">is.na</span>(SEQUENCE_REASON) <span class="sc">&amp;</span> <span class="fu">str_detect</span>(<span class="fu">toupper</span>(SEQUENCE_LAB),<span class="st">"KAISER"</span>) <span class="sc">~</span> <span class="st">"OTHER"</span>,</span>
+<span id="cb12-8"><a href="#cb12-8" aria-hidden="true" tabindex="-1"></a>    <span class="fu">is.na</span>(SEQUENCE_REASON) <span class="sc">&amp;</span> <span class="sc">!</span><span class="fu">str_detect</span>(<span class="fu">toupper</span>(SEQUENCE_LAB),<span class="st">"CDC|LAURING LAB|GRUBAUGH|PHL|KAISER"</span>) <span class="sc">~</span> <span class="st">"UNKNOWN"</span>,</span>
+<span id="cb12-9"><a href="#cb12-9" aria-hidden="true" tabindex="-1"></a>    <span class="cn">TRUE</span> <span class="sc">~</span> SEQUENCE_REASON</span>
+<span id="cb12-10"><a href="#cb12-10" aria-hidden="true" tabindex="-1"></a>  ))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div></div>
+<section id="first-quality-check" class="level2">
+<h2 class="anchored" data-anchor-id="first-quality-check">First Quality Check</h2>
+<p>The roster_filters function is used across multiple scripts. In the roster compile script, roster is set to TRUE. This sets the QA_SCA_NA and the QA_COLLECT_DATE check to NA. If a file name includes “reviewed_roster_compiled”, it sets QA_SCA_WDRS_DUPE and QA_SCA_INT_DUPE to NA (This is a temporary fix to allow reviewed records to be rostered and should be removed after updates to checking SCA, SA, and CASE_ID in WDRS). It includes a few additional checks that are included in QA_OTHER. The QA_OTHER checks include:</p>
+<ul>
+<li>Is SEQUENCE_SGTF blank?</li>
+<li>Is SEQUENCE_SPECIMEN hardcoded to ‘YES’?</li>
+<li>Is SEQUENCE_DATE blank?</li>
+<li>Is SEQUENCE_LAB populated and a valid value within lab_variables.rds?</li>
+<li>Is SEQUENCE_REPOSITORY set to ‘GISAID’?</li>
+<li>Is SEQUENCE_ACCESSION in a valid format? (includes “USA/”, doesn’t include “hCoV”, ends in a valid year)</li>
+<li>Is SEQUENCE_REVIEWED blank?</li>
+<li>Is SEQUENCE_SPECIMEN_COLLECTION_DATE formatted correctly? (MM/DD/YYYY or M/D/YYYY)</li>
+<li>Is Case.Note “External data question package updated by COVID19…”</li>
+<li>Does CASE_ID only include numbers?</li>
+<li>Is SEQUENCE_VARIANT_OPEN_TEXT filled in when SEQUENCE_STATUS is ‘COMPLETE’?</li>
+<li>Is SEQUENCE_VARIANT_OPEN_TEXT blank when SEQUENCE_STATUS is ‘LOW QUALITY’ or ‘FAILED’?</li>
+</ul>
+<p>The script will print a warning if a lab isn’t in the current list of lab names. The GitHub wiki has the current list of WDRS lab names. Update the lab_variables.RDS in write_lab_variables.R script as needed.</p>
+<div class="cell-container"><div class="cell-decorator"><pre>In [13]:</pre></div><div class="cell">
+<div class="sourceCode cell-code" id="cb13"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Using the quality filters to send files to some of the for review folders</span></span>
+<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a>Compiled_Roster_qa <span class="ot">&lt;-</span> <span class="fu">roster_filters</span>(Compiled_Roster, lab_vars, wdrs_sa_seq_values, wdrs_sca_seq_values, lineages<span class="sc">$</span>lineage_extracted, <span class="at">roster =</span> <span class="cn">TRUE</span>) </span>
+<span id="cb13-4"><a href="#cb13-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-5"><a href="#cb13-5" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span>(<span class="fu">any</span>(<span class="sc">!</span>Compiled_Roster_qa<span class="sc">$</span>SEQUENCE_LAB <span class="sc">%in%</span> lab_vars<span class="sc">$</span>lab_names_wdrs)) {</span>
+<span id="cb13-6"><a href="#cb13-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">warning</span>(<span class="fu">paste0</span>(<span class="st">"Please review list of sequence labs"</span>))</span>
+<span id="cb13-7"><a href="#cb13-7" aria-hidden="true" tabindex="-1"></a>}</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div></div>
+</section>
+<section id="save-flagged-records-to-for_review-folder" class="level2">
+<h2 class="anchored" data-anchor-id="save-flagged-records-to-for_review-folder">Save flagged records to For_Review folder</h2>
+<p>If a record has any flag, it is removed from the Compiled_Roster data. Flagged records that have a SEQUENCE_STATUS as “COMPLETE” or are from “PHL” are sent to the For_Review folder. Flagged records that are not from PHL and have a SEQUENCE_STATUS of “FAILED” or “LOW QUALITY” are dropped.</p>
+<div class="cell-container"><div class="cell-decorator"><pre>In [14]:</pre></div><div class="cell">
+<div class="sourceCode cell-code" id="cb14"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Create a dataframe that is referenced in email message</span></span>
+<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a>review_dataframe <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(<span class="at">File =</span> <span class="fu">as.character</span>(),</span>
+<span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a>                               <span class="at">nrows_in_file =</span> <span class="fu">as.integer</span>())</span>
+<span id="cb14-4"><a href="#cb14-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-5"><a href="#cb14-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-6"><a href="#cb14-6" aria-hidden="true" tabindex="-1"></a><span class="co"># Records with QA flags</span></span>
+<span id="cb14-7"><a href="#cb14-7" aria-hidden="true" tabindex="-1"></a>roster_for_review <span class="ot">&lt;-</span> <span class="fu">filter</span>(Compiled_Roster_qa, sum <span class="sc">&gt;</span> <span class="dv">0</span>)</span>
+<span id="cb14-8"><a href="#cb14-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-9"><a href="#cb14-9" aria-hidden="true" tabindex="-1"></a><span class="co"># Drop FAILED and LOW QUALITY records from non-PHL submitters</span></span>
+<span id="cb14-10"><a href="#cb14-10" aria-hidden="true" tabindex="-1"></a><span class="co"># Remove extra columns</span></span>
+<span id="cb14-11"><a href="#cb14-11" aria-hidden="true" tabindex="-1"></a>roster_for_review_output <span class="ot">&lt;-</span> roster_for_review <span class="sc">%&gt;%</span></span>
+<span id="cb14-12"><a href="#cb14-12" aria-hidden="true" tabindex="-1"></a>    <span class="fu">filter</span>(SEQUENCE_LAB <span class="sc">==</span> <span class="st">"PHL"</span> <span class="sc">|</span> <span class="sc">!</span>SEQUENCE_STATUS <span class="sc">%in%</span> <span class="fu">c</span>(<span class="st">"FAILED"</span>, <span class="st">"LOW QUALITY"</span>)) <span class="sc">%&gt;%</span> </span>
+<span id="cb14-13"><a href="#cb14-13" aria-hidden="true" tabindex="-1"></a>    <span class="fu">select</span>(<span class="sc">-</span>index, <span class="sc">-</span>sum)</span>
+<span id="cb14-14"><a href="#cb14-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-15"><a href="#cb14-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-16"><a href="#cb14-16" aria-hidden="true" tabindex="-1"></a><span class="co"># If there are records with QA flags, they need to be saved to the For_Review folder or dropped.</span></span>
+<span id="cb14-17"><a href="#cb14-17" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-18"><a href="#cb14-18" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span>(<span class="fu">nrow</span>(roster_for_review_output) <span class="sc">&gt;</span> <span class="dv">0</span>) {</span>
+<span id="cb14-19"><a href="#cb14-19" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb14-20"><a href="#cb14-20" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Save the number of records that need to be reviewed for use in email</span></span>
+<span id="cb14-21"><a href="#cb14-21" aria-hidden="true" tabindex="-1"></a>  review_dataframe <span class="ot">&lt;-</span> review_dataframe <span class="sc">%&gt;%</span> <span class="fu">add_row</span>(<span class="at">File =</span> <span class="st">"Compiled_Roster_For_Review"</span>, </span>
+<span id="cb14-22"><a href="#cb14-22" aria-hidden="true" tabindex="-1"></a>                                                   <span class="at">nrows_in_file =</span> <span class="fu">nrow</span>(roster_for_review_output))</span>
+<span id="cb14-23"><a href="#cb14-23" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb14-24"><a href="#cb14-24" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-25"><a href="#cb14-25" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Save csv file</span></span>
+<span id="cb14-26"><a href="#cb14-26" aria-hidden="true" tabindex="-1"></a>  roster_for_review_output <span class="sc">%&gt;%</span></span>
+<span id="cb14-27"><a href="#cb14-27" aria-hidden="true" tabindex="-1"></a>    <span class="fu">write_csv</span>(<span class="fu">paste0</span>(<span class="st">"For_Review/to_process/"</span>, </span>
+<span id="cb14-28"><a href="#cb14-28" aria-hidden="true" tabindex="-1"></a>                     <span class="st">"Compiled_Roster_For_Review_"</span>, </span>
+<span id="cb14-29"><a href="#cb14-29" aria-hidden="true" tabindex="-1"></a>                     <span class="fu">format</span>(<span class="fu">now</span>(), <span class="st">"%Y-%m-%d-%H%M%S"</span>), <span class="st">".csv"</span>), <span class="at">na =</span> <span class="st">""</span>)</span>
+<span id="cb14-30"><a href="#cb14-30" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb14-31"><a href="#cb14-31" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-32"><a href="#cb14-32" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-33"><a href="#cb14-33" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-34"><a href="#cb14-34" aria-hidden="true" tabindex="-1"></a><span class="co"># Remove all records from the roster that were sent to the for_review folder or dropped</span></span>
+<span id="cb14-35"><a href="#cb14-35" aria-hidden="true" tabindex="-1"></a>Compiled_Roster <span class="ot">&lt;-</span> Compiled_Roster <span class="sc">%&gt;%</span> </span>
+<span id="cb14-36"><a href="#cb14-36" aria-hidden="true" tabindex="-1"></a>  <span class="fu">anti_join</span>(roster_for_review, <span class="at">by=</span>key_cols) <span class="sc">%&gt;%</span></span>
+<span id="cb14-37"><a href="#cb14-37" aria-hidden="true" tabindex="-1"></a>  <span class="fu">distinct</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div></div>
+</section>
+</section>
+<section id="final-roster" class="level1 tabset tabset-pills">
+<h1 class="tabset tabset-pills">Final Roster</h1>
+<section id="final-quality-checks" class="level2">
+<h2 class="anchored" data-anchor-id="final-quality-checks">Final Quality Checks</h2>
+<p>Rerun the roster_filters. At this point, the Compiled_Roster dataframe should not have QA flags. If rows are removed at this point, check if they need to be sent to the For_Review folder. This code chunk can simplified/modified because the roster_filters function has already been used. It provides a nice quality_table that can be helpful as a visual check.</p>
+<div class="cell-container"><div class="cell-decorator"><pre>In [15]:</pre></div><div class="cell">
+<div class="sourceCode cell-code" id="cb15"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Last check on records to be rostered</span></span>
+<span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a>Compiled_Roster <span class="ot">&lt;-</span> <span class="fu">roster_filters</span>(Compiled_Roster, lab_vars, wdrs_sa_seq_values, wdrs_sca_seq_values, lineages<span class="sc">$</span>lineage_extracted, <span class="at">roster =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-4"><a href="#cb15-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Remove any records that have a flag and remove extra columns</span></span>
+<span id="cb15-5"><a href="#cb15-5" aria-hidden="true" tabindex="-1"></a>Compiled_Roster_Clean <span class="ot">&lt;-</span> Compiled_Roster <span class="sc">%&gt;%</span> </span>
+<span id="cb15-6"><a href="#cb15-6" aria-hidden="true" tabindex="-1"></a>                              <span class="fu">filter</span>(sum<span class="sc">==</span><span class="dv">0</span>) <span class="sc">%&gt;%</span> </span>
+<span id="cb15-7"><a href="#cb15-7" aria-hidden="true" tabindex="-1"></a>                                <span class="fu">select</span>(<span class="fu">all_of</span>(key_cols))</span>
+<span id="cb15-8"><a href="#cb15-8" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb15-9"><a href="#cb15-9" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span>(<span class="fu">nrow</span>(Compiled_Roster_Clean) <span class="sc">!=</span> <span class="fu">nrow</span>(Compiled_Roster)){</span>
+<span id="cb15-10"><a href="#cb15-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">stop</span>(<span class="fu">paste0</span>(<span class="st">"Please review the number of rows in the Compiled_Roster_Clean."</span>))</span>
+<span id="cb15-11"><a href="#cb15-11" aria-hidden="true" tabindex="-1"></a>}</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div></div>
+</section>
+<section id="check-number-of-columns" class="level2">
+<h2 class="anchored" data-anchor-id="check-number-of-columns">Check number of columns</h2>
+<p>This will stop the script if the number of columns is incorrect. If the WDRS template changes, this number needs to be updated to reflect the change.</p>
+<div class="cell-container"><div class="cell-decorator"><pre>In [16]:</pre></div><div class="cell">
+<div class="sourceCode cell-code" id="cb16"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Check number of columns</span></span>
+<span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (<span class="fu">ncol</span>(Compiled_Roster_Clean) <span class="sc">!=</span> <span class="dv">17</span>){</span>
+<span id="cb16-3"><a href="#cb16-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">stop</span>(<span class="fu">paste0</span>(<span class="st">"Please review number of columns. There should be 17 columns for roster."</span>))</span>
+<span id="cb16-4"><a href="#cb16-4" aria-hidden="true" tabindex="-1"></a>}</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div></div>
+</section>
+</section>
+<section id="prep-file-for-wdrs" class="level1 tabset tabset-pills">
+<h1 class="tabset tabset-pills">Prep file for WDRS</h1>
+<section id="split-files" class="level2">
+<h2 class="anchored" data-anchor-id="split-files">Split files</h2>
+<p>The maximum number of rows for WDRS is 500. This splits the records into lists of 500 records</p>
+<div class="cell-container"><div class="cell-decorator"><pre>In [17]:</pre></div><div class="cell">
+<div class="sourceCode cell-code" id="cb17"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Number of rows in roster</span></span>
+<span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a>number_row_clean_roster <span class="ot">&lt;-</span> <span class="fu">nrow</span>(Compiled_Roster_Clean)</span>
+<span id="cb17-3"><a href="#cb17-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-4"><a href="#cb17-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Determine the number of files that will be needed</span></span>
+<span id="cb17-5"><a href="#cb17-5" aria-hidden="true" tabindex="-1"></a>factor_for_roster_split <span class="ot">&lt;-</span> <span class="fu">rep</span>(<span class="fu">seq_len</span>(<span class="fu">ceiling</span>(number_row_clean_roster <span class="sc">/</span> <span class="dv">500</span>)),<span class="at">each =</span> <span class="dv">500</span>,<span class="at">length.out =</span> number_row_clean_roster)</span>
+<span id="cb17-6"><a href="#cb17-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-7"><a href="#cb17-7" aria-hidden="true" tabindex="-1"></a><span class="co"># Divide the data so there are a max of 500 records in a group</span></span>
+<span id="cb17-8"><a href="#cb17-8" aria-hidden="true" tabindex="-1"></a>Compiled_Roster_Split <span class="ot">&lt;-</span> <span class="fu">split</span>(Compiled_Roster_Clean, <span class="at">f =</span> factor_for_roster_split)</span>
+<span id="cb17-9"><a href="#cb17-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-10"><a href="#cb17-10" aria-hidden="true" tabindex="-1"></a><span class="co"># Print dimensions of the groups </span></span>
+<span id="cb17-11"><a href="#cb17-11" aria-hidden="true" tabindex="-1"></a><span class="fu">lapply</span>(Compiled_Roster_Split, dim)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div></div>
+</section>
+<section id="save-files-for-script-runners-review" class="level2">
+<h2 class="anchored" data-anchor-id="save-files-for-script-runners-review">Save files for script runner’s review</h2>
+<p>This writes the csv files to today’s Archive folder. This is the last point to review the file(s) before sending it to Data Support. Once the records have been saved to the Data Support folder, the file(s) may be uploaded to WDRS quickly, and we shouldn’t make changes to them.</p>
+<div class="cell-container"><div class="cell-decorator"><pre>In [18]:</pre></div><div class="cell">
+<div class="sourceCode cell-code" id="cb18"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Number of files to be saved</span></span>
+<span id="cb18-2"><a href="#cb18-2" aria-hidden="true" tabindex="-1"></a>m <span class="ot">&lt;-</span> <span class="fu">length</span>(Compiled_Roster_Split)</span>
+<span id="cb18-3"><a href="#cb18-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb18-4"><a href="#cb18-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Write compiled roster to new date-stamped folder in Archive </span></span>
+<span id="cb18-5"><a href="#cb18-5" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> (i <span class="cf">in</span> <span class="dv">1</span><span class="sc">:</span>m) {</span>
+<span id="cb18-6"><a href="#cb18-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">write_csv</span>(</span>
+<span id="cb18-7"><a href="#cb18-7" aria-hidden="true" tabindex="-1"></a>    Compiled_Roster_Split[[i]],</span>
+<span id="cb18-8"><a href="#cb18-8" aria-hidden="true" tabindex="-1"></a>    <span class="fu">paste0</span>(<span class="st">"write_roster_here/Archive/"</span>, </span>
+<span id="cb18-9"><a href="#cb18-9" aria-hidden="true" tabindex="-1"></a>      <span class="fu">today</span>(),</span>
+<span id="cb18-10"><a href="#cb18-10" aria-hidden="true" tabindex="-1"></a>      <span class="st">"//Compiled_Roster_"</span>,</span>
+<span id="cb18-11"><a href="#cb18-11" aria-hidden="true" tabindex="-1"></a>      i,</span>
+<span id="cb18-12"><a href="#cb18-12" aria-hidden="true" tabindex="-1"></a>      <span class="st">"_"</span>,</span>
+<span id="cb18-13"><a href="#cb18-13" aria-hidden="true" tabindex="-1"></a>      <span class="fu">str_replace</span>(<span class="fu">str_replace_all</span>(<span class="fu">format</span>(<span class="fu">now</span>()), <span class="st">":"</span>, <span class="st">"-"</span>), <span class="st">" "</span>, <span class="st">"_"</span>),</span>
+<span id="cb18-14"><a href="#cb18-14" aria-hidden="true" tabindex="-1"></a>      <span class="st">".csv"</span></span>
+<span id="cb18-15"><a href="#cb18-15" aria-hidden="true" tabindex="-1"></a>    ),</span>
+<span id="cb18-16"><a href="#cb18-16" aria-hidden="true" tabindex="-1"></a>    <span class="at">na =</span> <span class="st">""</span></span>
+<span id="cb18-17"><a href="#cb18-17" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb18-18"><a href="#cb18-18" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb18-19"><a href="#cb18-19" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb18-20"><a href="#cb18-20" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb18-21"><a href="#cb18-21" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb18-22"><a href="#cb18-22" aria-hidden="true" tabindex="-1"></a><span class="co"># Stop script and review files in the Archive folder. I've been checking that the numbers of rows and columns are correct and look for really high levels of missingness in a column or anything that seems weird. Once the files have been saved to the Data Support folder, we shouldn't make changes to the files, so this is the last chance for reviewing. </span></span>
+<span id="cb18-23"><a href="#cb18-23" aria-hidden="true" tabindex="-1"></a><span class="fu">stop</span>(<span class="fu">paste</span>(<span class="st">"Review files before saving to DS_path"</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div></div>
+</section>
+<section id="save-files-for-data-support" class="level2">
+<h2 class="anchored" data-anchor-id="save-files-for-data-support">Save files for Data Support</h2>
+<p>Don’t run this until you have reviewed the files in the Archive folder! This saves the file(s) for Data Support.</p>
+<div class="cell-container"><div class="cell-decorator"><pre>In [19]:</pre></div><div class="cell">
+<div class="sourceCode cell-code" id="cb19"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Read in the file path for Data Support folder</span></span>
+<span id="cb19-2"><a href="#cb19-2" aria-hidden="true" tabindex="-1"></a>DS_path <span class="ot">&lt;-</span> <span class="st">"WDRS/Rosters/RosterImports_to_Prod/Sequencing/"</span></span>
+<span id="cb19-3"><a href="#cb19-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb19-4"><a href="#cb19-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb19-5"><a href="#cb19-5" aria-hidden="true" tabindex="-1"></a><span class="co"># Save the file(s)</span></span>
+<span id="cb19-6"><a href="#cb19-6" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> (i <span class="cf">in</span> <span class="dv">1</span><span class="sc">:</span>m) {</span>
+<span id="cb19-7"><a href="#cb19-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">write_csv</span>(</span>
+<span id="cb19-8"><a href="#cb19-8" aria-hidden="true" tabindex="-1"></a>    Compiled_Roster_Split[[i]],</span>
+<span id="cb19-9"><a href="#cb19-9" aria-hidden="true" tabindex="-1"></a>    <span class="fu">paste0</span>(DS_path,</span>
+<span id="cb19-10"><a href="#cb19-10" aria-hidden="true" tabindex="-1"></a>      <span class="st">"Compiled_Roster_"</span>,</span>
+<span id="cb19-11"><a href="#cb19-11" aria-hidden="true" tabindex="-1"></a>      i,</span>
+<span id="cb19-12"><a href="#cb19-12" aria-hidden="true" tabindex="-1"></a>      <span class="st">"_"</span>,</span>
+<span id="cb19-13"><a href="#cb19-13" aria-hidden="true" tabindex="-1"></a>      <span class="fu">str_replace</span>(<span class="fu">str_replace_all</span>(<span class="fu">format</span>(<span class="fu">now</span>()), <span class="st">":"</span>, <span class="st">"-"</span>), <span class="st">" "</span>, <span class="st">"_"</span>),</span>
+<span id="cb19-14"><a href="#cb19-14" aria-hidden="true" tabindex="-1"></a>      <span class="st">".csv"</span></span>
+<span id="cb19-15"><a href="#cb19-15" aria-hidden="true" tabindex="-1"></a>    ),</span>
+<span id="cb19-16"><a href="#cb19-16" aria-hidden="true" tabindex="-1"></a>    <span class="at">na =</span> <span class="st">""</span></span>
+<span id="cb19-17"><a href="#cb19-17" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb19-18"><a href="#cb19-18" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb19-19"><a href="#cb19-19" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb19-20"><a href="#cb19-20" aria-hidden="true" tabindex="-1"></a><span class="co"># Confirm that the files have been saved for WDRS upload</span></span>
+<span id="cb19-21"><a href="#cb19-21" aria-hidden="true" tabindex="-1"></a><span class="fu">stop</span>(<span class="fu">paste</span>(<span class="st">"Manually check that files have been saved to DS_path"</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div></div>
+</section>
+<section id="send-email" class="level2">
+<h2 class="anchored" data-anchor-id="send-email">Send email</h2>
+<p>An email is sent out with the number of roster files produced and the number of records sent to the For_Review folder.</p>
+<div class="cell-container"><div class="cell-decorator"><pre>In [20]:</pre></div><div class="cell">
+<div class="sourceCode cell-code" id="cb20"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Email listed as sender</span></span>
+<span id="cb20-2"><a href="#cb20-2" aria-hidden="true" tabindex="-1"></a>email_from <span class="ot">&lt;-</span> <span class="st">""</span></span>
+<span id="cb20-3"><a href="#cb20-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-4"><a href="#cb20-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Email recipients</span></span>
+<span id="cb20-5"><a href="#cb20-5" aria-hidden="true" tabindex="-1"></a>email_to <span class="ot">&lt;-</span></span>
+<span id="cb20-6"><a href="#cb20-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">c</span>(<span class="st">""</span></span>
+<span id="cb20-7"><a href="#cb20-7" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb20-8"><a href="#cb20-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-9"><a href="#cb20-9" aria-hidden="true" tabindex="-1"></a><span class="co"># Subject line</span></span>
+<span id="cb20-10"><a href="#cb20-10" aria-hidden="true" tabindex="-1"></a>email_subj <span class="ot">&lt;-</span></span>
+<span id="cb20-11"><a href="#cb20-11" aria-hidden="true" tabindex="-1"></a>  <span class="st">"Sequencing - Genome Sequencing Roster Complete Automated Email"</span></span>
+<span id="cb20-12"><a href="#cb20-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-13"><a href="#cb20-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-14"><a href="#cb20-14" aria-hidden="true" tabindex="-1"></a><span class="co"># Number of roster files produced</span></span>
+<span id="cb20-15"><a href="#cb20-15" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (m <span class="sc">==</span> <span class="dv">1</span>) {</span>
+<span id="cb20-16"><a href="#cb20-16" aria-hidden="true" tabindex="-1"></a>  email_body <span class="ot">&lt;-</span></span>
+<span id="cb20-17"><a href="#cb20-17" aria-hidden="true" tabindex="-1"></a>    <span class="fu">paste</span>(</span>
+<span id="cb20-18"><a href="#cb20-18" aria-hidden="true" tabindex="-1"></a>      <span class="st">"The COVID-19 genome sequencing roster for"</span>,</span>
+<span id="cb20-19"><a href="#cb20-19" aria-hidden="true" tabindex="-1"></a>      <span class="fu">format</span>(<span class="fu">today</span>(), <span class="st">"%m/%d/%Y"</span>),</span>
+<span id="cb20-20"><a href="#cb20-20" aria-hidden="true" tabindex="-1"></a>      <span class="st">"has been generated. "</span></span>
+<span id="cb20-21"><a href="#cb20-21" aria-hidden="true" tabindex="-1"></a>    )</span>
+<span id="cb20-22"><a href="#cb20-22" aria-hidden="true" tabindex="-1"></a>} <span class="cf">else</span> {</span>
+<span id="cb20-23"><a href="#cb20-23" aria-hidden="true" tabindex="-1"></a>  email_body <span class="ot">&lt;-</span> <span class="fu">paste</span>(</span>
+<span id="cb20-24"><a href="#cb20-24" aria-hidden="true" tabindex="-1"></a>    m,</span>
+<span id="cb20-25"><a href="#cb20-25" aria-hidden="true" tabindex="-1"></a>    <span class="st">" COVID-19 genome sequencing rosters for"</span>,</span>
+<span id="cb20-26"><a href="#cb20-26" aria-hidden="true" tabindex="-1"></a>    <span class="fu">format</span>(<span class="fu">today</span>(), <span class="st">"%m/%d/%Y"</span>),</span>
+<span id="cb20-27"><a href="#cb20-27" aria-hidden="true" tabindex="-1"></a>    <span class="st">"have been generated."</span></span>
+<span id="cb20-28"><a href="#cb20-28" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb20-29"><a href="#cb20-29" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb20-30"><a href="#cb20-30" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-31"><a href="#cb20-31" aria-hidden="true" tabindex="-1"></a><span class="co"># Number of records that need to be reviewed</span></span>
+<span id="cb20-32"><a href="#cb20-32" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span>(<span class="fu">nrow</span>(review_dataframe) <span class="sc">&gt;</span> <span class="dv">0</span>) {</span>
+<span id="cb20-33"><a href="#cb20-33" aria-hidden="true" tabindex="-1"></a>  email_body_2 <span class="ot">&lt;-</span> <span class="fu">paste</span>(</span>
+<span id="cb20-34"><a href="#cb20-34" aria-hidden="true" tabindex="-1"></a>    <span class="st">"</span></span>
+<span id="cb20-35"><a href="#cb20-35" aria-hidden="true" tabindex="-1"></a><span class="st">    "</span>, (review_dataframe<span class="sc">$</span>nrows_in_file), <span class="st">"record(s) could not be added to the COVID-19 genome sequencing roster. "</span>,  <span class="st">" Please review the file located in the For Review/to_process folder."</span></span>
+<span id="cb20-36"><a href="#cb20-36" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb20-37"><a href="#cb20-37" aria-hidden="true" tabindex="-1"></a>} <span class="cf">else</span> {</span>
+<span id="cb20-38"><a href="#cb20-38" aria-hidden="true" tabindex="-1"></a>  email_body_2 <span class="ot">&lt;-</span> <span class="st">""</span></span>
+<span id="cb20-39"><a href="#cb20-39" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb20-40"><a href="#cb20-40" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-41"><a href="#cb20-41" aria-hidden="true" tabindex="-1"></a><span class="co"># Send email</span></span>
+<span id="cb20-42"><a href="#cb20-42" aria-hidden="true" tabindex="-1"></a>sendmailR<span class="sc">::</span><span class="fu">sendmail</span>(<span class="at">from =</span> email_from,</span>
+<span id="cb20-43"><a href="#cb20-43" aria-hidden="true" tabindex="-1"></a>                    <span class="at">to =</span> email_to,</span>
+<span id="cb20-44"><a href="#cb20-44" aria-hidden="true" tabindex="-1"></a>                    <span class="at">subject =</span> email_subj,</span>
+<span id="cb20-45"><a href="#cb20-45" aria-hidden="true" tabindex="-1"></a>                    <span class="at">msg =</span> <span class="fu">c</span>(email_body, email_body_2),</span>
+<span id="cb20-46"><a href="#cb20-46" aria-hidden="true" tabindex="-1"></a>                    <span class="at">headers=</span> <span class="fu">list</span>(<span class="st">"Reply-To"</span> <span class="ot">=</span> email_from),</span>
+<span id="cb20-47"><a href="#cb20-47" aria-hidden="true" tabindex="-1"></a>                    <span class="at">control =</span> <span class="fu">list</span>(<span class="at">smtpServer =</span> <span class="st">""</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div></div>
+</section>
+</section>
+     </main>
+<!-- /main column -->  <script id="quarto-html-after-body" type="application/javascript">
+window.document.addEventListener("DOMContentLoaded", function (event) {
+  const toggleBodyColorMode = (bsSheetEl) => {
+    const mode = bsSheetEl.getAttribute("data-mode");
+    const bodyEl = window.document.querySelector("body");
+    if (mode === "dark") {
+      bodyEl.classList.add("quarto-dark");
+      bodyEl.classList.remove("quarto-light");
+    } else {
+      bodyEl.classList.add("quarto-light");
+      bodyEl.classList.remove("quarto-dark");
+    }
+  }
+  const toggleBodyColorPrimary = () => {
+    const bsSheetEl = window.document.querySelector("link#quarto-bootstrap");
+    if (bsSheetEl) {
+      toggleBodyColorMode(bsSheetEl);
+    }
+  }
+  toggleBodyColorPrimary();  
+  const icon = "";
+  const anchorJS = new window.AnchorJS();
+  anchorJS.options = {
+    placement: 'right',
+    icon: icon
+  };
+  anchorJS.add('.anchored');
+  const isCodeAnnotation = (el) => {
+    for (const clz of el.classList) {
+      if (clz.startsWith('code-annotation-')) {                     
+        return true;
+      }
+    }
+    return false;
+  }
+  const clipboard = new window.ClipboardJS('.code-copy-button', {
+    text: function(trigger) {
+      const codeEl = trigger.previousElementSibling.cloneNode(true);
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+  });
+  clipboard.on('success', function(e) {
+    // button target
+    const button = e.trigger;
+    // don't keep focus
+    button.blur();
+    // flash "checked"
+    button.classList.add('code-copy-button-checked');
+    var currentTitle = button.getAttribute("title");
+    button.setAttribute("title", "Copied!");
+    let tooltip;
+    if (window.bootstrap) {
+      button.setAttribute("data-bs-toggle", "tooltip");
+      button.setAttribute("data-bs-placement", "left");
+      button.setAttribute("data-bs-title", "Copied!");
+      tooltip = new bootstrap.Tooltip(button, 
+        { trigger: "manual", 
+          customClass: "code-copy-button-tooltip",
+          offset: [0, -8]});
+      tooltip.show();    
+    }
+    setTimeout(function() {
+      if (tooltip) {
+        tooltip.hide();
+        button.removeAttribute("data-bs-title");
+        button.removeAttribute("data-bs-toggle");
+        button.removeAttribute("data-bs-placement");
+      }
+      button.setAttribute("title", currentTitle);
+      button.classList.remove('code-copy-button-checked');
+    }, 1000);
+    // clear code selection
+    e.clearSelection();
+  });
+    var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+    var mailtoRegex = new RegExp(/^mailto:/);
+      var filterRegex = new RegExp('/' + window.location.host + '/');
+    var isInternal = (href) => {
+        return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+    }
+    // Inspect non-navigation links and adorn them if external
+ 	var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool)');
+    for (var i=0; i<links.length; i++) {
+      const link = links[i];
+      if (!isInternal(link.href)) {
+        // undo the damage that might have been done by quarto-nav.js in the case of
+        // links that we want to consider external
+        if (link.dataset.originalHref !== undefined) {
+          link.href = link.dataset.originalHref;
+        }
+      }
+    }
+  function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+    const config = {
+      allowHTML: true,
+      maxWidth: 500,
+      delay: 100,
+      arrow: false,
+      appendTo: function(el) {
+          return el.parentElement;
+      },
+      interactive: true,
+      interactiveBorder: 10,
+      theme: 'quarto',
+      placement: 'bottom-start',
+    };
+    if (contentFn) {
+      config.content = contentFn;
+    }
+    if (onTriggerFn) {
+      config.onTrigger = onTriggerFn;
+    }
+    if (onUntriggerFn) {
+      config.onUntrigger = onUntriggerFn;
+    }
+    window.tippy(el, config); 
+  }
+  const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+  for (var i=0; i<noterefs.length; i++) {
+    const ref = noterefs[i];
+    tippyHover(ref, function() {
+      // use id or data attribute instead here
+      let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+      try { href = new URL(href).hash; } catch {}
+      const id = href.replace(/^#\/?/, "");
+      const note = window.document.getElementById(id);
+      if (note) {
+        return note.innerHTML;
+      } else {
+        return "";
+      }
+    });
+  }
+  const xrefs = window.document.querySelectorAll('a.quarto-xref');
+  const processXRef = (id, note) => {
+    // Strip column container classes
+    const stripColumnClz = (el) => {
+      el.classList.remove("page-full", "page-columns");
+      if (el.children) {
+        for (const child of el.children) {
+          stripColumnClz(child);
+        }
+      }
+    }
+    stripColumnClz(note)
+    if (id === null || id.startsWith('sec-')) {
+      // Special case sections, only their first couple elements
+      const container = document.createElement("div");
+      if (note.children && note.children.length > 2) {
+        container.appendChild(note.children[0].cloneNode(true));
+        for (let i = 1; i < note.children.length; i++) {
+          const child = note.children[i];
+          if (child.tagName === "P" && child.innerText === "") {
+            continue;
+          } else {
+            container.appendChild(child.cloneNode(true));
+            break;
+          }
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(container);
+        }
+        return container.innerHTML
+      } else {
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        return note.innerHTML;
+      }
+    } else {
+      // Remove any anchor links if they are present
+      const anchorLink = note.querySelector('a.anchorjs-link');
+      if (anchorLink) {
+        anchorLink.remove();
+      }
+      if (window.Quarto?.typesetMath) {
+        window.Quarto.typesetMath(note);
+      }
+      // TODO in 1.5, we should make sure this works without a callout special case
+      if (note.classList.contains("callout")) {
+        return note.outerHTML;
+      } else {
+        return note.innerHTML;
+      }
+    }
+  }
+  for (var i=0; i<xrefs.length; i++) {
+    const xref = xrefs[i];
+    tippyHover(xref, undefined, function(instance) {
+      instance.disable();
+      let url = xref.getAttribute('href');
+      let hash = undefined; 
+      if (url.startsWith('#')) {
+        hash = url;
+      } else {
+        try { hash = new URL(url).hash; } catch {}
+      }
+      if (hash) {
+        const id = hash.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note !== null) {
+          try {
+            const html = processXRef(id, note.cloneNode(true));
+            instance.setContent(html);
+          } finally {
+            instance.enable();
+            instance.show();
+          }
+        } else {
+          // See if we can fetch this
+          fetch(url.split('#')[0])
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.getElementById(id);
+            if (note !== null) {
+              const html = processXRef(id, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      } else {
+        // See if we can fetch a full url (with no hash to target)
+        // This is a special case and we should probably do some content thinning / targeting
+        fetch(url)
+        .then(res => res.text())
+        .then(html => {
+          const parser = new DOMParser();
+          const htmlDoc = parser.parseFromString(html, "text/html");
+          const note = htmlDoc.querySelector('main.content');
+          if (note !== null) {
+            // This should only happen for chapter cross references
+            // (since there is no id in the URL)
+            // remove the first header
+            if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+              note.children[0].remove();
+            }
+            const html = processXRef(null, note);
+            instance.setContent(html);
+          } 
+        }).finally(() => {
+          instance.enable();
+          instance.show();
+        });
+      }
+    }, function(instance) {
+    });
+  }
+      let selectedAnnoteEl;
+      const selectorForAnnotation = ( cell, annotation) => {
+        let cellAttr = 'data-code-cell="' + cell + '"';
+        let lineAttr = 'data-code-annotation="' +  annotation + '"';
+        const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+        return selector;
+      }
+      const selectCodeLines = (annoteEl) => {
+        const doc = window.document;
+        const targetCell = annoteEl.getAttribute("data-target-cell");
+        const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+        const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+        const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+        const lineIds = lines.map((line) => {
+          return targetCell + "-" + line;
+        })
+        let top = null;
+        let height = null;
+        let parent = null;
+        if (lineIds.length > 0) {
+            //compute the position of the single el (top and bottom and make a div)
+            const el = window.document.getElementById(lineIds[0]);
+            top = el.offsetTop;
+            height = el.offsetHeight;
+            parent = el.parentElement.parentElement;
+          if (lineIds.length > 1) {
+            const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+            const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+            height = bottom - top;
+          }
+          if (top !== null && height !== null && parent !== null) {
+            // cook up a div (if necessary) and position it 
+            let div = window.document.getElementById("code-annotation-line-highlight");
+            if (div === null) {
+              div = window.document.createElement("div");
+              div.setAttribute("id", "code-annotation-line-highlight");
+              div.style.position = 'absolute';
+              parent.appendChild(div);
+            }
+            div.style.top = top - 2 + "px";
+            div.style.height = height + 4 + "px";
+            div.style.left = 0;
+            let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+            if (gutterDiv === null) {
+              gutterDiv = window.document.createElement("div");
+              gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+              gutterDiv.style.position = 'absolute';
+              const codeCell = window.document.getElementById(targetCell);
+              const gutter = codeCell.querySelector('.code-annotation-gutter');
+              gutter.appendChild(gutterDiv);
+            }
+            gutterDiv.style.top = top - 2 + "px";
+            gutterDiv.style.height = height + 4 + "px";
+          }
+          selectedAnnoteEl = annoteEl;
+        }
+      };
+      const unselectCodeLines = () => {
+        const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+        elementsIds.forEach((elId) => {
+          const div = window.document.getElementById(elId);
+          if (div) {
+            div.remove();
+          }
+        });
+        selectedAnnoteEl = undefined;
+      };
+        // Handle positioning of the toggle
+    window.addEventListener(
+      "resize",
+      throttle(() => {
+        elRect = undefined;
+        if (selectedAnnoteEl) {
+          selectCodeLines(selectedAnnoteEl);
+        }
+      }, 10)
+    );
+    function throttle(fn, ms) {
+    let throttle = false;
+    let timer;
+      return (...args) => {
+        if(!throttle) { // first call gets through
+            fn.apply(this, args);
+            throttle = true;
+        } else { // all the others get throttled
+            if(timer) clearTimeout(timer); // cancel #2
+            timer = setTimeout(() => {
+              fn.apply(this, args);
+              timer = throttle = false;
+            }, ms);
+        }
+      };
+    }
+      // Attach click handler to the DT
+      const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+      for (const annoteDlNode of annoteDls) {
+        annoteDlNode.addEventListener('click', (event) => {
+          const clickedEl = event.target;
+          if (clickedEl !== selectedAnnoteEl) {
+            unselectCodeLines();
+            const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+            if (activeEl) {
+              activeEl.classList.remove('code-annotation-active');
+            }
+            selectCodeLines(clickedEl);
+            clickedEl.classList.add('code-annotation-active');
+          } else {
+            // Unselect the line
+            unselectCodeLines();
+            clickedEl.classList.remove('code-annotation-active');
+          }
+        });
+      }
+  const findCites = (el) => {
+    const parentEl = el.parentElement;
+    if (parentEl) {
+      const cites = parentEl.dataset.cites;
+      if (cites) {
+        return {
+          el,
+          cites: cites.split(' ')
+        };
+      } else {
+        return findCites(el.parentElement)
+      }
+    } else {
+      return undefined;
+    }
+  };
+  var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+  for (var i=0; i<bibliorefs.length; i++) {
+    const ref = bibliorefs[i];
+    const citeInfo = findCites(ref);
+    if (citeInfo) {
+      tippyHover(citeInfo.el, function() {
+        var popup = window.document.createElement('div');
+        citeInfo.cites.forEach(function(cite) {
+          var citeDiv = window.document.createElement('div');
+          citeDiv.classList.add('hanging-indent');
+          citeDiv.classList.add('csl-entry');
+          var biblioDiv = window.document.getElementById('ref-' + cite);
+          if (biblioDiv) {
+            citeDiv.innerHTML = biblioDiv.innerHTML;
+          }
+          popup.appendChild(citeDiv);
+        });
+        return popup.innerHTML;
+      });
+    }
+  }
+});
+</script>  </div> <!-- /content --> 
+  
+</body></html>

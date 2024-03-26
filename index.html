@@ -1,0 +1,2860 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.5.22">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+<meta name="dcterms.date" content="2024-03-04">
+<meta name="keywords" content="Sequencing, COVID19">
+
+<title>Data Integration and Quality Assurance of Sequencing Metadata in Washington State</title>
+<style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for citations */
+div.csl-bib-body { }
+div.csl-entry {
+  clear: both;
+  margin-bottom: 0em;
+}
+.hanging-indent div.csl-entry {
+  margin-left:2em;
+  text-indent:-2em;
+}
+div.csl-left-margin {
+  min-width:2em;
+  float:left;
+}
+div.csl-right-inline {
+  margin-left:2em;
+  padding-left:1em;
+}
+div.csl-indent {
+  margin-left: 2em;
+}</style>
+
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.5.1/jquery.min.js" integrity="sha512-bLT0Qm9VnAYZDflyKcBaQ2gg0hSYNQrJ8RilYldYQ1FxQYoCLtUjuuRuZo+fjqhx/qtq/1itJ0C2ejDxltZVFg==" crossorigin="anonymous"></script><script src="site_libs/clipboard/clipboard.min.js"></script>
+<script src="site_libs/quarto-html/quarto.js"></script>
+<script src="site_libs/quarto-html/popper.min.js"></script>
+<script src="site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="site_libs/quarto-html/anchor.min.js"></script>
+<link href="site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="site_libs/quarto-html/quarto-syntax-highlighting.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="site_libs/bootstrap/bootstrap.min.css" rel="stylesheet" id="quarto-bootstrap" data-mode="light">
+<script src="site_libs/quarto-contrib/glightbox/glightbox.min.js"></script>
+<link href="site_libs/quarto-contrib/glightbox/glightbox.min.css" rel="stylesheet">
+<link href="site_libs/quarto-contrib/glightbox/lightbox.css" rel="stylesheet">
+<script async="" src="https://hypothes.is/embed.js"></script>
+<script>
+  window.document.addEventListener("DOMContentLoaded", function (_event) {
+    document.body.classList.add('hypothesis-enabled');
+  });
+</script>
+<script src="site_libs/quarto-diagram/mermaid.min.js"></script>
+<script src="site_libs/quarto-diagram/mermaid-init.js"></script>
+<link href="site_libs/quarto-diagram/mermaid.css" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" integrity="sha512-c3Nl8+7g4LMSTdrm621y7kf9v3SDPnhxLNhcjFJbKECVnmZHTdo+IRO05sNLTH/D3vA6u1X32ehoLC7WFVdheg==" crossorigin="anonymous"></script>
+
+<script type="application/javascript">define('jquery', [],function() {return window.jQuery;})</script>
+
+
+<meta name="citation_title" content="Data Integration and Quality Assurance of Sequencing Metadata in Washington State">
+<meta name="citation_abstract" content="Genomic surveillance is important for identifying and tracking SARS CoV-2 variants to better mitigate spread of COVID-19. Washington State Department of Health quickly increased capacity to surveil SARS CoV-2 variants by partnering with over 25 labs to collect sequencing data while developing and implementing solutions to standardize submissions and enhance data linkage and quality. High impact solutions included development of a standardized reporting template, collection of case demographics, adaptation of HL7 messages with sequencing data, and strategic utilization of external sequencing data repositories. We developed an automated pipeline that combines data science tools to ingest, clean, and link SARS CoV-2 sequencing data from multiple sources, while accounting for differing data formats and quality. This manuscript details the first version of the pipeline developed in February 2021 when processes were unstable and were being developed as they were utilized.
+">
+<meta name="citation_keywords" content="Sequencing,COVID19">
+<meta name="citation_author" content="Frank Aragona">
+<meta name="citation_author" content="Cory Yun">
+<meta name="citation_author" content="Philip Crain">
+<meta name="citation_author" content="Paul Lloyd">
+<meta name="citation_author" content="Emily Nebergall">
+<meta name="citation_publication_date" content="2024-03-01">
+<meta name="citation_cover_date" content="2024-03-01">
+<meta name="citation_year" content="2024">
+<meta name="citation_online_date" content="2024-03-04">
+<meta name="citation_language" content="en">
+<meta name="citation_reference" content="citation_title=Changing genomic epidemiology of COVID-19 in long-term care facilities during the 2020–2022 pandemic, Washington State;,citation_abstract=Background Long-term care facilities (LTCFs) are vulnerable to disease outbreaks. Here, we jointly analyze SARS-CoV-2 genomic and paired epidemiologic data from LTCFs and surrounding communities in Washington state (WA) to assess transmission patterns during 2020–2022, in a setting of changing policy. We describe sequencing efforts and genomic epidemiologic findings across LTCFs and perform in-depth analysis in a single county. Methods We assessed genomic data representativeness, built phylogenetic trees, and conducted discrete trait analysis to estimate introduction sizes over time, and explored selected outbreaks to further characterize transmission events. Results We found that transmission dynamics among cases associated with LTCFs in WA changed over the course of the COVID-19 pandemic, with variable introduction rates into LTCFs, but decreasing amplification within LTCFs. SARS-CoV-2 lineages circulating in LTCFs were similar to those circulating in communities at the same time. Transmission between staff and residents was bi-directional. Conclusions Understanding transmission dynamics within and between LTCFs using genomic epidemiology on a broad scale can assist in targeting policies and prevention efforts. Tracking facility-level outbreaks can help differentiate intra-facility outbreaks from high community transmission with repeated introduction events. Based on our study findings, methods for routine tree building and overlay of epidemiologic data for hypothesis generation by public health practitioners are recommended. Discrete trait analysis added valuable insight and can be considered when representative sequencing is performed. Cluster detection tools, especially those that rely on distance thresholds, may be of more limited use given current data capture and timeliness. Importantly, we noted a decrease in data capture from LTCFs over time. Depending on goals for use of genomic data, sentinel surveillance should be increased or targeted surveillance implemented to ensure available data for analysis. Supplementary Information The online version contains supplementary material available at 10.1186/s12889-023-17461-2.;,citation_author=Hanna N. Oltean;,citation_author=Allison Black;,citation_author=Stephanie M. Lunn;,citation_author=Nailah Smith;,citation_author=Allison Templeton;,citation_author=Elyse Bevers;,citation_author=Lynae Kibiger;,citation_author=Melissa Sixberry;,citation_author=Josina B. Bickel;,citation_author=James P. Hughes;,citation_author=Scott Lindquist;,citation_author=Janet G. Baseman;,citation_author=Trevor Bedford;,citation_publication_date=2024-01-15;,citation_cover_date=2024-01-15;,citation_year=2024;,citation_fulltext_html_url=https://www.ncbi.nlm.nih.gov/pmc/articles/PMC10789038/;,citation_doi=10.1186/s12889-023-17461-2;,citation_issn=1471-2458;,citation_volume=24;,citation_journal_title=BMC Public Health;,citation_journal_abbrev=BMC Public Health;">
+<meta name="citation_reference" content="citation_title=Sentinel Surveillance System Implementation and Evaluation for SARS-CoV-2 Genomic Data, Washington, USA, 2020–2021 - Volume 29, Number 2—February 2023 - Emerging Infectious Diseases journal - CDC;,citation_abstract=Surveillance System for SARS-CoV-2 Genomic Data;,citation_author=Hanna N. Oltean;,citation_author=Krisandra J. Allen;,citation_author=Lauren Frisbie;,citation_author=Stephanie M. Lunn;,citation_author=Laura Marcela Torres;,citation_author=Lillian Manahan;,citation_author=Ian Painter;,citation_author=Denny Russell;,citation_author=Avi Singh;,citation_author=JohnAric MoonDance Peterson;,citation_author=Kristin Grant;,citation_author=Cara Peter;,citation_author=Rebecca Cao;,citation_author=Katelynn Garcia;,citation_author=Drew Mackellar;,citation_author=Lisa Jones;,citation_author=Holly Halstead;,citation_author=Hannah Gray;,citation_author=Geoff Melly;,citation_author=Deborah Nickerson;,citation_author=Lea Starita;,citation_author=Chris Frazar;,citation_author=Alexander L. Greninger;,citation_author=Pavitra Roychoudhury;,citation_author=Patrick C. Mathias;,citation_author=Michael H. Kalnoski;,citation_author=Chao-Nan Ting;,citation_author=Marisa Lykken;,citation_author=Tana Rice;,citation_author=Daniel Gonzalez-Robles;,citation_author=David Bina;,citation_author=Kelly Johnson;,citation_author=Carmen L. Wiley;,citation_author=Shaun C. Magnuson;,citation_author=Christopher M. Parsons;,citation_author=Eugene D. Chapman;,citation_author=C. Alexander Valencia;,citation_author=Ryan R. Fortna;,citation_author=Gregory Wolgamot;,citation_author=James P. Hughes;,citation_author=Janet G. Baseman;,citation_author=Trevor Bedford;,citation_author=Scott Lindquist;,citation_fulltext_html_url=https://wwwnc.cdc.gov/eid/article/29/2/22-1482_article;,citation_doi=10.3201/eid2902.221482;,citation_language=en-US;">
+<meta name="citation_reference" content="citation_title=Positive selection underlies repeated knockout of ORF8 in SARS-CoV-2 evolution;,citation_abstract=Knockout of the ORF8 protein has repeatedly spread through the global viral population during SARS-CoV-2 evolution. Here we use both regional and global pathogen sequencing to explore the selection pressures underlying its loss. In Washington State, we identified transmission clusters with ORF8 knockout throughout SARS-CoV-2 evolution, not just on novel, high fitness viral backbones. Indeed, ORF8 is truncated more frequently and knockouts circulate for longer than for any other gene. Using a global phylogeny, we find evidence of positive selection to explain this phenomenon: nonsense mutations resulting in shortened protein products occur more frequently and are associated with faster clade growth rates than synonymous mutations in ORF8. Loss of ORF8 is also associated with reduced clinical severity, highlighting the diverse clinical impacts of SARS-CoV-2 evolution.;,citation_author=Cassia Wagner;,citation_author=Kathryn E. Kistler;,citation_author=Garrett A. Perchetti;,citation_author=Noah Baker;,citation_author=Lauren A. Frisbie;,citation_author=Laura Marcela Torres;,citation_author=Frank Aragona;,citation_author=Cory Yun;,citation_author=Marlin Figgins;,citation_author=Alexander L. Greninger;,citation_author=Alex Cox;,citation_author=Hanna N. Oltean;,citation_author=Pavitra Roychoudhury;,citation_author=Trevor Bedford;,citation_publication_date=2023-09-23;,citation_cover_date=2023-09-23;,citation_year=2023;,citation_fulltext_html_url=https://www.medrxiv.org/content/10.1101/2023.09.21.23295927v1;,citation_doi=10.1101/2023.09.21.23295927;,citation_language=en-US;">
+</head>
+
+<body>
+
+<header id="title-block-header" class="quarto-title-block default toc-left page-columns page-full">
+  <div class="quarto-title-banner page-columns page-full">
+    <div class="quarto-title column-body">
+      <h1 class="title">Data Integration and Quality Assurance of Sequencing Metadata in Washington State</h1>
+          </div>
+
+    
+    <div class="quarto-title-meta-container">
+      <div class="quarto-title-meta-column-start">
+            <div class="quarto-title-meta-author">
+          <div class="quarto-title-meta-heading">Authors</div>
+          <div class="quarto-title-meta-heading">Affiliation</div>
+          
+                <div class="quarto-title-meta-contents">
+            <p class="author">Frank Aragona </p>
+          </div>
+                <div class="quarto-title-meta-contents">
+                    <p class="affiliation">
+                        Washington State Department of Health
+                      </p>
+                  </div>
+                      <div class="quarto-title-meta-contents">
+            <p class="author">Cory Yun </p>
+          </div>
+                <div class="quarto-title-meta-contents">
+                    <p class="affiliation">
+                        Washington State Department of Health
+                      </p>
+                  </div>
+                      <div class="quarto-title-meta-contents">
+            <p class="author">Philip Crain </p>
+          </div>
+                <div class="quarto-title-meta-contents">
+                    <p class="affiliation">
+                        Washington State Department of Health
+                      </p>
+                  </div>
+                      <div class="quarto-title-meta-contents">
+            <p class="author">Paul Lloyd </p>
+          </div>
+                <div class="quarto-title-meta-contents">
+                    <p class="affiliation">
+                        Washington State Department of Health
+                      </p>
+                  </div>
+                      <div class="quarto-title-meta-contents">
+            <p class="author">Emily Nebergall </p>
+          </div>
+                <div class="quarto-title-meta-contents">
+                    <p class="affiliation">
+                        Washington State Department of Health
+                      </p>
+                  </div>
+                    </div>
+        
+        <div class="quarto-title-meta">
+
+                      
+                <div>
+            <div class="quarto-title-meta-heading">Published</div>
+            <div class="quarto-title-meta-contents">
+              <p class="date">March 4, 2024</p>
+            </div>
+          </div>
+          
+                <div>
+            <div class="quarto-title-meta-heading">Modified</div>
+            <div class="quarto-title-meta-contents">
+              <p class="date-modified">March 26, 2024</p>
+            </div>
+          </div>
+                
+              </div>
+      </div>
+      <div class="quarto-title-meta-column-end quarto-other-formats-target">
+      <div class="quarto-alternate-formats"><div class="quarto-title-meta-heading">Other Formats</div><div class="quarto-title-meta-contents"><p><a href="diqa-sequencing-pipeline.pdf"><i class="bi bi-file-pdf"></i>PDF</a></p></div><div class="quarto-title-meta-contents"><p><a href="index.docx"><i class="bi bi-file-word"></i>MS Word</a></p></div><div class="quarto-title-meta-contents"><p><a href="index-meca.zip" data-meca-link="true"><i class="bi bi-archive"></i>MECA Bundle</a></p></div></div></div>
+    </div>
+
+    <div>
+      <div class="abstract">
+        <div class="block-title">Abstract</div>
+        <p>Genomic surveillance is important for identifying and tracking SARS CoV-2 variants to better mitigate spread of COVID-19. Washington State Department of Health quickly increased capacity to surveil SARS CoV-2 variants by partnering with over 25 labs to collect sequencing data while developing and implementing solutions to standardize submissions and enhance data linkage and quality. High impact solutions included development of a standardized reporting template, collection of case demographics, adaptation of HL7 messages with sequencing data, and strategic utilization of external sequencing data repositories. We developed an automated pipeline that combines data science tools to ingest, clean, and link SARS CoV-2 sequencing data from multiple sources, while accounting for differing data formats and quality. This manuscript details the first version of the pipeline developed in February 2021 when processes were unstable and were being developed as they were utilized.</p>
+      </div>
+    </div>
+
+    <div>
+      <div class="keywords">
+        <div class="block-title">Keywords</div>
+        <p>Sequencing, COVID19</p>
+      </div>
+    </div>
+
+    <div class="quarto-other-links-text-target">
+    <div class="quarto-code-links"><div class="quarto-title-meta-heading">Code Links</div><div class="quarto-title-meta-contents"><span style="padding-right: 0.5em;"><a href="https://github.com/NW-PaGe/sequencing_integration_pipeline1.0/" target="_blank"><i class="bi bi-github"></i>GitHub Repo</a>,</span><span style="padding-right: 0.5em;"><a href="https://github.com/codespaces/new/NW-PaGe/sequencing_integration_pipeline1.0?resume=1" target="_blank"><i class="bi bi-github"></i>Launch Dev Container</a>,</span><span><a href="https://mybinder.org/v2/gh/NW-PaGe/sequencing_integration_pipeline1.0/HEAD?urlpath=rstudio" target="_blank"><i class="bi bi-journals"></i>Launch Binder</a></span></div></div></div>  </div>
+</header><div id="quarto-content" class="page-columns page-rows-contents page-layout-article toc-left">
+<div id="quarto-sidebar-toc-left" class="sidebar toc-left">
+  <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">Table of contents</h2>
+   
+  <ul>
+  <li><a href="#introduction" id="toc-introduction" class="nav-link active" data-scroll-target="#introduction">Introduction</a>
+  <ul class="collapse">
+  <li><a href="#timeline" id="toc-timeline" class="nav-link" data-scroll-target="#timeline">Timeline</a></li>
+  </ul></li>
+  <li><a href="#sec-overview" id="toc-sec-overview" class="nav-link" data-scroll-target="#sec-overview">General Overview</a>
+  <ul class="collapse">
+  <li><a href="#laboratories-and-submitters" id="toc-laboratories-and-submitters" class="nav-link" data-scroll-target="#laboratories-and-submitters">Laboratories and Submitters</a></li>
+  <li><a href="#external-dependencies-and-data-pulls" id="toc-external-dependencies-and-data-pulls" class="nav-link" data-scroll-target="#external-dependencies-and-data-pulls">External Dependencies and Data Pulls</a>
+  <ul class="collapse">
+  <li><a href="#data-pulls" id="toc-data-pulls" class="nav-link" data-scroll-target="#data-pulls">Data Pulls</a></li>
+  <li><a href="#external-processes" id="toc-external-processes" class="nav-link" data-scroll-target="#external-processes">External Processes</a></li>
+  </ul></li>
+  <li><a href="#example-datasets" id="toc-example-datasets" class="nav-link" data-scroll-target="#example-datasets">Example Datasets</a></li>
+  </ul></li>
+  <li><a href="#roster-workflows" id="toc-roster-workflows" class="nav-link" data-scroll-target="#roster-workflows">Roster Workflows</a>
+  <ul class="collapse">
+  <li><a href="#sec-ecosystem" id="toc-sec-ecosystem" class="nav-link" data-scroll-target="#sec-ecosystem">Roster Scripts</a>
+  <ul class="collapse">
+  <li><a href="#sec-elr" id="toc-sec-elr" class="nav-link" data-scroll-target="#sec-elr">ELR</a></li>
+  <li><a href="#sec-phl" id="toc-sec-phl" class="nav-link" data-scroll-target="#sec-phl">PHL</a></li>
+  <li><a href="#sec-template" id="toc-sec-template" class="nav-link" data-scroll-target="#sec-template">Template</a></li>
+  <li><a href="#sec-rostercompile" id="toc-sec-rostercompile" class="nav-link" data-scroll-target="#sec-rostercompile">Roster Compile</a></li>
+  </ul></li>
+  <li><a href="#for-review" id="toc-for-review" class="nav-link" data-scroll-target="#for-review">For Review</a></li>
+  <li><a href="#fuzzy-matching-review" id="toc-fuzzy-matching-review" class="nav-link" data-scroll-target="#fuzzy-matching-review">Fuzzy Matching Review</a></li>
+  <li><a href="#sec-keepna" id="toc-sec-keepna" class="nav-link" data-scroll-target="#sec-keepna">Keep NA</a></li>
+  </ul></li>
+  <li><a href="#qa-processes" id="toc-qa-processes" class="nav-link" data-scroll-target="#qa-processes">QA Processes</a>
+  <ul class="collapse">
+  <li><a href="#gap-data" id="toc-gap-data" class="nav-link" data-scroll-target="#gap-data">Gap data</a></li>
+  <li><a href="#wdrs-logic-checks" id="toc-wdrs-logic-checks" class="nav-link" data-scroll-target="#wdrs-logic-checks">WDRS Logic Checks</a></li>
+  </ul></li>
+  <li><a href="#results" id="toc-results" class="nav-link" data-scroll-target="#results">Results</a></li>
+  </ul>
+<div class="quarto-alternate-notebooks"><h2>Notebooks</h2><ul><li><a href="index-preview.html"><i class="bi bi-journal-code"></i>Article Notebook</a></li><li><a href="notebooks/elr-preview.html"><i class="bi bi-journal-code"></i>ELR Script</a></li><li><a href="notebooks/fuzzy-preview.html"><i class="bi bi-journal-code"></i>Fuzzy Matching Script</a></li><li><a href="notebooks/KEEP_NA_ROSTER_SECOND_IN_PROGRESS-preview.html"><i class="bi bi-journal-code"></i>Keep NA Roster Script</a></li><li><a href="notebooks/phl-preview.html"><i class="bi bi-journal-code"></i>PHL Script</a></li><li><a href="notebooks/pipeline_counts-preview.html"><i class="bi bi-journal-code"></i>Pipeline Counts</a></li><li><a href="notebooks/ROSTER_COMPILE-preview.html"><i class="bi bi-journal-code"></i>Roster Compile</a></li><li><a href="notebooks/template_submitters-preview.html"><i class="bi bi-journal-code"></i>Template Submitters Script</a></li></ul></div></nav>
+</div>
+<div id="quarto-margin-sidebar" class="sidebar margin-sidebar zindex-bottom">
+</div>
+<main class="content quarto-banner-title-block" id="quarto-document-content">
+
+
+
+  
+
+
+<section id="introduction" class="level1">
+<h1>Introduction</h1>
+<p>This manuscript documents the original data integration pipeline for SARS-CoV-2 sequences for Washington State Department of Health during early 2021 to mid 2023. The Sequencing project began in February 2021 as an effort to process sequencing data into the Washington State Disease Reporting System (WDRS). In turn, the data fuels SARS-CoV-2 variant tracking and the generation of Covid-19 reports which are disseminated to the highest levels of state government. The pipeline continuously links data to our main database WDRS, where the data can be used to gain insights via surveillance reports or research <span class="citation" data-cites="olteanSentinelSurveillanceSystem olteanChangingGenomicEpidemiology2024 wagnerPositiveSelectionUnderlies2023">(for example, see <a href="#ref-olteanSentinelSurveillanceSystem" role="doc-biblioref">Oltean et al. n.d.</a>; <a href="#ref-olteanChangingGenomicEpidemiology2024" role="doc-biblioref">Oltean et al. 2024</a>; <a href="#ref-wagnerPositiveSelectionUnderlies2023" role="doc-biblioref">Wagner et al. 2023</a>)</span>. Data are processed via numerous R/Python/SQL scripts and are uploaded via rosters (.csv files) into WDRS and our Molecular Epidemiology produces <a href="https://doh.wa.gov/sites/default/files/2022-02/420-316-SequencingAndVariantsReport.pdf">reports</a> with the data. These processes ebb and flow often as changes are needed regularly in response to the data that are received. Since mid 2023 we have stopped using this particular pipeline and have built a new pipeline using a more streamlined approach. The purpose of detailing the original pipeline in this document is to give a transparent look at how data were processed under the unusual circumstances during the COVID-19 pandemic. Many aspects of this pipeline are inefficient because it was built under a rapidly changing environment, one that had never been built before, in addition to the many time constraints placed on our teams to produce data reports quickly. Some of the inefficiencies exposed in this pipeline still exist with our newer pipelines, but our teams are working to build a more sustainable way to process sequencing data of any disease type.</p>
+<p>There are a multitude of barriers which make data processing difficult with any pipeline such as:</p>
+<ol type="1">
+<li>Data standardization; data are received multiple ways. Depending on the manner it is submitted it may not follow the standard format requested from submitters. This requires manual intervention or communication back to labs. In addition, some submitters cannot change the manner in which they submit data which makes standardization across all labs impossible. These are handled by separate processes. Occasionally, submitters may break consistency in their own manner of which they report as well.</li>
+<li>Data quality; the quality of data received from labs can vary dramatically. Data needs to match between three sources: Lab Submissions, WDRS, and GISAID. When the wrong data are sent this can make matching impossible and prevents records from making it into our systems. It has been found that submitters sometimes submit incorrect ACCESSION ID’s that are used to match records between systems. Without the correct data it requires a considerable amount of manual intervention to be able to roster those records. Additionally, there are considerable lag times between all three data points/repositories; when a record is submitted that are not within WDRS the records cannot be matched and rostered.</li>
+<li>Technological gaps; the COVID-19 pandemic has exposed many technological gaps in our public health disease surveillance systems. Much of the technology used for processing and storing data needed to be built out during early 2020 so that we could provide disease reports in a timely manner. Therefore a lot of processes like this pipeline were built for short term needs, adding on more and more ‘technological debt’. Short term solutions have consequences and our data infrastructure is not well suited for pipelines like this.</li>
+</ol>
+<p>The original pipeline aggregates sequencing data submitted via secure file transfer, electronic lab reporting, lab management software, and open access data repositories. The process incorporates robust solutions to data challenges, including lagged data availability, variable data formatting, record duplication, and missing data. After aggregation, the pipeline connects records to COVID-19 case data via sequence to diagnostic test identifiers. We used patient demographics and string matching to link sequences to cases that are missing the unique identifiers. Internal databases are compared to external repositories to identify new results, track missing data, onboard new sequencing partners, and validate data. This pipeline was able to mostly automate aggregation, cleaning, and linkage of SARS CoV-2 genomic surveillance data, minimizing manual work and hastening availability of data for analysis and reporting.</p>
+<p>Challenges remain despite these improvements in data standardization and management. Barriers include differences in HL7 message reporting capabilities among submitters, inconsistencies in virus naming conventions, challenges in pulling data from public repositories, and limitations within our current internal database infrastructure. These factors increase likelihood of errors, require data processing logic unique to individual submitters and require manual intervention. Continued development of national standards can address these issues. Data accessibility can be improved by encouraging open-source sharing, especially to repositories that enable full programmatic data sourcing for all users. A community of practice across departments of health to discuss storage methods, processing pipelines, and matching approaches would enhance current practices, and support greater consistency and interoperability across public health.</p>
+<section id="timeline" class="level2">
+<h2 class="anchored" data-anchor-id="timeline">Timeline</h2>
+<div class="cell" data-fig-width="7" data-layout-align="default">
+<div class="cell-output-display">
+<div>
+<p></p><figure class="figure"><p></p>
+<div>
+<pre class="mermaid mermaid-js">timeline
+    title Timeline of Covid-19 Sequencing Efforts
+    2021 : Feb - Sequencing Project Begins
+         : April - Access to StarLIMS
+         : July - Template disseminated
+         : Sep - Reporting via HL7/ELR goes live
+    2022 : April - DSSU-DIQA handoff
+         : Sep - PGCOE grant awarded
+         : Nov - Sequencing 2.0 dev begins
+    2023 : Mar - Sequencing 2.0 testing begins
+         : June - Sequencing 2.0 is deployed
+         : Aug - Sequencing 3.0 planning begins
+    2024 : Jan - Exploration of cloud computing for the pipeline
+</pre>
+</div>
+<p></p></figure><p></p>
+</div>
+</div>
+<a class="quarto-notebook-link" id="nblink-1" href="index-preview.html">Source: Article Notebook</a></div>
+<p>The sequencing metadata linkage project began in February 2021 by the Data Science Support Unit (DSSU). A pipeline was needed to process and upload sequencing data to Washington Disease Reporting System (WDRS) for variant tracking/generation of reports to the governor’s office​. The pipeline links sequencing metadata to case data in WDRS, links sequences to GISAID (Global Initiative on Sharing All Influenza Data, a public sequencing repository), and it cleans and transforms non-standardized data.</p>
+<p>The project originally started as a group of individual contributors writing R scripts to handle needs for pulling data and cleaning, matching, and transforming non-standardized sequencing data​. During this period, urgency was prioritized at the cost of technical debt: it was a “build as we go”​ mentality given the time restraints during the pandemic. This scenario made for segmented processes and no true workflow. During height of the 2021-2022 period this pipeline would typically process 1000+ records per week​.</p>
+</section>
+</section>
+<section id="sec-overview" class="level1">
+<h1>General Overview</h1>
+<p>Sequencing data gets sent through our pipeline through multiple processes and the pipeline works in the following steps:</p>
+<ol type="1">
+<li>A submitter sends us the sequencing data three different ways;
+<ul>
+<li>as tabular data via secure file transfer (SFT)</li>
+<li>as tabular data that is ‘scraped’ web-scraping of their dashboard as is the case with our PHL</li>
+<li>via ELR or electronic lab reporting that is automatically connected to our database</li>
+</ul></li>
+<li>Our pipeline will extract, transform, and link that data to a case in WDRS</li>
+<li>The pipeline then performs quality checks to make sure errors or data leaks did not occur</li>
+</ol>
+<p>The three main routes that a submitter can send us data through are detailed in <a href="#fig-overview" class="quarto-xref">Figure&nbsp;1</a> under Template Submitters (secure file transfer of tabular data), PHL (webscraping of tabular data), and HL7 messages (secure data transfer for ELR).</p>
+<p>First, the <a href="@sec-template">Template Submitters</a> script processes the majority of data received by external submitters. Sequencing data from external submitters are received via <code>.csv</code> files in a template format which they uploaded to our secure file transfer (SFT) portal.</p>
+<p>Second, the The <a href="@sec-phl">PHL Roster</a> script processes the data received from PHL (Public Health Laboratory), our internal laboratory. Sequencing data from PHL is pulled from an internal dashboard, ‘StarLIMS’. The logic for both processes are similar. There is an attempt to link the sequencing data to the patient-level data using a <code>SEQUENCE_CLINICAL_ACCESSION</code>; an accession ID that should match between the patient-level data and the specimen sequenced by laboratories (note: while the terms ‘Laboratory’ and ‘Submitter’ may be used interchangeably at times they are not the same). In many cases, this accession ID is unable to match. This may be due to multiple reasons ranging from lag times to data quality issues. In this case, if demographics have been provided by the submitter an attempt will be made to match based on these demographic variables (name, date of birth, etc.).</p>
+<p>Lastly, the <a href="@sec-elr">ELR Roster</a> script processes the data from external submitters that have been received via HL7 messages and populated in the table in WDRS named <code>[dbo].[DD_ELR_DD_ENTIRE]</code>. In this case, the ELR (electronic laboratory reporting) process performs the matching of sequencing data to the patient-level data. Since the sequencing data and patient-level data are already tied for these records received via ELR, the logic for the ELR Roster script is predominately transformation to a format acceptable for import into the <code>[dbo].[DD_GCD_COVID_19_FLATTENED]</code> table. All records, regardless of the process through which they are received/processed are uploaded to the <code>[dbo].[DD_GCD_COVID_19_FLATTENED]</code> table via .csv files in a roster format. These rosters are the end product and output of all three processes.</p>
+<div id="fig-overview" class="quarto-figure quarto-figure-center quarto-float anchored" data-fig-align="center">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-overview-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<a href="assets/overview.jpg" class="lightbox" data-gallery="quarto-lightbox-gallery-1" title="Figure&nbsp;1: Overview of sequencing pipeline"><img src="assets/overview.jpg" class="img-fluid quarto-figure quarto-figure-center figure-img"></a>
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-overview-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;1: Overview of sequencing pipeline
+</figcaption>
+</figure>
+</div>
+<p>In addition to sequencing data submissions and WDRS, there is a third component; GISAID (Global Initiative on Sharing Avian Influenza Data). GISAID is an initiative that provides open-access to genomic data of influenza viruses and more importantly for the purposes of this project, SARS-CoV-2; coronavirus responsible for the COVID-19 pandemic). This database is available online to the public and holds genomic data of sequenced specimens from across the globe. In theory, submitters should be sending their sequencing data to the DOH and GISAID. When this happens there is consistency between both databases and the data received from submitters <a href="#fig-gisaid" class="quarto-xref">Figure&nbsp;2</a></p>
+<div id="fig-gisaid" class="quarto-figure quarto-figure-center quarto-float anchored" data-fig-align="center">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-gisaid-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<a href="assets/gisaidflow.jpg" class="lightbox" data-gallery="quarto-lightbox-gallery-2" title="Figure&nbsp;2: Sequence submissions should match WDRS and GISAID"><img src="assets/gisaidflow.jpg" class="img-fluid quarto-figure quarto-figure-center figure-img"></a>
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-gisaid-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;2: Sequence submissions should match WDRS and GISAID
+</figcaption>
+</figure>
+</div>
+<p>It should be noted that in some instances sequencing data is manually entered by creating events within WDRS. However, this practice is not common and generally should be avoided if at all possible in order to prevent non-standard entries and potential data quality issues.</p>
+<section id="laboratories-and-submitters" class="level2">
+<h2 class="anchored" data-anchor-id="laboratories-and-submitters">Laboratories and Submitters</h2>
+<p>Through various contracts and collaboration with external agencies the DOH receives sequencing data from numerous submitters. Laboratories are the entities which perform the sequencing. Submitters are the entities that relay/send sequencing data to the DOH. Many of our submitters perform both the sequencing and submission of data. There are some submitters that send sequencing data to the DOH on behalf of multiple laboratories as well. Therefore, some laboratories that perform the sequencing do not directly submit the sequencing data themselves. Data quality is a significant issue across all submission routes listed below. This is mainly due to the fact that there are no national standards as how sequencing data should be transmitted.</p>
+</section>
+<section id="external-dependencies-and-data-pulls" class="level2">
+<h2 class="anchored" data-anchor-id="external-dependencies-and-data-pulls">External Dependencies and Data Pulls</h2>
+<p>Prior to any processing of sequencing data received from submitters there are numerous data pulls and external dependencies that must be completed. Below is a brief description of each process <a href="#fig-pulls" class="quarto-xref">Figure&nbsp;3</a>.</p>
+<div id="fig-pulls" class="quarto-figure quarto-figure-center quarto-float anchored" data-fig-align="center">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-pulls-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<a href="assets/external_pulls.jpg" class="lightbox" data-gallery="quarto-lightbox-gallery-3" title="Figure&nbsp;3: "><img src="assets/external_pulls.jpg" id="fig-pulls" class="img-fluid quarto-figure quarto-figure-center anchored figure-img"></a>
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig quarto-uncaptioned" id="fig-pulls-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;3
+</figcaption>
+</figure>
+</div>
+<p>The scripts below are responsible for pulling submissions from their corresponding locations and dropping a file into the submissions folder in the Network Drive so that it can be picked up by the roster scripts and processed into WDRS.</p>
+<section id="data-pulls" class="level3">
+<h3 class="anchored" data-anchor-id="data-pulls">Data Pulls</h3>
+<p><strong>sel_Dashboard_All.Rmd</strong>&nbsp;performs the task of pulling data from across three separate dashboard within starLIMS. This data is aggregated then placed into the submission folder for PHL in the network drive for processing.</p>
+<p><strong>sft_main.py</strong> performs the task of pulling all data from the individual submitter folders within the SFT, routing the downloaded files to the correct submitter folders in the network drive, deleting out the old files, and keeping a log. Additionally, an email is sent out to the correct stakeholders each day on what submission were uploaded to the SFT (if any) and notifies of any new labs that have uploaded a submission for the first time.</p>
+</section>
+<section id="external-processes" class="level3">
+<h3 class="anchored" data-anchor-id="external-processes">External Processes</h3>
+<p><strong>wa_cdc_pull.Rmd</strong> performs the task of pulling data from the CDC for specimens sequenced by laboratories under the CDC for the state of Washington so that it can be picked up by multiple QA scripts and utilized by other other stakeholders.</p>
+<p><strong>lineages_main.py</strong> performs the task of pulling data from a .txt in a GitHub repository containing the latest Covid Lineages and dropping them in the lineages folder in the network drive so that it can be picked up by multiple scripts and utilized by other stakeholders. The .txt file in the repository is the same file used update the Cov-Lineages site (<a href="https://cov-lineages.org/lineage_list.html" class="uri">https://cov-lineages.org/lineage_list.html</a>).</p>
+<section id="sgtf" class="level4">
+<h4 class="anchored" data-anchor-id="sgtf">SGTF</h4>
+<p>To assist with the monitoring of Omicron, five labs are submitting S-gene target failures (SGTF) data to WADOH via Redcap or GitHub (UW only). These submissions are standardized and compiled each day to calculate % SGTF by epidemiological week.</p>
+<p><strong>sgtf_compile_daily.Rmd</strong> performs the task of compiling all the templates and performing the necessary calculations. Submissions are downloaded by Molecular Epi each day and placed into the network drive to be picked up by sgtf_compile_daily.Rmd</p>
+<p><strong>uw_sgtf.Rmd</strong> performs the task of pulling the latest SGTF file from UW’s GitHub repository, routing the downloaded files to the correct folder in the Network Drive, and keeping a log.</p>
+</section>
+</section>
+</section>
+<section id="example-datasets" class="level2">
+<h2 class="anchored" data-anchor-id="example-datasets">Example Datasets</h2>
+<p>In 2021, data was sent from sequencing labs to us via tabular files. There were no standards between submitting labs, and for a given submitter the format of the tabular files would often change between each submission as well​. It was impossible to process these data without editing scripts each time to account for a varying format. Initially, all data was received via non-standardized tabular files, including data sent from our public health lab (PHL). We did not have access to their starLIMS database at the time. <a href="#tbl-tabdata1" class="quarto-xref">Table&nbsp;1</a> below is an example of the data sent to us in tabular format. <a href="#tbl-tabdata2" class="quarto-xref">Table&nbsp;2</a> shows data sent in tabular form from our public health laboratory (PHL) and <a href="#tbl-tabdata3" class="quarto-xref">Table&nbsp;3</a> is an example of data sent from the University of Washington Virology Lab (UW Virology).</p>
+<div id="tbl-tabdata1" class="quarto-float anchored">
+<figure class="quarto-float quarto-float-tbl figure">
+<figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-tbl" id="tbl-tabdata1-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Table&nbsp;1: example of tabular datasets sent to the Department of Health from sequencing labs in 2021
+</figcaption>
+<div aria-describedby="tbl-tabdata1-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<table class="table">
+<colgroup>
+<col style="width: 31%">
+<col style="width: 68%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Variable</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Accession</td>
+<td>identifier that links a sequence to a test</td>
+</tr>
+<tr class="even">
+<td>COLLECTION_SAMPLE_ID</td>
+<td>the identifier that linked a sequence to a test</td>
+</tr>
+<tr class="odd">
+<td>ORIG_ACCESSION_NUMBER</td>
+<td>the identifier that linked a sequence to a test</td>
+</tr>
+<tr class="even">
+<td>PAT_FIRST_NAME</td>
+<td>patient first name</td>
+</tr>
+<tr class="odd">
+<td>PAT_LAST_NAME</td>
+<td>patient last name</td>
+</tr>
+<tr class="even">
+<td>DATE_OF_BIRTH</td>
+<td>date of birth</td>
+</tr>
+<tr class="odd">
+<td>PAT_ADDRESS_1</td>
+<td>address</td>
+</tr>
+<tr class="even">
+<td>PAT_CITY</td>
+<td>city</td>
+</tr>
+<tr class="odd">
+<td>PAT_STATE</td>
+<td>state</td>
+</tr>
+<tr class="even">
+<td>PAT_ZIP</td>
+<td>zip code</td>
+</tr>
+<tr class="odd">
+<td>Phone</td>
+<td>phone number</td>
+</tr>
+<tr class="even">
+<td>Original Physician</td>
+<td>doctor name</td>
+</tr>
+</tbody>
+</table>
+</div>
+</figure>
+</div>
+<div id="tbl-tabdata2" class="quarto-float anchored">
+<figure class="quarto-float quarto-float-tbl figure">
+<figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-tbl" id="tbl-tabdata2-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Table&nbsp;2: example of tabular datasets sent to the Department of Health from a Public Health Lab (PHL) during 2021
+</figcaption>
+<div aria-describedby="tbl-tabdata2-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<table class="table">
+<colgroup>
+<col style="width: 36%">
+<col style="width: 63%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Variable</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>LIMS</td>
+<td>the laboratory information management system (LIMS)</td>
+</tr>
+<tr class="even">
+<td>Project</td>
+<td>the reason for sequencing</td>
+</tr>
+<tr class="odd">
+<td>Investigator_sample_id</td>
+<td>an identifier to the sample</td>
+</tr>
+<tr class="even">
+<td>collection_date</td>
+<td>the specimen collection date</td>
+</tr>
+<tr class="odd">
+<td>age</td>
+<td>patient age</td>
+</tr>
+<tr class="even">
+<td>county</td>
+<td>patient county</td>
+</tr>
+<tr class="odd">
+<td>sex</td>
+<td>patient sex</td>
+</tr>
+<tr class="even">
+<td>specimen_id</td>
+<td>the identifier linking to the original PCR covid test</td>
+</tr>
+<tr class="odd">
+<td>submitting_lab</td>
+<td>the lab submitting the sequence</td>
+</tr>
+<tr class="even">
+<td>note</td>
+<td>free text note field</td>
+</tr>
+</tbody>
+</table>
+</div>
+</figure>
+</div>
+<div id="tbl-tabdata3" class="quarto-float anchored">
+<figure class="quarto-float quarto-float-tbl figure">
+<figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-tbl" id="tbl-tabdata3-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Table&nbsp;3: example of tabluar datasets sent to the Department of Health by UW Virology during 2021
+</figcaption>
+<div aria-describedby="tbl-tabdata3-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<table class="table">
+<colgroup>
+<col style="width: 36%">
+<col style="width: 63%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Variable</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>uwnum</td>
+<td>the identifier of the sequence that links to GISAID</td>
+</tr>
+<tr class="even">
+<td>acc_num</td>
+<td>the accession number linking to the positive covid PCR test</td>
+</tr>
+<tr class="odd">
+<td>collection date</td>
+<td>specimen collection date</td>
+</tr>
+<tr class="even">
+<td>loc_state</td>
+<td>patient state</td>
+</tr>
+<tr class="odd">
+<td>fullname</td>
+<td>the full GISAID identifier name, such as HCoV19-USA/WA-#####/2021 (not the patient’s name)</td>
+</tr>
+<tr class="even">
+<td>shortname</td>
+<td>a partial GISAID identifier name, such as WA-#######</td>
+</tr>
+</tbody>
+</table>
+</div>
+</figure>
+</div>
+<p>As you can see from the tables above, data sent via tabular format early in the project was not standardized and could not be processed automatically due to it constantly changing field names and descriptions.</p>
+</section>
+</section>
+<section id="roster-workflows" class="level1">
+<h1>Roster Workflows</h1>
+<p>There are three main workflows for rostering sequencing data into WDRS. <a href="@sec-elr">ELR</a>, <a href="@sec-phl">PHL</a>, and <a href="@sec-template">Template</a> scripts as detailed in <a href="#sec-overview" class="quarto-xref">Section&nbsp;2</a>. All three will output a roster, and the <a href="@sec-rostercompile">Roster Compile</a> script will combine them and send the data to be rostered into WDRS. See <a href="#fig-roster" class="quarto-xref">Figure&nbsp;4</a> for a high level overview. The <a href="./notebooks/elr-preview.html">elr.Rmd</a> script pulls sequencing metadata from WDRS, transforms it, and runs QA checks on it before putting it into a usable roster. <a href="./notebooks/template_submitters-preview.html">template_submitters.Rmd</a> performs the task of processing template submission. <a href="./notebooks/phl-preview.html">PHL.Rmd</a> performs the task of processing all phl records. Both the template and phl processes operate based on similar logic from a high level view, but there are significant differences between each script.</p>
+<p>The <code>SEQUENCE_CLINICAL_ACCESSION</code> variable is used to find a matching event within the <code>[dbo].[DD_ELR_DD_ENTIRE]</code> table. The <code>CASE_ID</code> (WDRS variable that is an identifier for a disease case, not a person) for that event is pulled then assigned to the corresponding record. At this point, if an event using the accession ID cannot be found for a record it will be routed to two different processes depending on if the sequencing data received has patient demographics attached to it; FIRST_NAME, LAST_NAME, MIDDLE_NAME, DOB. If the record received contains patient demographic it is routed to the <a href="./notebooks/fuzzy-preview.html">fuzzy matching process</a>, an attempt to match to the correct event will be made using the demographic information. If the record received contains no patient demographic it is routed to the keep na process (<a href="#sec-keepna" class="quarto-xref">Section&nbsp;3.4</a>), the record will be retained and an attempt to match via the accession ID will regularly be made in case the corresponding event populates in WDRS later on.</p>
+<p>Once a record has been matched to an event it will undergo transformation to clean and standardize the matched data into a roster format. Some submitters do not provide the full <code>GISAID_ID</code> in the submission. In this case, the <code>SEQUENCE_ACCESSION</code> can be constructed from their internal accession is inputted into the <code>GISAID_ID</code> column. This happens during the transformation process and the resulting <code>SEQUENCE_ACCESSION</code> should match to what is in GISAID.</p>
+<p>Records are then put through a series of quality filters to check for QA issues. All records that pass this series of QA checks will then populated into a final roster then outputted to be picked up by the roster compile script <a href="#sec-rostercompile" class="quarto-xref">Section&nbsp;3.1.4</a> and sent to data support for upload to WDRS.</p>
+<div id="fig-roster" class="quarto-figure quarto-figure-center quarto-float anchored" data-fig-align="center">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-roster-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<a href="assets/roster.jpg" class="lightbox" data-gallery="quarto-lightbox-gallery-4" title="Figure&nbsp;4: "><img src="assets/roster.jpg" id="fig-roster" class="img-fluid quarto-figure quarto-figure-center anchored figure-img"></a>
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig quarto-uncaptioned" id="fig-roster-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;4
+</figcaption>
+</figure>
+</div>
+<section id="sec-ecosystem" class="level2">
+<h2 class="anchored" data-anchor-id="sec-ecosystem">Roster Scripts</h2>
+<p>This section gives more details about each roster script and a high level diagram following the process.<br>
+</p>
+<p>Legend:</p>
+<div class="cell" data-layout-align="default">
+<div class="cell-output-display">
+<div>
+<p></p><figure class="figure"><p></p>
+<div>
+<pre class="mermaid mermaid-js">%%{ init: { 'flowchart': { 'curve': 'monotoneY' } } }%%
+flowchart TD
+    ext(External Data Owner) 
+    doh[/Internal Data Owner/]
+</pre>
+</div>
+<p></p></figure><p></p>
+</div>
+</div>
+</div>
+<div class="cell" data-layout-align="default">
+<div class="cell-output-display">
+<div>
+<p></p><figure class="figure"><p></p>
+<div>
+<pre class="mermaid mermaid-js">%%{ init: { 'flowchart': { 'curve': 'monotoneY' } } }%%
+flowchart TD
+    proc[["Data processing (software)"]]
+    script{{"Data processing (scripts)"}}
+    db[(Database)] 
+    
+</pre>
+</div>
+<p></p></figure><p></p>
+</div>
+</div>
+</div>
+<section id="sec-elr" class="level3">
+<h3 class="anchored" data-anchor-id="sec-elr">ELR</h3>
+<p>Electronic Lab Reporting for sequencing went live in September 2021. These are records with Covid PCR tests processed by WELRS/DRIVE and sent to WDRS​. See <a href="#fig-elrflow" class="quarto-xref">Figure&nbsp;5</a> below. For more details on the script, see <a href="./notebooks/elr-preview.html">the ELR notebook</a>. From a high-level overview, the script will:</p>
+<ul>
+<li>WELRS/DRIVE process, match, and fill the entire/lab tables but not sequencing table​</li>
+<li>No QA processing​</li>
+<li>Sequencing table is built as an after thought​</li>
+<li>WELRS/DRIVE is somewhat of a black box to us (changes without knowing,&nbsp;don’t have oversight on mismatches)​</li>
+<li>Our ELR script will extract from the entire table, transform, QA, and send via&nbsp;roster​</li>
+</ul>
+<div class="cell" data-fig-width="3" data-layout-align="default">
+<div class="cell-output-display">
+<div id="fig-elrflow" class="quarto-figure quarto-figure-center quarto-float anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-elrflow-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<div>
+<pre class="mermaid mermaid-js" data-label="fig-elrflow">%%{ init: { 'flowchart': { 'curve': 'monotoneY' }, 'theme':'base', 'themeVariables': {'primaryColor': '#eff6f3', 'primaryTextColor': '#6a6a6a', 'primaryBorderColor': '#6a6a6a', 'lineColor': '#f3969a', '#seondaryColor': '#eff6f3'}} }%%
+    flowchart TD
+    d_lab(Diagnostic Lab) --&gt; s_lab(Sequencing Lab)
+    s_lab &amp; lab(Diagnostic &amp; Sequencing Lab) --&gt; aphl(APHL) 
+    s_lab --&gt; pre[[Pre-processor]]
+    aphl --&gt; pre
+    lab --&gt; pre
+    pre --&gt; welrs[(WELRS)] --&gt; drive[[DRIVE]] --&gt; post[[Post-processor]] --&gt; wdrs[(WDRS)]
+    post --&gt; welrs
+    wdrs --&gt; diqa{{"Data Integration Pipeline:
+    - Data Reformatting
+    - Public Repo (NCBI/GISAID) Linkage
+    - QA"}}
+    diqa --&gt; |"Question 
+    Package 
+    Update"| wdrs
+</pre>
+</div>
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-elrflow-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;5: ELR submission to WDRS workflow
+</figcaption>
+</figure>
+</div>
+</div>
+</div>
+</section>
+<section id="sec-phl" class="level3">
+<h3 class="anchored" data-anchor-id="sec-phl">PHL</h3>
+<p>Access to starLIMS, our Public Health Laboratory (PHL) system, was granted in April 2021. However, there was no API or underlying database access so the pipeline needed to scrape data from the starLIMS dashboard. It would download the <code>.xslx</code> files from starLIMS and then use identifiers to match sequences to a case in our database, WDRS. See <a href="#fig-phlflow" class="quarto-xref">Figure&nbsp;6</a> below for a high level summary. This process can get complicated for a multitude of reasons mainly due to challenges with our underlying data infrastructure. For more details on the workflow and to view those challenges, see <a href="./notebooks/phl-preview.html#fig-phlworkflow">more details here</a> and for all script details see <a href="./notebooks/phl-preview.html">the PHL notebook</a>. From a high-level overview, the script will:</p>
+<ul>
+<li>Scrape from StarLIMS​</li>
+<li>Match to a WDRS case&nbsp;​</li>
+<li>If no match based on <code>FILLER_ORDER_NUM</code>&nbsp;then match on&nbsp;demographics​</li>
+<li>Uses a processed file to eliminate feedback loops (prevent failed records from being processed every run)​</li>
+<li>Fields may change in starLIMS without our knowledge​</li>
+</ul>
+<div class="cell" data-fig-width="3" data-layout-align="default">
+<div class="cell-output-display">
+<div id="fig-phlflow" class="quarto-figure quarto-figure-center quarto-float anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-phlflow-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<div>
+<pre class="mermaid mermaid-js" data-label="fig-phlflow">%%{ init: { 'flowchart': { 'curve': 'monotoneY' }, 'theme':'base', 'themeVariables': {'primaryColor': '#eff6f3', 'primaryTextColor': '#6a6a6a', 'primaryBorderColor': '#6a6a6a', 'lineColor': '#f3969a', 'secondaryColor': '#eff6f3'}} }%%
+    flowchart TD
+    d_lab(Diagnostic Lab) 
+    d_phl[/PHL Diagnostic/] 
+    d_lab &amp; d_phl --&gt; s_phl[/PHL Sequencing/]
+    s_phl --&gt; lims[(LIMS)] --&gt; web[/Data Dashboard/]
+    web --&gt;  |Web Scraping| diqa{{"Data Integration Pipeline:
+    - &lt;i&gt;Case linkage&lt;/i&gt;
+    - Data Reformatting
+    - Public Repo (NCBI/GISAID) Linkage
+    - QA"}}
+    diqa --&gt; |"Question 
+    Package 
+    Update"| wdrs[(WDRS)]
+</pre>
+</div>
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-phlflow-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;6: PHL submission to WDRS workflow
+</figcaption>
+</figure>
+</div>
+</div>
+</div>
+</section>
+<section id="sec-template" class="level3">
+<h3 class="anchored" data-anchor-id="sec-template">Template</h3>
+<p>There are still labs that cannot send us data via ELR or PHL and could only send us tabular files. The Department of Health has a secure file transfer (SFT) site that the labs could send data to and that we could pull from. We did not have a way to pull from our own SFT site so we needed to scrape this data as well. In July 2021, Cory Yun developed a template (see <a href="#tbl-template" class="quarto-xref">Table&nbsp;4</a>) for labs to fill the sequencing data instead of labs sending us data with no standards. See <a href="#fig-templateflow" class="quarto-xref">Figure&nbsp;7</a> below. For script details see <a href="./notebooks/template_submitters-preview.html">the template submitters notebook</a>. From a high-level overview, the script will:</p>
+<ul>
+<li>Labs send us a <code>.csv</code> file into our MFT site​</li>
+<li>All data follows a specific template created by Cory​</li>
+<li>Scrape the site and download the <code>.csv</code> files for each lab​</li>
+<li>Format, find a match based on <code>FILLER_ORDER_NUM</code> or demographics</li>
+</ul>
+<div id="tbl-template" class="quarto-float anchored">
+<figure class="quarto-float quarto-float-tbl figure">
+<figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-tbl" id="tbl-template-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Table&nbsp;4: Template Data Variables
+</figcaption>
+<div aria-describedby="tbl-template-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<table class="table">
+<colgroup>
+<col style="width: 40%">
+<col style="width: 34%">
+<col style="width: 25%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Variable</th>
+<th>Description</th>
+<th>Example</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>LAB_ACCESSION_ID</td>
+<td>id matching a sequence to a PCR test</td>
+<td>alphanumeric string</td>
+</tr>
+<tr class="even">
+<td>GISAID_ID</td>
+<td>identifier of sequence in GISAID</td>
+<td>USA/WA-X/2020</td>
+</tr>
+<tr class="odd">
+<td>SPECIMEN_COLLECTION_DATE</td>
+<td>collection date of specimen</td>
+<td>mm-dd-yyyy</td>
+</tr>
+<tr class="even">
+<td>SUBMITTING_LAB</td>
+<td>lab name</td>
+<td>UW Virology</td>
+</tr>
+<tr class="odd">
+<td>SEQUENCE_REASON</td>
+<td>reason for sequencing</td>
+<td>SENTINEL SURVEILLANCE</td>
+</tr>
+<tr class="even">
+<td>SEQUENCE_STATUS</td>
+<td>complete or failed sequence</td>
+<td>COMPLETE</td>
+</tr>
+<tr class="odd">
+<td>PANGO_LINEAGE</td>
+<td>lineage call in GISAID</td>
+<td>BA.1</td>
+</tr>
+<tr class="even">
+<td>FIRST_NAME</td>
+<td>patient first name</td>
+<td></td>
+</tr>
+<tr class="odd">
+<td>LAST_NAME</td>
+<td>patient last name</td>
+<td></td>
+</tr>
+<tr class="even">
+<td>MIDDLE_NAME</td>
+<td>patient middle name</td>
+<td></td>
+</tr>
+<tr class="odd">
+<td>DOB</td>
+<td>date of birth</td>
+<td></td>
+</tr>
+<tr class="even">
+<td>ALTERNATIVE_ID</td>
+<td>alternative identifier</td>
+<td>alphanumeric string</td>
+</tr>
+</tbody>
+</table>
+</div>
+</figure>
+</div>
+<div class="cell" data-fig-width="3" data-layout-align="default">
+<div class="cell-output-display">
+<div id="fig-templateflow" class="quarto-figure quarto-figure-center quarto-float anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-templateflow-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<div>
+<pre class="mermaid mermaid-js" data-label="fig-templateflow">%%{ init: { 'flowchart': { 'curve': 'monotoneY' }, 'theme':'base', 'themeVariables': {'primaryColor': '#eff6f3', 'primaryTextColor': '#6a6a6a', 'primaryBorderColor': '#6a6a6a', 'lineColor': '#f3969a', 'secondaryColor': '#eff6f3'}} }%%
+    flowchart TD
+    d_lab(Diagnostic Lab) --&gt; s_lab(Sequencing Lab)
+    s_lab &amp; lab(Diagnostic &amp; Sequencing Lab) --&gt; sft[/SFT Host/]
+    sft --&gt; |Web Scraping| diqa{{"Data Integration Pipeline:
+    - &lt;i&gt;Case linkage&lt;/i&gt;
+    - Data Reformatting
+    - Public Repo (NCBI/GISAID) Linkage
+    - QA"}}
+    diqa --&gt; |"Question 
+    Package 
+    Update"| wdrs[(WDRS)]
+</pre>
+</div>
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-templateflow-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;7: Template submission to WDRS workflow
+</figcaption>
+</figure>
+</div>
+</div>
+</div>
+</section>
+<section id="sec-rostercompile" class="level3">
+<h3 class="anchored" data-anchor-id="sec-rostercompile">Roster Compile</h3>
+<p>After the Template, PHL, and ELR scripts run, they all output a <code>.csv</code> file into a folder called <code>write_roster_here</code> in our network drive. The <a href="ROSTER_COMPILE.Rmd">Roster Compile</a> script reads in all of these files, combines them, and runs additional QA checks on them before outputting the results into one file for output to the WDRS database. Then our Data Support team will upload the file into WDRS where it will update the results into the flattened table. Each row will match a <code>CASE_ID</code> in WDRS and the sequencing event is added to the cases external data as seen below in <a href="#fig-examplewdrs" class="quarto-xref">Figure&nbsp;8</a>.</p>
+<div id="fig-examplewdrs" class="quarto-figure quarto-figure-center quarto-float anchored" data-fig-align="center">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-examplewdrs-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<a href="assets/example_qp_frontend.png" class="lightbox" data-gallery="quarto-lightbox-gallery-5" title="Figure&nbsp;8: "><img src="assets/example_qp_frontend.png" id="fig-examplewdrs" class="img-fluid quarto-figure quarto-figure-center anchored figure-img"></a>
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig quarto-uncaptioned" id="fig-examplewdrs-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;8
+</figcaption>
+</figure>
+</div>
+</section>
+</section>
+<section id="for-review" class="level2">
+<h2 class="anchored" data-anchor-id="for-review">For Review</h2>
+<p>The pipeline attempts to link sequencing data to cases in WDRS. Some records have quality issues and cannot be processed in our system. These data are tagged and saved in a separate folder where our team reviews them and attempts to fix and re-process them. <a href="#tbl-review" class="quarto-xref">Table&nbsp;5</a> is an example of the sort of issues that get tagged in our pipeline:</p>
+<div id="tbl-review" class="quarto-float anchored">
+<figure class="quarto-float quarto-float-tbl figure">
+<figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-tbl" id="tbl-review-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Table&nbsp;5: For review quality issue tags
+</figcaption>
+<div aria-describedby="tbl-review-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<table class="table">
+<colgroup>
+<col style="width: 50%">
+<col style="width: 50%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Variable</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>QA_CASE_ID</td>
+<td>Missing CASE_ID from WDRS</td>
+</tr>
+<tr class="even">
+<td>QA_SCA_NA</td>
+<td>Clinical Accession identifier is missing</td>
+</tr>
+<tr class="odd">
+<td>QA_SCA_INT_DUPE</td>
+<td>Clinical Accession duplicate in file</td>
+</tr>
+<tr class="even">
+<td>QA_SCA_WDRS_DUPE</td>
+<td>Clinical Accession duplicate found in WDRS</td>
+</tr>
+<tr class="odd">
+<td>QA_SA_INT_DUPE</td>
+<td>Accession duplicate in file</td>
+</tr>
+<tr class="even">
+<td>QA_SA_WDRS_DUPE</td>
+<td>Accession duplicate found in WDRS</td>
+</tr>
+<tr class="odd">
+<td>QA_SEQ_VARIANT</td>
+<td>Variant not in list of VOC</td>
+</tr>
+<tr class="even">
+<td>QA_SEQ_STAT</td>
+<td>Status error (labeled complete sequence when it was failed)</td>
+</tr>
+<tr class="odd">
+<td>QA_SEQ_REASON</td>
+<td>Unknown sequence reason</td>
+</tr>
+<tr class="even">
+<td>QA_SEQ_NOTES</td>
+<td>Sequence note not formatted</td>
+</tr>
+<tr class="odd">
+<td>QA_COLLECT_DATE</td>
+<td>Match found but collection dates &gt;14 days</td>
+</tr>
+<tr class="even">
+<td>QA_OTHER</td>
+<td>Other formatting issues</td>
+</tr>
+<tr class="odd">
+<td>sum</td>
+<td>Total number of errors found</td>
+</tr>
+</tbody>
+</table>
+</div>
+</figure>
+</div>
+</section>
+<section id="fuzzy-matching-review" class="level2">
+<h2 class="anchored" data-anchor-id="fuzzy-matching-review">Fuzzy Matching Review</h2>
+<p>When records cannot be linked via accession identifier the pipeline attempts to match a sequence to a PCR test in WDRS via demographics (first name, last name, date of birth, and collection date). The <a href="notebook/fuzzy.Rmd">fuzzy matching script</a> uses <a href="https://github.com/markvanderloo/stringdist">string distances</a> to match names from a submitter to names in WDRS and determine the highest likelihood of a correct link.</p>
+<p>There may be quality issues with the demographics and the fuzzy matching script tags issues and outputs them into a fuzzy matching review folder where our team will manually review the errors and re-process the files. <a href="#tbl-fuzzyreview" class="quarto-xref">Table&nbsp;6</a> is an example of the files the fuzzy matching process outputs:</p>
+<div id="tbl-fuzzyreview" class="quarto-float anchored">
+<figure class="quarto-float quarto-float-tbl figure">
+<figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-tbl" id="tbl-fuzzyreview-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Table&nbsp;6: Fuzzy matching review quality issue tags
+</figcaption>
+<div aria-describedby="tbl-fuzzyreview-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<table class="table">
+<thead>
+<tr class="header">
+<th>File</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Fuzzy bad rows</td>
+<td>error in a column other than demographics columns</td>
+</tr>
+<tr class="even">
+<td>Fuzz 1</td>
+<td>best match was a name levenshtein distance of 1</td>
+</tr>
+<tr class="odd">
+<td>Fuzz 2</td>
+<td>best match was a name levenshtein distance of 2</td>
+</tr>
+<tr class="even">
+<td>Fuzz 3</td>
+<td>best match was a name levenshtein distance of 3</td>
+</tr>
+<tr class="odd">
+<td>Did_not_match</td>
+<td>no match was found</td>
+</tr>
+<tr class="even">
+<td>Fuzzy perfect</td>
+<td>perfect match found</td>
+</tr>
+</tbody>
+</table>
+</div>
+</figure>
+</div>
+</section>
+<section id="sec-keepna" class="level2">
+<h2 class="anchored" data-anchor-id="sec-keepna">Keep NA</h2>
+<p>A sequenced specimen may not initially match to our database (WDRS) for many reasons. A case may not have been updated at the time our pipeline tried to match the sequence to the PCR test, or a sequence may simply not match to a case in WDRS. Our <a href="KEEP_NA_ROSTER_SECOND_IN_PROGRESS.Rmd">Keep NA script</a> reads in all the data that could not be matched in previous pipeline runs and attempts to match them again in the case that new and updated case data is in WDRS. If an unmatched record is in our archive for more than 60 days the Keep NA script will remove it from the list and keep it in an archived file. We made this decision because the vast majority of records that are in Keep NA for over 60 days have never matched to any case in WDRS.</p>
+</section>
+</section>
+<section id="qa-processes" class="level1">
+<h1>QA Processes</h1>
+<section id="gap-data" class="level2">
+<h2 class="anchored" data-anchor-id="gap-data">Gap data</h2>
+<p><strong>gap_data.Rmd</strong> performs the task of identifying and tracking the number of sequencing records for the state of WA that have been submitted to GISAID but are missing from WDRS. As previously mentioned, submitters should be sending records to both the DOH and GISAID. This process uses the <code>SEQUENCE_ACCESION</code> (<code>GISAID_ID</code>) to identify any records from GISAID that are not in WDRS for the state of WA. An excel file containing two pivot tables and metadata is output. Each pivot table contains either the number or proportion of records missing in WDRS, this information is the submission date (month-year) and the submitting lab. The metadata contains each record and accompanying information pulled from GISAID.</p>
+<p>This output is utilized by Data Support and other stakeholders for two main reasons. First, to reach out to submitters to regarding missing records. Second, to identify any new that are submitting to GISAID regularly and should potentially be onboarded.</p>
+</section>
+<section id="wdrs-logic-checks" class="level2">
+<h2 class="anchored" data-anchor-id="wdrs-logic-checks">WDRS Logic Checks</h2>
+<p><code>wdrs_logic_checks.R</code> pulls the sequencing data from our database and runs checks on them to confirm that there are no issues with the data uploaded. See <a href="#tbl-qachecks" class="quarto-xref">Table&nbsp;7</a> below for more info.</p>
+<div id="tbl-qachecks" class="quarto-float anchored">
+<figure class="quarto-float quarto-float-tbl figure">
+<figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-tbl" id="tbl-qachecks-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Table&nbsp;7: WDRS QA Checks
+</figcaption>
+<div aria-describedby="tbl-qachecks-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<table class="table">
+<colgroup>
+<col style="width: 52%">
+<col style="width: 47%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>QA Check</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>SEQUENCE_REASON is NULL</td>
+<td>The reason for sequencing is used to determine sentinel surveillance counts and cannot be null</td>
+</tr>
+<tr class="even">
+<td>SEQUENCE_REASON not standardized</td>
+<td>If the reason has a typo or unexpected value</td>
+</tr>
+<tr class="odd">
+<td>SEQUENCE_VARIANT_OPEN_TEXT filled but SEQUENCE_STATUS is not COMPLETE</td>
+<td>Status must be complete when the variant is filled</td>
+</tr>
+<tr class="even">
+<td>SEQUENCE_ACCESSION number NULL but status not FAILED/LOW QUALITY</td>
+<td>A sequence identifier must be provided for complete sequences</td>
+</tr>
+<tr class="odd">
+<td>SEQUENCE_VARIANT_OPEN_TEXT exists but SEQUENCE_ACCESION number is null</td>
+<td>A sequence identifier must be provided for sequences with lineage calls</td>
+</tr>
+<tr class="even">
+<td>SEQUENCE_VARIANT not of concern/interest - check or update list</td>
+<td>Lineage has a typo or not a variant of concern</td>
+</tr>
+<tr class="odd">
+<td>SEQUENCE_LAB not standardized - check or update list</td>
+<td>The lab name is not standardized to our database standards</td>
+</tr>
+<tr class="even">
+<td>SEQUENCE_SPECIMEN_COLLECTION_DATE out of range. Before 1/05/2020 or after today’s date</td>
+<td>The sequence collection date is in the future or before 2020 (invalid)</td>
+</tr>
+<tr class="odd">
+<td>SEQUENCE_SPECIMEN = ‘No’ but sequencing data attatched</td>
+<td>Database error</td>
+</tr>
+<tr class="even">
+<td>SEQUENCE_ACCESSION number and SEQUENCE_CLINICAL_ACCESSION numbers missing</td>
+<td>A sequence needs the identifiers attached</td>
+</tr>
+<tr class="odd">
+<td>Unexpected characters in a column</td>
+<td>Database or submitter error (usually typos or wrong value in a column)</td>
+</tr>
+<tr class="even">
+<td>Lineage found in SEQUENCE_NOTES but SEQUENCE_VARIANT_OPEN_TEXT is NULL</td>
+<td>Database error</td>
+</tr>
+<tr class="odd">
+<td>SEQUENCE_STATUS = ‘Complete’ and SEQUENCE_VARIANT_OPEN_TEXT is NULL</td>
+<td>Sequence needs a lineage call if status is complete</td>
+</tr>
+<tr class="even">
+<td>Duplicate - SCA, SA and Variant duplicated</td>
+<td>Duplicate identifier values found in database</td>
+</tr>
+</tbody>
+</table>
+</div>
+</figure>
+</div>
+</section>
+</section>
+<section id="results" class="level1">
+<h1>Results</h1>
+<p>During the February 2021 to September 2023 period we processed a total of 172,050 sequences. These data were most commonly processed via SFT (secure file transfer) of tabular datasets (see <a href="#fig-countprop" class="quarto-xref">Figure&nbsp;9</a> below)</p>
+<div class="quarto-embed-nb-cell">
+<div id="cell-fig-countprop" class="cell">
+<div class="cell-output cell-output-display">
+<div id="fig-countprop" class="quarto-figure quarto-figure-center quarto-float anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-countprop-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<a href="index_files/figure-html/notebooks-pipeline_counts-fig-countprop-output-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-6" title="Figure&nbsp;9: Count and proportion of sequencing metadata submissions by mode"><img src="index_files/figure-html/notebooks-pipeline_counts-fig-countprop-output-1.png" width="672" height="480" class="figure-img"></a>
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-countprop-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;9: Count and proportion of sequencing metadata submissions by mode
+</figcaption>
+</figure>
+</div>
+</div>
+</div>
+</div>
+<p>96% of those sequences were successfully matched to a case in WDRS, while 3% had no match. Less than 1% of the records had quality issues that could not be resolved and are still archived in our for review process. See <a href="#tbl-counts" class="quarto-xref">Table&nbsp;8</a> for more details.</p>
+<div class="quarto-embed-nb-cell">
+<div class="cell">
+<div id="tbl-counts" class="cell quarto-float anchored">
+<figure class="quarto-float quarto-float-tbl figure">
+<figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-tbl" id="tbl-counts-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Table&nbsp;8: Count of sequences matching to WDRS cases
+</figcaption>
+<div aria-describedby="tbl-counts-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<div class="cell-output cell-output-display">
+<div>
+<div id="gzagugjuxk" style="padding-left:0px;padding-right:0px;padding-top:10px;padding-bottom:10px;overflow-x:auto;overflow-y:auto;width:auto;height:auto;">
+<style>@import url("https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap");
+#gzagugjuxk table {
+  font-family: Roboto, system-ui, 'Segoe UI', Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+#gzagugjuxk thead, #gzagugjuxk tbody, #gzagugjuxk tfoot, #gzagugjuxk tr, #gzagugjuxk td, #gzagugjuxk th {
+  border-style: none;
+}
+
+#gzagugjuxk p {
+  margin: 0;
+  padding: 0;
+}
+
+#gzagugjuxk .gt_table {
+  display: table;
+  border-collapse: collapse;
+  line-height: normal;
+  margin-left: auto;
+  margin-right: auto;
+  color: #333333;
+  font-size: 16px;
+  font-weight: normal;
+  font-style: normal;
+  background-color: #FFFFFF;
+  width: auto;
+  border-top-style: solid;
+  border-top-width: 2px;
+  border-top-color: #000000;
+  border-right-style: none;
+  border-right-width: 2px;
+  border-right-color: #D3D3D3;
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #000000;
+  border-left-style: none;
+  border-left-width: 2px;
+  border-left-color: #D3D3D3;
+}
+
+#gzagugjuxk .gt_caption {
+  padding-top: 4px;
+  padding-bottom: 4px;
+}
+
+#gzagugjuxk .gt_title {
+  color: #333333;
+  font-size: 125%;
+  font-weight: initial;
+  padding-top: 4px;
+  padding-bottom: 4px;
+  padding-left: 5px;
+  padding-right: 5px;
+  border-bottom-color: #FFFFFF;
+  border-bottom-width: 0;
+}
+
+#gzagugjuxk .gt_subtitle {
+  color: #333333;
+  font-size: 85%;
+  font-weight: initial;
+  padding-top: 3px;
+  padding-bottom: 5px;
+  padding-left: 5px;
+  padding-right: 5px;
+  border-top-color: #FFFFFF;
+  border-top-width: 0;
+}
+
+#gzagugjuxk .gt_heading {
+  background-color: #FFFFFF;
+  text-align: left;
+  border-bottom-color: #FFFFFF;
+  border-left-style: none;
+  border-left-width: 1px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 1px;
+  border-right-color: #D3D3D3;
+}
+
+#gzagugjuxk .gt_bottom_border {
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+}
+
+#gzagugjuxk .gt_col_headings {
+  border-top-style: solid;
+  border-top-width: 3px;
+  border-top-color: #000000;
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+  border-left-style: none;
+  border-left-width: 1px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 1px;
+  border-right-color: #D3D3D3;
+}
+
+#gzagugjuxk .gt_col_heading {
+  color: #333333;
+  background-color: #FFFFFF;
+  font-size: 80%;
+  font-weight: bolder;
+  text-transform: uppercase;
+  border-left-style: none;
+  border-left-width: 1px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 1px;
+  border-right-color: #D3D3D3;
+  vertical-align: bottom;
+  padding-top: 5px;
+  padding-bottom: 6px;
+  padding-left: 5px;
+  padding-right: 5px;
+  overflow-x: hidden;
+}
+
+#gzagugjuxk .gt_column_spanner_outer {
+  color: #333333;
+  background-color: #FFFFFF;
+  font-size: 80%;
+  font-weight: bolder;
+  text-transform: uppercase;
+  padding-top: 0;
+  padding-bottom: 0;
+  padding-left: 4px;
+  padding-right: 4px;
+}
+
+#gzagugjuxk .gt_column_spanner_outer:first-child {
+  padding-left: 0;
+}
+
+#gzagugjuxk .gt_column_spanner_outer:last-child {
+  padding-right: 0;
+}
+
+#gzagugjuxk .gt_column_spanner {
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+  vertical-align: bottom;
+  padding-top: 5px;
+  padding-bottom: 5px;
+  overflow-x: hidden;
+  display: inline-block;
+  width: 100%;
+}
+
+#gzagugjuxk .gt_spanner_row {
+  border-bottom-style: hidden;
+}
+
+#gzagugjuxk .gt_group_heading {
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 5px;
+  padding-right: 5px;
+  color: #333333;
+  background-color: #FFFFFF;
+  font-size: 80%;
+  font-weight: bolder;
+  text-transform: uppercase;
+  border-top-style: solid;
+  border-top-width: 2px;
+  border-top-color: #D3D3D3;
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+  border-left-style: none;
+  border-left-width: 1px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 1px;
+  border-right-color: #D3D3D3;
+  vertical-align: middle;
+  text-align: left;
+}
+
+#gzagugjuxk .gt_empty_group_heading {
+  padding: 0.5px;
+  color: #333333;
+  background-color: #FFFFFF;
+  font-size: 80%;
+  font-weight: bolder;
+  border-top-style: solid;
+  border-top-width: 2px;
+  border-top-color: #D3D3D3;
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+  vertical-align: middle;
+}
+
+#gzagugjuxk .gt_from_md > :first-child {
+  margin-top: 0;
+}
+
+#gzagugjuxk .gt_from_md > :last-child {
+  margin-bottom: 0;
+}
+
+#gzagugjuxk .gt_row {
+  padding-top: 3px;
+  padding-bottom: 3px;
+  padding-left: 10px;
+  padding-right: 10px;
+  margin: 10px;
+  border-top-style: solid;
+  border-top-width: 1px;
+  border-top-color: #D3D3D3;
+  border-left-style: none;
+  border-left-width: 1px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 1px;
+  border-right-color: #D3D3D3;
+  vertical-align: middle;
+  overflow-x: hidden;
+}
+
+#gzagugjuxk .gt_stub {
+  color: #333333;
+  background-color: #FFFFFF;
+  font-size: 80%;
+  font-weight: bolder;
+  text-transform: uppercase;
+  border-right-style: solid;
+  border-right-width: 2px;
+  border-right-color: #D3D3D3;
+  padding-left: 10px;
+  padding-right: 10px;
+}
+
+#gzagugjuxk .gt_stub_row_group {
+  color: #333333;
+  background-color: #FFFFFF;
+  font-size: 100%;
+  font-weight: initial;
+  text-transform: inherit;
+  border-right-style: solid;
+  border-right-width: 2px;
+  border-right-color: #D3D3D3;
+  padding-left: 5px;
+  padding-right: 5px;
+  vertical-align: top;
+}
+
+#gzagugjuxk .gt_row_group_first td {
+  border-top-width: 2px;
+}
+
+#gzagugjuxk .gt_row_group_first th {
+  border-top-width: 2px;
+}
+
+#gzagugjuxk .gt_summary_row {
+  color: #333333;
+  background-color: #FFFFFF;
+  text-transform: inherit;
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 5px;
+  padding-right: 5px;
+}
+
+#gzagugjuxk .gt_first_summary_row {
+  border-top-style: solid;
+  border-top-color: #D3D3D3;
+}
+
+#gzagugjuxk .gt_first_summary_row.thick {
+  border-top-width: 2px;
+}
+
+#gzagugjuxk .gt_last_summary_row {
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 5px;
+  padding-right: 5px;
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+}
+
+#gzagugjuxk .gt_grand_summary_row {
+  color: #333333;
+  background-color: #FFFFFF;
+  text-transform: inherit;
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 5px;
+  padding-right: 5px;
+}
+
+#gzagugjuxk .gt_first_grand_summary_row {
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 5px;
+  padding-right: 5px;
+  border-top-style: double;
+  border-top-width: 6px;
+  border-top-color: #D3D3D3;
+}
+
+#gzagugjuxk .gt_last_grand_summary_row_top {
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 5px;
+  padding-right: 5px;
+  border-bottom-style: double;
+  border-bottom-width: 6px;
+  border-bottom-color: #D3D3D3;
+}
+
+#gzagugjuxk .gt_striped {
+  background-color: rgba(128, 128, 128, 0.05);
+}
+
+#gzagugjuxk .gt_table_body {
+  border-top-style: solid;
+  border-top-width: 2px;
+  border-top-color: #D3D3D3;
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+}
+
+#gzagugjuxk .gt_footnotes {
+  color: #333333;
+  background-color: #FFFFFF;
+  border-bottom-style: none;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+  border-left-style: none;
+  border-left-width: 2px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 2px;
+  border-right-color: #D3D3D3;
+}
+
+#gzagugjuxk .gt_footnote {
+  margin: 0px;
+  font-size: 90%;
+  padding-top: 4px;
+  padding-bottom: 4px;
+  padding-left: 5px;
+  padding-right: 5px;
+}
+
+#gzagugjuxk .gt_sourcenotes {
+  color: #333333;
+  background-color: #FFFFFF;
+  border-bottom-style: none;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+  border-left-style: none;
+  border-left-width: 2px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 2px;
+  border-right-color: #D3D3D3;
+}
+
+#gzagugjuxk .gt_sourcenote {
+  font-size: 12px;
+  padding-top: 4px;
+  padding-bottom: 4px;
+  padding-left: 5px;
+  padding-right: 5px;
+}
+
+#gzagugjuxk .gt_left {
+  text-align: left;
+}
+
+#gzagugjuxk .gt_center {
+  text-align: center;
+}
+
+#gzagugjuxk .gt_right {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+#gzagugjuxk .gt_font_normal {
+  font-weight: normal;
+}
+
+#gzagugjuxk .gt_font_bold {
+  font-weight: bold;
+}
+
+#gzagugjuxk .gt_font_italic {
+  font-style: italic;
+}
+
+#gzagugjuxk .gt_super {
+  font-size: 65%;
+}
+
+#gzagugjuxk .gt_footnote_marks {
+  font-size: 75%;
+  vertical-align: 0.4em;
+  position: initial;
+}
+
+#gzagugjuxk .gt_asterisk {
+  font-size: 100%;
+  vertical-align: 0;
+}
+
+#gzagugjuxk .gt_indent_1 {
+  text-indent: 5px;
+}
+
+#gzagugjuxk .gt_indent_2 {
+  text-indent: 10px;
+}
+
+#gzagugjuxk .gt_indent_3 {
+  text-indent: 15px;
+}
+
+#gzagugjuxk .gt_indent_4 {
+  text-indent: 20px;
+}
+
+#gzagugjuxk .gt_indent_5 {
+  text-indent: 25px;
+}
+</style>
+
+<table class="gt_table do-not-create-environment cell table table-sm table-striped small" data-quarto-postprocess="true" data-quarto-disable-processing="false" data-quarto-bootstrap="false">
+<thead>
+<tr class="header gt_heading">
+<th colspan="2" class="gt_heading gt_title gt_font_normal gt_bottom_border">Covid Sequencing Pipeline Counts</th>
+</tr>
+<tr class="odd gt_col_headings">
+<th id="Location" class="gt_col_heading gt_columns_bottom_border gt_left" data-quarto-table-cell-role="th" style="border-bottom-width: 3px; border-bottom-style: solid; border-bottom-color: black" scope="col">Location</th>
+<th id="Count" class="gt_col_heading gt_columns_bottom_border gt_left" data-quarto-table-cell-role="th" style="border-bottom-width: 3px; border-bottom-style: solid; border-bottom-color: black" scope="col">Count</th>
+</tr>
+</thead>
+<tbody class="gt_table_body">
+<tr class="odd">
+<td class="gt_row gt_left" headers="Location">For Review</td>
+<td class="gt_row gt_left" headers="Count">220 (0.13%)</td>
+</tr>
+<tr class="even">
+<td class="gt_row gt_left" headers="Location">Fuzzy Review</td>
+<td class="gt_row gt_left" headers="Count">569 (0.33%)</td>
+</tr>
+<tr class="odd">
+<td class="gt_row gt_left" headers="Location">Keep NA</td>
+<td class="gt_row gt_left" headers="Count">5,710 (3.32%)</td>
+</tr>
+<tr class="even">
+<td class="gt_row gt_left" headers="Location" style="background-color: rgba(139,125,123,0.8)">WDRS</td>
+<td class="gt_row gt_left" headers="Count" style="background-color: rgba(139,125,123,0.8); color: #000000; font-weight: bold">165,551 (96.22%)</td>
+</tr>
+<tr class="odd">
+<td class="gt_row gt_left" headers="Location">Total</td>
+<td class="gt_row gt_left" headers="Count">172,050 (-)</td>
+</tr>
+</tbody>
+</table>
+
+</div>
+</div>
+</div>
+</div>
+</figure>
+</div>
+</div>
+</div>
+<p>When stratifying by lab/submitter in <a href="#tbl-labcount" class="quarto-xref">Table&nbsp;9</a>, we can see that most of the sequences were submitted by 4 labs. Over 40% of the sequences were submitted by University of Washington Virology Lab, followed by our own PHL with 19%, Labcorp with 15% and Northwest Genomics with 11%.</p>
+<div class="quarto-embed-nb-cell">
+<div class="cell">
+<div id="tbl-labcount" class="cell quarto-float anchored">
+<figure class="quarto-float quarto-float-tbl figure">
+<figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-tbl" id="tbl-labcount-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Table&nbsp;9: Count of sequences by lab and status during the sequencing pipeline 1.0 phase
+</figcaption>
+<div aria-describedby="tbl-labcount-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<div class="cell-output cell-output-display">
+<div>
+<div id="itithtszcp" style="padding-left:0px;padding-right:0px;padding-top:10px;padding-bottom:10px;overflow-x:auto;overflow-y:auto;width:auto;height:auto;">
+<style>@import url("https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap");
+#itithtszcp table {
+  font-family: Roboto, system-ui, 'Segoe UI', Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+#itithtszcp thead, #itithtszcp tbody, #itithtszcp tfoot, #itithtszcp tr, #itithtszcp td, #itithtszcp th {
+  border-style: none;
+}
+
+#itithtszcp p {
+  margin: 0;
+  padding: 0;
+}
+
+#itithtszcp .gt_table {
+  display: table;
+  border-collapse: collapse;
+  line-height: normal;
+  margin-left: auto;
+  margin-right: auto;
+  color: #333333;
+  font-size: 16px;
+  font-weight: normal;
+  font-style: normal;
+  background-color: #FFFFFF;
+  width: auto;
+  border-top-style: solid;
+  border-top-width: 2px;
+  border-top-color: #000000;
+  border-right-style: none;
+  border-right-width: 2px;
+  border-right-color: #D3D3D3;
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #000000;
+  border-left-style: none;
+  border-left-width: 2px;
+  border-left-color: #D3D3D3;
+}
+
+#itithtszcp .gt_caption {
+  padding-top: 4px;
+  padding-bottom: 4px;
+}
+
+#itithtszcp .gt_title {
+  color: #333333;
+  font-size: 125%;
+  font-weight: initial;
+  padding-top: 4px;
+  padding-bottom: 4px;
+  padding-left: 5px;
+  padding-right: 5px;
+  border-bottom-color: #FFFFFF;
+  border-bottom-width: 0;
+}
+
+#itithtszcp .gt_subtitle {
+  color: #333333;
+  font-size: 85%;
+  font-weight: initial;
+  padding-top: 3px;
+  padding-bottom: 5px;
+  padding-left: 5px;
+  padding-right: 5px;
+  border-top-color: #FFFFFF;
+  border-top-width: 0;
+}
+
+#itithtszcp .gt_heading {
+  background-color: #FFFFFF;
+  text-align: left;
+  border-bottom-color: #FFFFFF;
+  border-left-style: none;
+  border-left-width: 1px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 1px;
+  border-right-color: #D3D3D3;
+}
+
+#itithtszcp .gt_bottom_border {
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+}
+
+#itithtszcp .gt_col_headings {
+  border-top-style: solid;
+  border-top-width: 3px;
+  border-top-color: #000000;
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+  border-left-style: none;
+  border-left-width: 1px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 1px;
+  border-right-color: #D3D3D3;
+}
+
+#itithtszcp .gt_col_heading {
+  color: #333333;
+  background-color: #FFFFFF;
+  font-size: 80%;
+  font-weight: bolder;
+  text-transform: uppercase;
+  border-left-style: none;
+  border-left-width: 1px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 1px;
+  border-right-color: #D3D3D3;
+  vertical-align: bottom;
+  padding-top: 5px;
+  padding-bottom: 6px;
+  padding-left: 5px;
+  padding-right: 5px;
+  overflow-x: hidden;
+}
+
+#itithtszcp .gt_column_spanner_outer {
+  color: #333333;
+  background-color: #FFFFFF;
+  font-size: 80%;
+  font-weight: bolder;
+  text-transform: uppercase;
+  padding-top: 0;
+  padding-bottom: 0;
+  padding-left: 4px;
+  padding-right: 4px;
+}
+
+#itithtszcp .gt_column_spanner_outer:first-child {
+  padding-left: 0;
+}
+
+#itithtszcp .gt_column_spanner_outer:last-child {
+  padding-right: 0;
+}
+
+#itithtszcp .gt_column_spanner {
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+  vertical-align: bottom;
+  padding-top: 5px;
+  padding-bottom: 5px;
+  overflow-x: hidden;
+  display: inline-block;
+  width: 100%;
+}
+
+#itithtszcp .gt_spanner_row {
+  border-bottom-style: hidden;
+}
+
+#itithtszcp .gt_group_heading {
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 5px;
+  padding-right: 5px;
+  color: #333333;
+  background-color: #FFFFFF;
+  font-size: 80%;
+  font-weight: bolder;
+  text-transform: uppercase;
+  border-top-style: solid;
+  border-top-width: 2px;
+  border-top-color: #D3D3D3;
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+  border-left-style: none;
+  border-left-width: 1px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 1px;
+  border-right-color: #D3D3D3;
+  vertical-align: middle;
+  text-align: left;
+}
+
+#itithtszcp .gt_empty_group_heading {
+  padding: 0.5px;
+  color: #333333;
+  background-color: #FFFFFF;
+  font-size: 80%;
+  font-weight: bolder;
+  border-top-style: solid;
+  border-top-width: 2px;
+  border-top-color: #D3D3D3;
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+  vertical-align: middle;
+}
+
+#itithtszcp .gt_from_md > :first-child {
+  margin-top: 0;
+}
+
+#itithtszcp .gt_from_md > :last-child {
+  margin-bottom: 0;
+}
+
+#itithtszcp .gt_row {
+  padding-top: 3px;
+  padding-bottom: 3px;
+  padding-left: 10px;
+  padding-right: 10px;
+  margin: 10px;
+  border-top-style: solid;
+  border-top-width: 1px;
+  border-top-color: #D3D3D3;
+  border-left-style: none;
+  border-left-width: 1px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 1px;
+  border-right-color: #D3D3D3;
+  vertical-align: middle;
+  overflow-x: hidden;
+}
+
+#itithtszcp .gt_stub {
+  color: #333333;
+  background-color: #FFFFFF;
+  font-size: 80%;
+  font-weight: bolder;
+  text-transform: uppercase;
+  border-right-style: solid;
+  border-right-width: 2px;
+  border-right-color: #D3D3D3;
+  padding-left: 10px;
+  padding-right: 10px;
+}
+
+#itithtszcp .gt_stub_row_group {
+  color: #333333;
+  background-color: #FFFFFF;
+  font-size: 100%;
+  font-weight: initial;
+  text-transform: inherit;
+  border-right-style: solid;
+  border-right-width: 2px;
+  border-right-color: #D3D3D3;
+  padding-left: 5px;
+  padding-right: 5px;
+  vertical-align: top;
+}
+
+#itithtszcp .gt_row_group_first td {
+  border-top-width: 2px;
+}
+
+#itithtszcp .gt_row_group_first th {
+  border-top-width: 2px;
+}
+
+#itithtszcp .gt_summary_row {
+  color: #333333;
+  background-color: #FFFFFF;
+  text-transform: inherit;
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 5px;
+  padding-right: 5px;
+}
+
+#itithtszcp .gt_first_summary_row {
+  border-top-style: solid;
+  border-top-color: #D3D3D3;
+}
+
+#itithtszcp .gt_first_summary_row.thick {
+  border-top-width: 2px;
+}
+
+#itithtszcp .gt_last_summary_row {
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 5px;
+  padding-right: 5px;
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+}
+
+#itithtszcp .gt_grand_summary_row {
+  color: #333333;
+  background-color: #FFFFFF;
+  text-transform: inherit;
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 5px;
+  padding-right: 5px;
+}
+
+#itithtszcp .gt_first_grand_summary_row {
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 5px;
+  padding-right: 5px;
+  border-top-style: double;
+  border-top-width: 6px;
+  border-top-color: #D3D3D3;
+}
+
+#itithtszcp .gt_last_grand_summary_row_top {
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 5px;
+  padding-right: 5px;
+  border-bottom-style: double;
+  border-bottom-width: 6px;
+  border-bottom-color: #D3D3D3;
+}
+
+#itithtszcp .gt_striped {
+  background-color: rgba(128, 128, 128, 0.05);
+}
+
+#itithtszcp .gt_table_body {
+  border-top-style: solid;
+  border-top-width: 2px;
+  border-top-color: #D3D3D3;
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+}
+
+#itithtszcp .gt_footnotes {
+  color: #333333;
+  background-color: #FFFFFF;
+  border-bottom-style: none;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+  border-left-style: none;
+  border-left-width: 2px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 2px;
+  border-right-color: #D3D3D3;
+}
+
+#itithtszcp .gt_footnote {
+  margin: 0px;
+  font-size: 90%;
+  padding-top: 4px;
+  padding-bottom: 4px;
+  padding-left: 5px;
+  padding-right: 5px;
+}
+
+#itithtszcp .gt_sourcenotes {
+  color: #333333;
+  background-color: #FFFFFF;
+  border-bottom-style: none;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+  border-left-style: none;
+  border-left-width: 2px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 2px;
+  border-right-color: #D3D3D3;
+}
+
+#itithtszcp .gt_sourcenote {
+  font-size: 12px;
+  padding-top: 4px;
+  padding-bottom: 4px;
+  padding-left: 5px;
+  padding-right: 5px;
+}
+
+#itithtszcp .gt_left {
+  text-align: left;
+}
+
+#itithtszcp .gt_center {
+  text-align: center;
+}
+
+#itithtszcp .gt_right {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+#itithtszcp .gt_font_normal {
+  font-weight: normal;
+}
+
+#itithtszcp .gt_font_bold {
+  font-weight: bold;
+}
+
+#itithtszcp .gt_font_italic {
+  font-style: italic;
+}
+
+#itithtszcp .gt_super {
+  font-size: 65%;
+}
+
+#itithtszcp .gt_footnote_marks {
+  font-size: 75%;
+  vertical-align: 0.4em;
+  position: initial;
+}
+
+#itithtszcp .gt_asterisk {
+  font-size: 100%;
+  vertical-align: 0;
+}
+
+#itithtszcp .gt_indent_1 {
+  text-indent: 5px;
+}
+
+#itithtszcp .gt_indent_2 {
+  text-indent: 10px;
+}
+
+#itithtszcp .gt_indent_3 {
+  text-indent: 15px;
+}
+
+#itithtszcp .gt_indent_4 {
+  text-indent: 20px;
+}
+
+#itithtszcp .gt_indent_5 {
+  text-indent: 25px;
+}
+</style>
+
+<table class="gt_table do-not-create-environment cell table table-sm table-striped small" data-quarto-postprocess="true" data-quarto-disable-processing="false" data-quarto-bootstrap="false">
+<thead>
+<tr class="header gt_heading">
+<th colspan="3" class="gt_heading gt_title gt_font_normal">Number of Sequences by Lab</th>
+</tr>
+<tr class="odd gt_heading">
+<th colspan="3" class="gt_heading gt_subtitle gt_font_normal gt_bottom_border">Before 2023-06-01 switch to 2.0 pipeline</th>
+</tr>
+<tr class="header gt_col_headings">
+<th id="Sequencing Lab" class="gt_col_heading gt_columns_bottom_border gt_left" data-quarto-table-cell-role="th" style="border-bottom-width: 3px; border-bottom-style: solid; border-bottom-color: black" scope="col">Sequencing Lab</th>
+<th id="Count" class="gt_col_heading gt_columns_bottom_border gt_right" data-quarto-table-cell-role="th" style="border-bottom-width: 3px; border-bottom-style: solid; border-bottom-color: black" scope="col">Count</th>
+<th id="Percent of Total Sequences" class="gt_col_heading gt_columns_bottom_border gt_left" data-quarto-table-cell-role="th" style="border-bottom-width: 3px; border-bottom-style: solid; border-bottom-color: black" scope="col">Percent of Total Sequences</th>
+</tr>
+</thead>
+<tbody class="gt_table_body">
+<tr class="odd">
+<td class="gt_row gt_left" headers="SEQUENCE_LAB">UW Virology</td>
+<td class="gt_row gt_right" headers="n">69,799</td>
+<td class="gt_row gt_left" headers="x_scaled"><div style="flex-grow:1;margin-left:8px;background:#e1e1e1;">
+<div style="background:#8b7d7b;width:42.1616299508913%;height:16px;display:flex;align-items:center;justify-content:flex-start;position:relative;">
+<span style="color:#000000;position:absolute;left:0px;margin-left:5px;font-weight:bold;font-size:12px;">42.2%</span>
+</div>
+</div></td>
+</tr>
+<tr class="even">
+<td class="gt_row gt_left" headers="SEQUENCE_LAB">PHL</td>
+<td class="gt_row gt_right" headers="n">32,845</td>
+<td class="gt_row gt_left" headers="x_scaled"><div style="flex-grow:1;margin-left:8px;background:#e1e1e1;">
+<div style="background:#8b7d7b;width:19.8398076725601%;height:16px;display:flex;align-items:center;justify-content:flex-start;position:relative;">
+<span style="color:#000000;position:absolute;left:0px;margin-left:5px;font-weight:bold;font-size:12px;">19.8%</span>
+</div>
+</div></td>
+</tr>
+<tr class="odd">
+<td class="gt_row gt_left" headers="SEQUENCE_LAB">Labcorp</td>
+<td class="gt_row gt_right" headers="n">26,597</td>
+<td class="gt_row gt_left" headers="x_scaled"><div style="flex-grow:1;margin-left:8px;background:#e1e1e1;">
+<div style="background:#8b7d7b;width:16.0657440909448%;height:16px;display:flex;align-items:center;justify-content:center;color:#000000;font-weight:bold;font-size:12px;position:relative;">
+<span style="color:#000000;position:absolute;left:0%;margin-left:16.0657440909448px;font-weight:bold;font-size:12px;">16.1%</span>
+</div>
+</div></td>
+</tr>
+<tr class="even">
+<td class="gt_row gt_left" headers="SEQUENCE_LAB">NW Genomics</td>
+<td class="gt_row gt_right" headers="n">18,532</td>
+<td class="gt_row gt_left" headers="x_scaled"><div style="flex-grow:1;margin-left:8px;background:#e1e1e1;">
+<div style="background:#8b7d7b;width:11.1941335298488%;height:16px;display:flex;align-items:center;justify-content:center;color:#000000;font-weight:bold;font-size:12px;position:relative;">
+<span style="color:#000000;position:absolute;left:0%;margin-left:11.1941335298488px;font-weight:bold;font-size:12px;">11.2%</span>
+</div>
+</div></td>
+</tr>
+<tr class="odd">
+<td class="gt_row gt_left" headers="SEQUENCE_LAB">Quest</td>
+<td class="gt_row gt_right" headers="n">4,121</td>
+<td class="gt_row gt_left" headers="x_scaled"><div style="flex-grow:1;margin-left:8px;background:#e1e1e1;">
+<div style="background:#8b7d7b;width:2.48926312737465%;height:16px;display:flex;align-items:center;justify-content:center;color:#000000;font-weight:bold;font-size:12px;position:relative;">
+<span style="color:#000000;position:absolute;left:0%;margin-left:2.48926312737465px;font-weight:bold;font-size:12px;">2.5%</span>
+</div>
+</div></td>
+</tr>
+<tr class="even">
+<td class="gt_row gt_left" headers="SEQUENCE_LAB">Altius</td>
+<td class="gt_row gt_right" headers="n">3,696</td>
+<td class="gt_row gt_left" headers="x_scaled"><div style="flex-grow:1;margin-left:8px;background:#e1e1e1;">
+<div style="background:#8b7d7b;width:2.2325446539133%;height:16px;display:flex;align-items:center;justify-content:center;color:#000000;font-weight:bold;font-size:12px;position:relative;">
+<span style="color:#000000;position:absolute;left:0%;margin-left:2.2325446539133px;font-weight:bold;font-size:12px;">2.2%</span>
+</div>
+</div></td>
+</tr>
+<tr class="odd">
+<td class="gt_row gt_left" headers="SEQUENCE_LAB">Fulgent Genetics</td>
+<td class="gt_row gt_right" headers="n">2,859</td>
+<td class="gt_row gt_left" headers="x_scaled"><div style="flex-grow:1;margin-left:8px;background:#e1e1e1;">
+<div style="background:#8b7d7b;width:1.72696027206118%;height:16px;display:flex;align-items:center;justify-content:center;color:#000000;font-weight:bold;font-size:12px;position:relative;">
+<span style="color:#000000;position:absolute;left:0%;margin-left:1.72696027206118px;font-weight:bold;font-size:12px;">1.7%</span>
+</div>
+</div></td>
+</tr>
+<tr class="even">
+<td class="gt_row gt_left" headers="SEQUENCE_LAB">PHL/Bedford</td>
+<td class="gt_row gt_right" headers="n">2,857</td>
+<td class="gt_row gt_left" headers="x_scaled"><div style="flex-grow:1;margin-left:8px;background:#e1e1e1;">
+<div style="background:#8b7d7b;width:1.72575218512724%;height:16px;display:flex;align-items:center;justify-content:center;color:#000000;font-weight:bold;font-size:12px;position:relative;">
+<span style="color:#000000;position:absolute;left:0%;margin-left:1.72575218512724px;font-weight:bold;font-size:12px;">1.7%</span>
+</div>
+</div></td>
+</tr>
+<tr class="odd">
+<td class="gt_row gt_left" headers="SEQUENCE_LAB">SCAN/Bedford</td>
+<td class="gt_row gt_right" headers="n">1,004</td>
+<td class="gt_row gt_left" headers="x_scaled"><div style="flex-grow:1;margin-left:8px;background:#e1e1e1;">
+<div style="background:#8b7d7b;width:0.606459640835755%;height:16px;display:flex;align-items:center;justify-content:center;color:#000000;font-weight:bold;font-size:12px;position:relative;">
+<span style="color:#000000;position:absolute;left:0%;margin-left:0.606459640835755px;font-weight:bold;font-size:12px;">0.6%</span>
+</div>
+</div></td>
+</tr>
+<tr class="even">
+<td class="gt_row gt_left" headers="SEQUENCE_LAB">Aegis</td>
+<td class="gt_row gt_right" headers="n">943</td>
+<td class="gt_row gt_left" headers="x_scaled"><div style="flex-grow:1;margin-left:8px;background:#e1e1e1;">
+<div style="background:#8b7d7b;width:0.569612989350714%;height:16px;display:flex;align-items:center;justify-content:center;color:#000000;font-weight:bold;font-size:12px;position:relative;">
+<span style="color:#000000;position:absolute;left:0%;margin-left:0.569612989350714px;font-weight:bold;font-size:12px;">0.6%</span>
+</div>
+</div></td>
+</tr>
+<tr class="odd">
+<td class="gt_row gt_left" headers="SEQUENCE_LAB">Curative Labs</td>
+<td class="gt_row gt_right" headers="n">649</td>
+<td class="gt_row gt_left" headers="x_scaled"><div style="flex-grow:1;margin-left:8px;background:#e1e1e1;">
+<div style="background:#8b7d7b;width:0.392024210062156%;height:16px;display:flex;align-items:center;justify-content:center;color:#000000;font-weight:bold;font-size:12px;position:relative;">
+<span style="color:#000000;position:absolute;left:0%;margin-left:0.392024210062156px;font-weight:bold;font-size:12px;">0.4%</span>
+</div>
+</div></td>
+</tr>
+<tr class="even">
+<td class="gt_row gt_left" headers="SEQUENCE_LAB">KP WA Research Inst</td>
+<td class="gt_row gt_right" headers="n">281</td>
+<td class="gt_row gt_left" headers="x_scaled"><div style="flex-grow:1;margin-left:8px;background:#e1e1e1;">
+<div style="background:#8b7d7b;width:0.169736214217975%;height:16px;display:flex;align-items:center;justify-content:center;color:#000000;font-weight:bold;font-size:12px;position:relative;">
+<span style="color:#000000;position:absolute;left:0%;margin-left:0.169736214217975px;font-weight:bold;font-size:12px;">0.2%</span>
+</div>
+</div></td>
+</tr>
+<tr class="odd">
+<td class="gt_row gt_left" headers="SEQUENCE_LAB">USAFSAM</td>
+<td class="gt_row gt_right" headers="n">275</td>
+<td class="gt_row gt_left" headers="x_scaled"><div style="flex-grow:1;margin-left:8px;background:#e1e1e1;">
+<div style="background:#8b7d7b;width:0.166111953416168%;height:16px;display:flex;align-items:center;justify-content:center;color:#000000;font-weight:bold;font-size:12px;position:relative;">
+<span style="color:#000000;position:absolute;left:0%;margin-left:0.166111953416168px;font-weight:bold;font-size:12px;">0.2%</span>
+</div>
+</div></td>
+</tr>
+<tr class="even">
+<td class="gt_row gt_left" headers="SEQUENCE_LAB">CDC</td>
+<td class="gt_row gt_right" headers="n">211</td>
+<td class="gt_row gt_left" headers="x_scaled"><div style="flex-grow:1;margin-left:8px;background:#e1e1e1;">
+<div style="background:#8b7d7b;width:0.127453171530223%;height:16px;display:flex;align-items:center;justify-content:center;color:#000000;font-weight:bold;font-size:12px;position:relative;">
+<span style="color:#000000;position:absolute;left:0%;margin-left:0.127453171530223px;font-weight:bold;font-size:12px;">0.1%</span>
+</div>
+</div></td>
+</tr>
+<tr class="odd">
+<td class="gt_row gt_left" headers="SEQUENCE_LAB">Providence Swedish</td>
+<td class="gt_row gt_right" headers="n">173</td>
+<td class="gt_row gt_left" headers="x_scaled"><div style="flex-grow:1;margin-left:8px;background:#e1e1e1;">
+<div style="background:#8b7d7b;width:0.104499519785444%;height:16px;display:flex;align-items:center;justify-content:center;color:#000000;font-weight:bold;font-size:12px;position:relative;">
+<span style="color:#000000;position:absolute;left:0%;margin-left:0.104499519785444px;font-weight:bold;font-size:12px;">0.1%</span>
+</div>
+</div></td>
+</tr>
+<tr class="even">
+<td class="gt_row gt_left" headers="SEQUENCE_LAB">Helix</td>
+<td class="gt_row gt_right" headers="n">151</td>
+<td class="gt_row gt_left" headers="x_scaled"><div style="flex-grow:1;margin-left:8px;background:#e1e1e1;">
+<div style="background:#8b7d7b;width:0.0912105635121503%;height:16px;display:flex;align-items:center;justify-content:center;color:#000000;font-weight:bold;font-size:12px;position:relative;">
+<span style="color:#000000;position:absolute;left:0%;margin-left:0.0912105635121503px;font-weight:bold;font-size:12px;">0.1%</span>
+</div>
+</div></td>
+</tr>
+<tr class="odd">
+<td class="gt_row gt_left" headers="SEQUENCE_LAB">Lauring Lab</td>
+<td class="gt_row gt_right" headers="n">118</td>
+<td class="gt_row gt_left" headers="x_scaled"><div style="flex-grow:1;margin-left:8px;background:#e1e1e1;">
+<div style="background:#8b7d7b;width:0.0712771291022102%;height:16px;display:flex;align-items:center;justify-content:center;color:#000000;font-weight:bold;font-size:12px;position:relative;">
+<span style="color:#000000;position:absolute;left:0%;margin-left:0.0712771291022102px;font-weight:bold;font-size:12px;">0.1%</span>
+</div>
+</div></td>
+</tr>
+<tr class="even">
+<td class="gt_row gt_left" headers="SEQUENCE_LAB">Atlas Genomics</td>
+<td class="gt_row gt_right" headers="n">89</td>
+<td class="gt_row gt_left" headers="x_scaled"><div style="flex-grow:1;margin-left:8px;background:#e1e1e1;">
+<div style="background:#8b7d7b;width:0.0537598685601416%;height:16px;display:flex;align-items:center;justify-content:center;color:#000000;font-weight:bold;font-size:12px;position:relative;">
+<span style="color:#000000;position:absolute;left:0%;margin-left:0.0537598685601416px;font-weight:bold;font-size:12px;">0.1%</span>
+</div>
+</div></td>
+</tr>
+<tr class="odd">
+<td class="gt_row gt_left" headers="SEQUENCE_LAB">Boise VA</td>
+<td class="gt_row gt_right" headers="n">67</td>
+<td class="gt_row gt_left" headers="x_scaled"><div style="flex-grow:1;margin-left:8px;background:#e1e1e1;">
+<div style="background:#8b7d7b;width:0.0404709122868482%;height:16px;display:flex;align-items:center;justify-content:center;color:#000000;font-weight:bold;font-size:12px;position:relative;">
+<span style="color:#000000;position:absolute;left:0%;margin-left:0.0404709122868482px;font-weight:bold;font-size:12px;">0%</span>
+</div>
+</div></td>
+</tr>
+<tr class="even">
+<td class="gt_row gt_left" headers="SEQUENCE_LAB">OHSU</td>
+<td class="gt_row gt_right" headers="n">61</td>
+<td class="gt_row gt_left" headers="x_scaled"><div style="flex-grow:1;margin-left:8px;background:#e1e1e1;">
+<div style="background:#8b7d7b;width:0.0368466514850409%;height:16px;display:flex;align-items:center;justify-content:center;color:#000000;font-weight:bold;font-size:12px;position:relative;">
+<span style="color:#000000;position:absolute;left:0%;margin-left:0.0368466514850409px;font-weight:bold;font-size:12px;">0%</span>
+</div>
+</div></td>
+</tr>
+<tr class="odd">
+<td class="gt_row gt_left" headers="SEQUENCE_LAB">SFS/Bedford</td>
+<td class="gt_row gt_right" headers="n">53</td>
+<td class="gt_row gt_left" headers="x_scaled"><div style="flex-grow:1;margin-left:8px;background:#e1e1e1;">
+<div style="background:#8b7d7b;width:0.0320143037492978%;height:16px;display:flex;align-items:center;justify-content:center;color:#000000;font-weight:bold;font-size:12px;position:relative;">
+<span style="color:#000000;position:absolute;left:0%;margin-left:0.0320143037492978px;font-weight:bold;font-size:12px;">0%</span>
+</div>
+</div></td>
+</tr>
+<tr class="even">
+<td class="gt_row gt_left" headers="SEQUENCE_LAB">IDBOL</td>
+<td class="gt_row gt_right" headers="n">40</td>
+<td class="gt_row gt_left" headers="x_scaled"><div style="flex-grow:1;margin-left:8px;background:#e1e1e1;">
+<div style="background:#8b7d7b;width:0.0241617386787153%;height:16px;display:flex;align-items:center;justify-content:center;color:#000000;font-weight:bold;font-size:12px;position:relative;">
+<span style="color:#000000;position:absolute;left:0%;margin-left:0.0241617386787153px;font-weight:bold;font-size:12px;">0%</span>
+</div>
+</div></td>
+</tr>
+<tr class="odd">
+<td class="gt_row gt_left" headers="SEQUENCE_LAB">Gravity Diagnostics</td>
+<td class="gt_row gt_right" headers="n">36</td>
+<td class="gt_row gt_left" headers="x_scaled"><div style="flex-grow:1;margin-left:8px;background:#e1e1e1;">
+<div style="background:#8b7d7b;width:0.0217455648108438%;height:16px;display:flex;align-items:center;justify-content:center;color:#000000;font-weight:bold;font-size:12px;position:relative;">
+<span style="color:#000000;position:absolute;left:0%;margin-left:0.0217455648108438px;font-weight:bold;font-size:12px;">0%</span>
+</div>
+</div></td>
+</tr>
+<tr class="even">
+<td class="gt_row gt_left" headers="SEQUENCE_LAB">ASU</td>
+<td class="gt_row gt_right" headers="n">33</td>
+<td class="gt_row gt_left" headers="x_scaled"><div style="flex-grow:1;margin-left:8px;background:#e1e1e1;">
+<div style="background:#8b7d7b;width:0.0199334344099401%;height:16px;display:flex;align-items:center;justify-content:center;color:#000000;font-weight:bold;font-size:12px;position:relative;">
+<span style="color:#000000;position:absolute;left:0%;margin-left:0.0199334344099401px;font-weight:bold;font-size:12px;">0%</span>
+</div>
+</div></td>
+</tr>
+<tr class="odd">
+<td class="gt_row gt_left" headers="SEQUENCE_LAB">NA</td>
+<td class="gt_row gt_right" headers="n">18</td>
+<td class="gt_row gt_left" headers="x_scaled"><div style="flex-grow:1;margin-left:8px;background:#e1e1e1;">
+<div style="background:#8b7d7b;width:0.0108727824054219%;height:16px;display:flex;align-items:center;justify-content:center;color:#000000;font-weight:bold;font-size:12px;position:relative;">
+<span style="color:#000000;position:absolute;left:0%;margin-left:0.0108727824054219px;font-weight:bold;font-size:12px;">0%</span>
+</div>
+</div></td>
+</tr>
+<tr class="even">
+<td class="gt_row gt_left" headers="SEQUENCE_LAB">OSPHL</td>
+<td class="gt_row gt_right" headers="n">15</td>
+<td class="gt_row gt_left" headers="x_scaled"><div style="flex-grow:1;margin-left:8px;background:#e1e1e1;">
+<div style="background:#8b7d7b;width:0.00906065200451824%;height:16px;display:flex;align-items:center;justify-content:center;color:#000000;font-weight:bold;font-size:12px;position:relative;">
+<span style="color:#000000;position:absolute;left:0%;margin-left:0.00906065200451824px;font-weight:bold;font-size:12px;">0%</span>
+</div>
+</div></td>
+</tr>
+<tr class="odd">
+<td class="gt_row gt_left" headers="SEQUENCE_LAB">USAMRIID</td>
+<td class="gt_row gt_right" headers="n">9</td>
+<td class="gt_row gt_left" headers="x_scaled"><div style="flex-grow:1;margin-left:8px;background:#e1e1e1;">
+<div style="background:#8b7d7b;width:0.00543639120271095%;height:16px;display:flex;align-items:center;justify-content:center;color:#000000;font-weight:bold;font-size:12px;position:relative;">
+<span style="color:#000000;position:absolute;left:0%;margin-left:0.00543639120271095px;font-weight:bold;font-size:12px;">0%</span>
+</div>
+</div></td>
+</tr>
+<tr class="even">
+<td class="gt_row gt_left" headers="SEQUENCE_LAB">Infinity Biologix</td>
+<td class="gt_row gt_right" headers="n">7</td>
+<td class="gt_row gt_left" headers="x_scaled"><div style="flex-grow:1;margin-left:8px;background:#e1e1e1;">
+<div style="background:#8b7d7b;width:0.00422830426877518%;height:16px;display:flex;align-items:center;justify-content:center;color:#000000;font-weight:bold;font-size:12px;position:relative;">
+<span style="color:#000000;position:absolute;left:0%;margin-left:0.00422830426877518px;font-weight:bold;font-size:12px;">0%</span>
+</div>
+</div></td>
+</tr>
+<tr class="odd">
+<td class="gt_row gt_left" headers="SEQUENCE_LAB">Grubaugh Lab</td>
+<td class="gt_row gt_right" headers="n">2</td>
+<td class="gt_row gt_left" headers="x_scaled"><div style="flex-grow:1;margin-left:8px;background:#e1e1e1;">
+<div style="background:#8b7d7b;width:0.00120808693393577%;height:16px;display:flex;align-items:center;justify-content:center;color:#000000;font-weight:bold;font-size:12px;position:relative;">
+<span style="color:#000000;position:absolute;left:0%;margin-left:0.00120808693393577px;font-weight:bold;font-size:12px;">0%</span>
+</div>
+</div></td>
+</tr>
+<tr class="even">
+<td class="gt_row gt_left" headers="SEQUENCE_LAB">Montana Public Health Lab</td>
+<td class="gt_row gt_right" headers="n">2</td>
+<td class="gt_row gt_left" headers="x_scaled"><div style="flex-grow:1;margin-left:8px;background:#e1e1e1;">
+<div style="background:#8b7d7b;width:0.00120808693393577%;height:16px;display:flex;align-items:center;justify-content:center;color:#000000;font-weight:bold;font-size:12px;position:relative;">
+<span style="color:#000000;position:absolute;left:0%;margin-left:0.00120808693393577px;font-weight:bold;font-size:12px;">0%</span>
+</div>
+</div></td>
+</tr>
+<tr class="odd">
+<td class="gt_row gt_left" headers="SEQUENCE_LAB">Flow Diagnostics</td>
+<td class="gt_row gt_right" headers="n">1</td>
+<td class="gt_row gt_left" headers="x_scaled"><div style="flex-grow:1;margin-left:8px;background:#e1e1e1;">
+<div style="background:#8b7d7b;width:0.000604043466967883%;height:16px;display:flex;align-items:center;justify-content:center;color:#000000;font-weight:bold;font-size:12px;position:relative;">
+<span style="color:#000000;position:absolute;left:0%;margin-left:0.000604043466967883px;font-weight:bold;font-size:12px;">0%</span>
+</div>
+</div></td>
+</tr>
+<tr class="even">
+<td class="gt_row gt_left" headers="SEQUENCE_LAB">Grittman Medical Center</td>
+<td class="gt_row gt_right" headers="n">1</td>
+<td class="gt_row gt_left" headers="x_scaled"><div style="flex-grow:1;margin-left:8px;background:#e1e1e1;">
+<div style="background:#8b7d7b;width:0.000604043466967883%;height:16px;display:flex;align-items:center;justify-content:center;color:#000000;font-weight:bold;font-size:12px;position:relative;">
+<span style="color:#000000;position:absolute;left:0%;margin-left:0.000604043466967883px;font-weight:bold;font-size:12px;">0%</span>
+</div>
+</div></td>
+</tr>
+<tr class="odd">
+<td class="gt_row gt_left" headers="SEQUENCE_LAB">NW GENOMICS</td>
+<td class="gt_row gt_right" headers="n">1</td>
+<td class="gt_row gt_left" headers="x_scaled"><div style="flex-grow:1;margin-left:8px;background:#e1e1e1;">
+<div style="background:#8b7d7b;width:0.000604043466967883%;height:16px;display:flex;align-items:center;justify-content:center;color:#000000;font-weight:bold;font-size:12px;position:relative;">
+<span style="color:#000000;position:absolute;left:0%;margin-left:0.000604043466967883px;font-weight:bold;font-size:12px;">0%</span>
+</div>
+</div></td>
+</tr>
+<tr class="even">
+<td class="gt_row gt_left" headers="SEQUENCE_LAB">Naval Health Research Center</td>
+<td class="gt_row gt_right" headers="n">1</td>
+<td class="gt_row gt_left" headers="x_scaled"><div style="flex-grow:1;margin-left:8px;background:#e1e1e1;">
+<div style="background:#8b7d7b;width:0.000604043466967883%;height:16px;display:flex;align-items:center;justify-content:center;color:#000000;font-weight:bold;font-size:12px;position:relative;">
+<span style="color:#000000;position:absolute;left:0%;margin-left:0.000604043466967883px;font-weight:bold;font-size:12px;">0%</span>
+</div>
+</div></td>
+</tr>
+<tr class="odd">
+<td class="gt_row gt_left" headers="SEQUENCE_LAB">Providence_Swedish</td>
+<td class="gt_row gt_right" headers="n">1</td>
+<td class="gt_row gt_left" headers="x_scaled"><div style="flex-grow:1;margin-left:8px;background:#e1e1e1;">
+<div style="background:#8b7d7b;width:0.000604043466967883%;height:16px;display:flex;align-items:center;justify-content:center;color:#000000;font-weight:bold;font-size:12px;position:relative;">
+<span style="color:#000000;position:absolute;left:0%;margin-left:0.000604043466967883px;font-weight:bold;font-size:12px;">0%</span>
+</div>
+</div></td>
+</tr>
+<tr class="even">
+<td class="gt_row gt_left" headers="SEQUENCE_LAB">SCAB/Bedford</td>
+<td class="gt_row gt_right" headers="n">1</td>
+<td class="gt_row gt_left" headers="x_scaled"><div style="flex-grow:1;margin-left:8px;background:#e1e1e1;">
+<div style="background:#8b7d7b;width:0.000604043466967883%;height:16px;display:flex;align-items:center;justify-content:center;color:#000000;font-weight:bold;font-size:12px;position:relative;">
+<span style="color:#000000;position:absolute;left:0%;margin-left:0.000604043466967883px;font-weight:bold;font-size:12px;">0%</span>
+</div>
+</div></td>
+</tr>
+<tr class="odd">
+<td class="gt_row gt_left" headers="SEQUENCE_LAB">SFS/ Bedford</td>
+<td class="gt_row gt_right" headers="n">1</td>
+<td class="gt_row gt_left" headers="x_scaled"><div style="flex-grow:1;margin-left:8px;background:#e1e1e1;">
+<div style="background:#8b7d7b;width:0.000604043466967883%;height:16px;display:flex;align-items:center;justify-content:center;color:#000000;font-weight:bold;font-size:12px;position:relative;">
+<span style="color:#000000;position:absolute;left:0%;margin-left:0.000604043466967883px;font-weight:bold;font-size:12px;">0%</span>
+</div>
+</div></td>
+</tr>
+<tr class="even">
+<td class="gt_row gt_left" headers="SEQUENCE_LAB">The Jackson Laboratory</td>
+<td class="gt_row gt_right" headers="n">1</td>
+<td class="gt_row gt_left" headers="x_scaled"><div style="flex-grow:1;margin-left:8px;background:#e1e1e1;">
+<div style="background:#8b7d7b;width:0.000604043466967883%;height:16px;display:flex;align-items:center;justify-content:center;color:#000000;font-weight:bold;font-size:12px;position:relative;">
+<span style="color:#000000;position:absolute;left:0%;margin-left:0.000604043466967883px;font-weight:bold;font-size:12px;">0%</span>
+</div>
+</div></td>
+</tr>
+</tbody>
+</table>
+
+</div>
+</div>
+</div>
+</div>
+</figure>
+</div>
+</div>
+</div>
+<p><a href="./notebooks/pipeline_counts-preview.html#tbl-labcount">source notebook</a>.</p>
+<p><br></p>
+
+</section>
+
+<div id="quarto-appendix" class="default"><section class="quarto-appendix-contents" role="doc-bibliography" id="quarto-bibliography"><h2 class="anchored quarto-appendix-heading">References</h2><div id="refs" class="references csl-bib-body hanging-indent" data-entry-spacing="0" role="list">
+<div id="ref-olteanSentinelSurveillanceSystem" class="csl-entry" role="listitem">
+Oltean, Hanna N., Krisandra J. Allen, Lauren Frisbie, Stephanie M. Lunn, Laura Marcela Torres, Lillian Manahan, Ian Painter, et al. n.d. <span>“Sentinel <span>Surveillance System Implementation</span> and <span>Evaluation</span> for <span>SARS-CoV-2 Genomic Data</span>, <span>Washington</span>, <span>USA</span>, 2020–2021 - <span>Volume</span> 29, <span>Number</span> 2—<span>February</span> 2023 - <span>Emerging Infectious Diseases</span> Journal - <span>CDC</span>.”</span> Accessed March 18, 2024. <a href="https://doi.org/10.3201/eid2902.221482">https://doi.org/10.3201/eid2902.221482</a>.
+</div>
+<div id="ref-olteanChangingGenomicEpidemiology2024" class="csl-entry" role="listitem">
+Oltean, Hanna N., Allison Black, Stephanie M. Lunn, Nailah Smith, Allison Templeton, Elyse Bevers, Lynae Kibiger, et al. 2024. <span>“Changing Genomic Epidemiology of <span>COVID-19</span> in Long-Term Care Facilities During the 2020–2022 Pandemic, <span>Washington State</span>.”</span> <em>BMC Public Health</em> 24 (January): 182. <a href="https://doi.org/10.1186/s12889-023-17461-2">https://doi.org/10.1186/s12889-023-17461-2</a>.
+</div>
+<div id="ref-wagnerPositiveSelectionUnderlies2023" class="csl-entry" role="listitem">
+Wagner, Cassia, Kathryn E. Kistler, Garrett A. Perchetti, Noah Baker, Lauren A. Frisbie, Laura Marcela Torres, Frank Aragona, et al. 2023. <span>“Positive Selection Underlies Repeated Knockout of <span>ORF8</span> in <span>SARS-CoV-2</span> Evolution.”</span> September 23, 2023. <a href="https://doi.org/10.1101/2023.09.21.23295927">https://doi.org/10.1101/2023.09.21.23295927</a>.
+</div>
+</div></section><section class="quarto-appendix-contents" id="quarto-citation"><h2 class="anchored quarto-appendix-heading">Citation</h2><div><div class="quarto-appendix-secondary-label">BibTeX citation:</div><pre class="sourceCode code-with-copy quarto-appendix-bibtex"><code class="sourceCode bibtex">@article{aragona2024,
+  author = {Aragona, Frank and Yun, Cory and Crain, Philip and Lloyd,
+    Paul and Nebergall, Emily},
+  title = {Data {Integration} and {Quality} {Assurance} of {Sequencing}
+    {Metadata} in {Washington} {State}},
+  date = {2024-03-01},
+  langid = {en},
+  abstract = {Genomic surveillance is important for identifying and
+    tracking SARS CoV-2 variants to better mitigate spread of COVID-19.
+    Washington State Department of Health quickly increased capacity to
+    surveil SARS CoV-2 variants by partnering with over 25 labs to
+    collect sequencing data while developing and implementing solutions
+    to standardize submissions and enhance data linkage and quality.
+    High impact solutions included development of a standardized
+    reporting template, collection of case demographics, adaptation of
+    HL7 messages with sequencing data, and strategic utilization of
+    external sequencing data repositories. We developed an automated
+    pipeline that combines data science tools to ingest, clean, and link
+    SARS CoV-2 sequencing data from multiple sources, while accounting
+    for differing data formats and quality. This manuscript details the
+    first version of the pipeline developed in February 2021 when
+    processes were unstable and were being developed as they were
+    utilized.}
+}
+</code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre><div class="quarto-appendix-secondary-label">For attribution, please cite this work as:</div><div id="ref-aragona2024" class="csl-entry quarto-appendix-citeas" role="listitem">
+Aragona, Frank, Cory Yun, Philip Crain, Paul Lloyd, and Emily Nebergall.
+2024. <span>“Data Integration and Quality Assurance of Sequencing
+Metadata in Washington State,”</span> March.
+</div></div></section></div></main>
+<!-- /main column -->
+<script id="quarto-html-after-body" type="application/javascript">
+window.document.addEventListener("DOMContentLoaded", function (event) {
+  const toggleBodyColorMode = (bsSheetEl) => {
+    const mode = bsSheetEl.getAttribute("data-mode");
+    const bodyEl = window.document.querySelector("body");
+    if (mode === "dark") {
+      bodyEl.classList.add("quarto-dark");
+      bodyEl.classList.remove("quarto-light");
+    } else {
+      bodyEl.classList.add("quarto-light");
+      bodyEl.classList.remove("quarto-dark");
+    }
+  }
+  const toggleBodyColorPrimary = () => {
+    const bsSheetEl = window.document.querySelector("link#quarto-bootstrap");
+    if (bsSheetEl) {
+      toggleBodyColorMode(bsSheetEl);
+    }
+  }
+  toggleBodyColorPrimary();  
+  const icon = "";
+  const anchorJS = new window.AnchorJS();
+  anchorJS.options = {
+    placement: 'right',
+    icon: icon
+  };
+  anchorJS.add('.anchored');
+  const isCodeAnnotation = (el) => {
+    for (const clz of el.classList) {
+      if (clz.startsWith('code-annotation-')) {                     
+        return true;
+      }
+    }
+    return false;
+  }
+  const clipboard = new window.ClipboardJS('.code-copy-button', {
+    text: function(trigger) {
+      const codeEl = trigger.previousElementSibling.cloneNode(true);
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+  });
+  clipboard.on('success', function(e) {
+    // button target
+    const button = e.trigger;
+    // don't keep focus
+    button.blur();
+    // flash "checked"
+    button.classList.add('code-copy-button-checked');
+    var currentTitle = button.getAttribute("title");
+    button.setAttribute("title", "Copied!");
+    let tooltip;
+    if (window.bootstrap) {
+      button.setAttribute("data-bs-toggle", "tooltip");
+      button.setAttribute("data-bs-placement", "left");
+      button.setAttribute("data-bs-title", "Copied!");
+      tooltip = new bootstrap.Tooltip(button, 
+        { trigger: "manual", 
+          customClass: "code-copy-button-tooltip",
+          offset: [0, -8]});
+      tooltip.show();    
+    }
+    setTimeout(function() {
+      if (tooltip) {
+        tooltip.hide();
+        button.removeAttribute("data-bs-title");
+        button.removeAttribute("data-bs-toggle");
+        button.removeAttribute("data-bs-placement");
+      }
+      button.setAttribute("title", currentTitle);
+      button.classList.remove('code-copy-button-checked');
+    }, 1000);
+    // clear code selection
+    e.clearSelection();
+  });
+    var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+    var mailtoRegex = new RegExp(/^mailto:/);
+      var filterRegex = new RegExp('/' + window.location.host + '/');
+    var isInternal = (href) => {
+        return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+    }
+    // Inspect non-navigation links and adorn them if external
+ 	var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool)');
+    for (var i=0; i<links.length; i++) {
+      const link = links[i];
+      if (!isInternal(link.href)) {
+        // undo the damage that might have been done by quarto-nav.js in the case of
+        // links that we want to consider external
+        if (link.dataset.originalHref !== undefined) {
+          link.href = link.dataset.originalHref;
+        }
+      }
+    }
+  function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+    const config = {
+      allowHTML: true,
+      maxWidth: 500,
+      delay: 100,
+      arrow: false,
+      appendTo: function(el) {
+          return el.parentElement;
+      },
+      interactive: true,
+      interactiveBorder: 10,
+      theme: 'quarto',
+      placement: 'bottom-start',
+    };
+    if (contentFn) {
+      config.content = contentFn;
+    }
+    if (onTriggerFn) {
+      config.onTrigger = onTriggerFn;
+    }
+    if (onUntriggerFn) {
+      config.onUntrigger = onUntriggerFn;
+    }
+    window.tippy(el, config); 
+  }
+  const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+  for (var i=0; i<noterefs.length; i++) {
+    const ref = noterefs[i];
+    tippyHover(ref, function() {
+      // use id or data attribute instead here
+      let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+      try { href = new URL(href).hash; } catch {}
+      const id = href.replace(/^#\/?/, "");
+      const note = window.document.getElementById(id);
+      if (note) {
+        return note.innerHTML;
+      } else {
+        return "";
+      }
+    });
+  }
+  const xrefs = window.document.querySelectorAll('a.quarto-xref');
+  const processXRef = (id, note) => {
+    // Strip column container classes
+    const stripColumnClz = (el) => {
+      el.classList.remove("page-full", "page-columns");
+      if (el.children) {
+        for (const child of el.children) {
+          stripColumnClz(child);
+        }
+      }
+    }
+    stripColumnClz(note)
+    if (id === null || id.startsWith('sec-')) {
+      // Special case sections, only their first couple elements
+      const container = document.createElement("div");
+      if (note.children && note.children.length > 2) {
+        container.appendChild(note.children[0].cloneNode(true));
+        for (let i = 1; i < note.children.length; i++) {
+          const child = note.children[i];
+          if (child.tagName === "P" && child.innerText === "") {
+            continue;
+          } else {
+            container.appendChild(child.cloneNode(true));
+            break;
+          }
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(container);
+        }
+        return container.innerHTML
+      } else {
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        return note.innerHTML;
+      }
+    } else {
+      // Remove any anchor links if they are present
+      const anchorLink = note.querySelector('a.anchorjs-link');
+      if (anchorLink) {
+        anchorLink.remove();
+      }
+      if (window.Quarto?.typesetMath) {
+        window.Quarto.typesetMath(note);
+      }
+      // TODO in 1.5, we should make sure this works without a callout special case
+      if (note.classList.contains("callout")) {
+        return note.outerHTML;
+      } else {
+        return note.innerHTML;
+      }
+    }
+  }
+  for (var i=0; i<xrefs.length; i++) {
+    const xref = xrefs[i];
+    tippyHover(xref, undefined, function(instance) {
+      instance.disable();
+      let url = xref.getAttribute('href');
+      let hash = undefined; 
+      if (url.startsWith('#')) {
+        hash = url;
+      } else {
+        try { hash = new URL(url).hash; } catch {}
+      }
+      if (hash) {
+        const id = hash.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note !== null) {
+          try {
+            const html = processXRef(id, note.cloneNode(true));
+            instance.setContent(html);
+          } finally {
+            instance.enable();
+            instance.show();
+          }
+        } else {
+          // See if we can fetch this
+          fetch(url.split('#')[0])
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.getElementById(id);
+            if (note !== null) {
+              const html = processXRef(id, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      } else {
+        // See if we can fetch a full url (with no hash to target)
+        // This is a special case and we should probably do some content thinning / targeting
+        fetch(url)
+        .then(res => res.text())
+        .then(html => {
+          const parser = new DOMParser();
+          const htmlDoc = parser.parseFromString(html, "text/html");
+          const note = htmlDoc.querySelector('main.content');
+          if (note !== null) {
+            // This should only happen for chapter cross references
+            // (since there is no id in the URL)
+            // remove the first header
+            if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+              note.children[0].remove();
+            }
+            const html = processXRef(null, note);
+            instance.setContent(html);
+          } 
+        }).finally(() => {
+          instance.enable();
+          instance.show();
+        });
+      }
+    }, function(instance) {
+    });
+  }
+      let selectedAnnoteEl;
+      const selectorForAnnotation = ( cell, annotation) => {
+        let cellAttr = 'data-code-cell="' + cell + '"';
+        let lineAttr = 'data-code-annotation="' +  annotation + '"';
+        const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+        return selector;
+      }
+      const selectCodeLines = (annoteEl) => {
+        const doc = window.document;
+        const targetCell = annoteEl.getAttribute("data-target-cell");
+        const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+        const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+        const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+        const lineIds = lines.map((line) => {
+          return targetCell + "-" + line;
+        })
+        let top = null;
+        let height = null;
+        let parent = null;
+        if (lineIds.length > 0) {
+            //compute the position of the single el (top and bottom and make a div)
+            const el = window.document.getElementById(lineIds[0]);
+            top = el.offsetTop;
+            height = el.offsetHeight;
+            parent = el.parentElement.parentElement;
+          if (lineIds.length > 1) {
+            const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+            const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+            height = bottom - top;
+          }
+          if (top !== null && height !== null && parent !== null) {
+            // cook up a div (if necessary) and position it 
+            let div = window.document.getElementById("code-annotation-line-highlight");
+            if (div === null) {
+              div = window.document.createElement("div");
+              div.setAttribute("id", "code-annotation-line-highlight");
+              div.style.position = 'absolute';
+              parent.appendChild(div);
+            }
+            div.style.top = top - 2 + "px";
+            div.style.height = height + 4 + "px";
+            div.style.left = 0;
+            let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+            if (gutterDiv === null) {
+              gutterDiv = window.document.createElement("div");
+              gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+              gutterDiv.style.position = 'absolute';
+              const codeCell = window.document.getElementById(targetCell);
+              const gutter = codeCell.querySelector('.code-annotation-gutter');
+              gutter.appendChild(gutterDiv);
+            }
+            gutterDiv.style.top = top - 2 + "px";
+            gutterDiv.style.height = height + 4 + "px";
+          }
+          selectedAnnoteEl = annoteEl;
+        }
+      };
+      const unselectCodeLines = () => {
+        const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+        elementsIds.forEach((elId) => {
+          const div = window.document.getElementById(elId);
+          if (div) {
+            div.remove();
+          }
+        });
+        selectedAnnoteEl = undefined;
+      };
+        // Handle positioning of the toggle
+    window.addEventListener(
+      "resize",
+      throttle(() => {
+        elRect = undefined;
+        if (selectedAnnoteEl) {
+          selectCodeLines(selectedAnnoteEl);
+        }
+      }, 10)
+    );
+    function throttle(fn, ms) {
+    let throttle = false;
+    let timer;
+      return (...args) => {
+        if(!throttle) { // first call gets through
+            fn.apply(this, args);
+            throttle = true;
+        } else { // all the others get throttled
+            if(timer) clearTimeout(timer); // cancel #2
+            timer = setTimeout(() => {
+              fn.apply(this, args);
+              timer = throttle = false;
+            }, ms);
+        }
+      };
+    }
+      // Attach click handler to the DT
+      const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+      for (const annoteDlNode of annoteDls) {
+        annoteDlNode.addEventListener('click', (event) => {
+          const clickedEl = event.target;
+          if (clickedEl !== selectedAnnoteEl) {
+            unselectCodeLines();
+            const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+            if (activeEl) {
+              activeEl.classList.remove('code-annotation-active');
+            }
+            selectCodeLines(clickedEl);
+            clickedEl.classList.add('code-annotation-active');
+          } else {
+            // Unselect the line
+            unselectCodeLines();
+            clickedEl.classList.remove('code-annotation-active');
+          }
+        });
+      }
+  const findCites = (el) => {
+    const parentEl = el.parentElement;
+    if (parentEl) {
+      const cites = parentEl.dataset.cites;
+      if (cites) {
+        return {
+          el,
+          cites: cites.split(' ')
+        };
+      } else {
+        return findCites(el.parentElement)
+      }
+    } else {
+      return undefined;
+    }
+  };
+  var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+  for (var i=0; i<bibliorefs.length; i++) {
+    const ref = bibliorefs[i];
+    const citeInfo = findCites(ref);
+    if (citeInfo) {
+      tippyHover(citeInfo.el, function() {
+        var popup = window.document.createElement('div');
+        citeInfo.cites.forEach(function(cite) {
+          var citeDiv = window.document.createElement('div');
+          citeDiv.classList.add('hanging-indent');
+          citeDiv.classList.add('csl-entry');
+          var biblioDiv = window.document.getElementById('ref-' + cite);
+          if (biblioDiv) {
+            citeDiv.innerHTML = biblioDiv.innerHTML;
+          }
+          popup.appendChild(citeDiv);
+        });
+        return popup.innerHTML;
+      });
+    }
+  }
+});
+</script>
+</div> <!-- /content -->
+<script>var lightboxQuarto = GLightbox({"closeEffect":"zoom","openEffect":"zoom","descPosition":"bottom","loop":false,"selector":".lightbox"});
+window.onload = () => {
+  lightboxQuarto.on('slide_before_load', (data) => {
+    const { slideIndex, slideNode, slideConfig, player, trigger } = data;
+    const href = trigger.getAttribute('href');
+    if (href !== null) {
+      const imgEl = window.document.querySelector(`a[href="${href}"] img`);
+      if (imgEl !== null) {
+        const srcAttr = imgEl.getAttribute("src");
+        if (srcAttr && srcAttr.startsWith("data:")) {
+          slideConfig.href = srcAttr;
+        }
+      }
+    } 
+  });
+
+  lightboxQuarto.on('slide_after_load', (data) => {
+    const { slideIndex, slideNode, slideConfig, player, trigger } = data;
+    if (window.Quarto?.typesetMath) {
+      window.Quarto.typesetMath(slideNode);
+    }
+  });
+
+};
+          </script>
+
+
+
+
+</body></html>

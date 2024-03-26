@@ -1,0 +1,1769 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+    <meta charset="utf-8">
+    <meta name="generator" content="quarto-1.5.22">
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+    <meta name="author" content="Emily Nebergall and Allie Warren">
+    <meta name="dcterms.date" content="2024-03-05">
+
+    <title>PHL Script</title>
+    <style>
+      code{white-space: pre-wrap;}
+      span.smallcaps{font-variant: small-caps;}
+      div.columns{display: flex; gap: min(4vw, 1.5em);}
+      div.column{flex: auto; overflow-x: auto;}
+      div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+      ul.task-list{list-style: none;}
+      ul.task-list li input[type="checkbox"] {
+        width: 0.8em;
+        margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+        vertical-align: middle;
+      }
+      /* CSS for syntax highlighting */
+      pre > code.sourceCode { white-space: pre; position: relative; }
+      pre > code.sourceCode > span { line-height: 1.25; }
+      pre > code.sourceCode > span:empty { height: 1.2em; }
+      .sourceCode { overflow: visible; }
+      code.sourceCode > span { color: inherit; text-decoration: inherit; }
+      div.sourceCode { margin: 1em 0; }
+      pre.sourceCode { margin: 0; }
+      @media screen {
+      div.sourceCode { overflow: auto; }
+      }
+      @media print {
+      pre > code.sourceCode { white-space: pre-wrap; }
+      pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+      }
+      pre.numberSource code
+        { counter-reset: source-line 0; }
+      pre.numberSource code > span
+        { position: relative; left: -4em; counter-increment: source-line; }
+      pre.numberSource code > span > a:first-child::before
+        { content: counter(source-line);
+          position: relative; left: -1em; text-align: right; vertical-align: baseline;
+          border: none; display: inline-block;
+          -webkit-touch-callout: none; -webkit-user-select: none;
+          -khtml-user-select: none; -moz-user-select: none;
+          -ms-user-select: none; user-select: none;
+          padding: 0 4px; width: 4em;
+        }
+      pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+      div.sourceCode
+        {   }
+      @media screen {
+      pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+      }
+    </style>
+
+    <style>
+      body.hypothesis-enabled #quarto-embed-header {
+        padding-right: 36px;
+      }
+
+      #quarto-embed-header {
+        height: 3em;
+        width: 100%;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border-bottom: solid 1px;
+      }
+
+      #quarto-embed-header h6 {
+        font-size: 1.1em;
+        padding-top: 0.6em;
+        margin-left: 1em;
+        margin-right: 1em;
+        font-weight: 400;
+      }
+
+      #quarto-embed-header a.quarto-back-link,
+      #quarto-embed-header a.quarto-download-embed {
+        font-size: 0.8em;
+        margin-top: 1em;
+        margin-bottom: 1em;
+        margin-left: 1em;
+        margin-right: 1em;
+      }
+
+      .quarto-back-container {
+        padding-left: 0.5em;
+        display: flex;
+      }
+
+      .headroom {
+          will-change: transform;
+          transition: transform 200ms linear;
+      }
+
+      .headroom--pinned {
+          transform: translateY(0%);
+      }
+
+      .headroom--unpinned {
+          transform: translateY(-100%);
+      }      
+    </style>
+
+    <script>
+    window.document.addEventListener("DOMContentLoaded", function () {
+
+      var header = window.document.querySelector("#quarto-embed-header");
+      const titleBannerEl = window.document.querySelector("body > #title-block-header");
+      if (titleBannerEl) {
+        titleBannerEl.style.paddingTop = header.clientHeight + "px";
+      }
+      const contentEl = window.document.getElementById('quarto-content');
+      for (const child of contentEl.children) {
+        child.style.paddingTop = header.clientHeight + "px";
+        child.style.marginTop = "1em";
+      }
+
+      // Use the article root if the `back` call doesn't work. This isn't perfect
+      // but should typically work
+      window.quartoBackToArticle = () => {
+        var currentUrl = window.location.href;
+        window.history.back();
+        setTimeout(() => {
+            // if location was not changed in 100 ms, then there is no history back
+            if(currentUrl === window.location.href){              
+                // redirect to site root
+                window.location.href = "../index.html";
+            }
+        }, 100);
+      }
+
+      const headroom = new window.Headroom(header, {
+        tolerance: 5,
+        onPin: function () {
+        },
+        onUnpin: function () {
+        },
+      });
+      headroom.init();
+    });
+    </script>
+
+    
+<script src="../site_libs/manuscript-notebook/headroom.min.js"></script>
+<script src="../site_libs/clipboard/clipboard.min.js"></script>
+<script src="../site_libs/quarto-html/quarto.js"></script>
+<script src="../site_libs/quarto-html/popper.min.js"></script>
+<script src="../site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="../site_libs/quarto-html/anchor.min.js"></script>
+<link href="../site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="../site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="../site_libs/bootstrap/bootstrap.min.css" rel="stylesheet" id="quarto-bootstrap" data-mode="light">
+<script src="../site_libs/quarto-contrib/glightbox/glightbox.min.js"></script>
+<link href="../site_libs/quarto-contrib/glightbox/glightbox.min.css" rel="stylesheet">
+<link href="../site_libs/quarto-contrib/glightbox/lightbox.css" rel="stylesheet">
+     <script async="" src="https://hypothes.is/embed.js"></script>
+<script>
+  window.document.addEventListener("DOMContentLoaded", function (_event) {
+    document.body.classList.add('hypothesis-enabled');
+  });
+</script>  
+      </head>
+
+  <body class="quarto-notebook">
+    <div id="quarto-embed-header" class="headroom fixed-top bg-primary">
+      
+      <a onclick="window.quartoBackToArticle(); return false;" class="btn btn-primary quarto-back-link" href=""><i class="bi bi-caret-left"></i> Back to Article</a>
+      <h6><i class="bi bi-journal-code"></i> PHL Script</h6>
+
+            <a href="../notebooks/phl.Rmd" class="btn btn-primary quarto-download-embed" download="phl.Rmd">Download Notebook</a>
+          </div>
+
+     <header id="title-block-header" class="quarto-title-block default toc-left page-columns page-full">
+  <div class="quarto-title-banner page-columns page-full">
+    <div class="quarto-title column-body">
+      <h1 class="title">PHL Script</h1>
+          </div>
+
+    
+    <div class="quarto-title-meta-container">
+      <div class="quarto-title-meta-column-start">
+        
+        <div class="quarto-title-meta">
+
+                <div>
+            <div class="quarto-title-meta-heading">Author</div>
+            <div class="quarto-title-meta-contents">
+                        <p>Emily Nebergall and Allie Warren </p>
+                      </div>
+          </div>
+                
+                <div>
+            <div class="quarto-title-meta-heading">Published</div>
+            <div class="quarto-title-meta-contents">
+              <p class="date">March 5, 2024</p>
+            </div>
+          </div>
+          
+                
+              </div>
+      </div>
+      <div class="quarto-title-meta-column-end quarto-other-formats-target">
+      </div>
+    </div>
+
+
+
+    <div class="quarto-other-links-text-target">
+    </div>  </div>
+</header><div id="quarto-content" class="page-columns page-rows-contents page-layout-article toc-left">
+<div id="quarto-sidebar-toc-left" class="sidebar toc-left">
+  <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">Table of contents</h2>
+   
+  <ul>
+  <li><a href="#overview" id="toc-overview" class="nav-link active" data-scroll-target="#overview">Overview</a></li>
+  <li><a href="#flowchart" id="toc-flowchart" class="nav-link" data-scroll-target="#flowchart">Flowchart</a></li>
+  <li><a href="#setup" id="toc-setup" class="nav-link" data-scroll-target="#setup">Setup</a>
+  <ul class="collapse">
+  <li><a href="#load-all-libraries" id="toc-load-all-libraries" class="nav-link" data-scroll-target="#load-all-libraries">Load all libraries</a></li>
+  <li><a href="#load-data-objects-and-files" id="toc-load-data-objects-and-files" class="nav-link" data-scroll-target="#load-data-objects-and-files">Load Data Objects and Files</a></li>
+  </ul></li>
+  <li><a href="#load-input-data" id="toc-load-input-data" class="nav-link" data-scroll-target="#load-input-data">Load Input Data</a>
+  <ul class="collapse">
+  <li><a href="#phl-data" id="toc-phl-data" class="nav-link" data-scroll-target="#phl-data">PHL Data</a></li>
+  <li><a href="#redcap-data" id="toc-redcap-data" class="nav-link" data-scroll-target="#redcap-data">REDCAP Data</a></li>
+  <li><a href="#surveillance-data" id="toc-surveillance-data" class="nav-link" data-scroll-target="#surveillance-data">Surveillance Data</a></li>
+  <li><a href="#epi-data" id="toc-epi-data" class="nav-link" data-scroll-target="#epi-data">Epi Data</a></li>
+  </ul></li>
+  <li><a href="#initial-quality-checks" id="toc-initial-quality-checks" class="nav-link" data-scroll-target="#initial-quality-checks">Initial quality checks</a>
+  <ul class="collapse">
+  <li><a href="#work-stoppers" id="toc-work-stoppers" class="nav-link" data-scroll-target="#work-stoppers">Work Stoppers</a></li>
+  <li><a href="#warning-generators" id="toc-warning-generators" class="nav-link" data-scroll-target="#warning-generators">Warning Generators</a></li>
+  </ul></li>
+  <li><a href="#wdrs-queries" id="toc-wdrs-queries" class="nav-link" data-scroll-target="#wdrs-queries">WDRS Queries</a>
+  <ul class="collapse">
+  <li><a href="#open-connection-to-wdrs" id="toc-open-connection-to-wdrs" class="nav-link" data-scroll-target="#open-connection-to-wdrs">Open connection to WDRS</a></li>
+  <li><a href="#wdrs-flattened" id="toc-wdrs-flattened" class="nav-link" data-scroll-target="#wdrs-flattened">WDRS FLATTENED</a>
+  <ul class="collapse">
+  <li><a href="#flattened-sequence-accessions" id="toc-flattened-sequence-accessions" class="nav-link" data-scroll-target="#flattened-sequence-accessions">Flattened Sequence Accessions</a></li>
+  <li><a href="#flattened-sequence-clinical-accessions" id="toc-flattened-sequence-clinical-accessions" class="nav-link" data-scroll-target="#flattened-sequence-clinical-accessions">Flattened Sequence Clinical Accessions</a></li>
+  </ul></li>
+  <li><a href="#wdrs-entire" id="toc-wdrs-entire" class="nav-link" data-scroll-target="#wdrs-entire">WDRS ENTIRE</a></li>
+  <li><a href="#wdrs-lab" id="toc-wdrs-lab" class="nav-link" data-scroll-target="#wdrs-lab">WDRS LAB</a></li>
+  <li><a href="#combine-wdrs-records" id="toc-combine-wdrs-records" class="nav-link" data-scroll-target="#combine-wdrs-records">Combine WDRS Records</a></li>
+  </ul></li>
+  <li><a href="#filters-and-transformations" id="toc-filters-and-transformations" class="nav-link" data-scroll-target="#filters-and-transformations">Filters and Transformations</a></li>
+  <li><a href="#joins" id="toc-joins" class="nav-link" data-scroll-target="#joins">Joins</a>
+  <ul class="collapse">
+  <li><a href="#phl-and-redcap-join" id="toc-phl-and-redcap-join" class="nav-link" data-scroll-target="#phl-and-redcap-join">PHL and REDCap Join</a></li>
+  <li><a href="#phl-and-surveillance-join" id="toc-phl-and-surveillance-join" class="nav-link" data-scroll-target="#phl-and-surveillance-join">PHL and Surveillance Join</a></li>
+  <li><a href="#phl-and-epi-join" id="toc-phl-and-epi-join" class="nav-link" data-scroll-target="#phl-and-epi-join">PHL and Epi Join</a></li>
+  <li><a href="#join-sequence-data-to-wdrs" id="toc-join-sequence-data-to-wdrs" class="nav-link" data-scroll-target="#join-sequence-data-to-wdrs">Join sequence data to WDRS</a></li>
+  <li><a href="#leftovers" id="toc-leftovers" class="nav-link" data-scroll-target="#leftovers">Leftovers</a></li>
+  </ul></li>
+  <li><a href="#transform-data" id="toc-transform-data" class="nav-link" data-scroll-target="#transform-data">Transform Data</a>
+  <ul class="collapse">
+  <li><a href="#roster-columns" id="toc-roster-columns" class="nav-link" data-scroll-target="#roster-columns">Roster Columns</a></li>
+  <li><a href="#sequence-clinical-accession-formats" id="toc-sequence-clinical-accession-formats" class="nav-link" data-scroll-target="#sequence-clinical-accession-formats">Sequence Clinical Accession Formats</a></li>
+  <li><a href="#generate-format-for-roster" id="toc-generate-format-for-roster" class="nav-link" data-scroll-target="#generate-format-for-roster">Generate Format for Roster</a></li>
+  </ul></li>
+  <li><a href="#roster-quality-checks" id="toc-roster-quality-checks" class="nav-link" data-scroll-target="#roster-quality-checks">Roster Quality Checks</a>
+  <ul class="collapse">
+  <li><a href="#processed-records" id="toc-processed-records" class="nav-link" data-scroll-target="#processed-records">Processed Records</a></li>
+  <li><a href="#sca-failed-in-wdrs" id="toc-sca-failed-in-wdrs" class="nav-link" data-scroll-target="#sca-failed-in-wdrs">SCA Failed in WDRS</a></li>
+  <li><a href="#roster-filters" id="toc-roster-filters" class="nav-link" data-scroll-target="#roster-filters">Roster Filters</a></li>
+  </ul></li>
+  <li><a href="#fuzzy-matching" id="toc-fuzzy-matching" class="nav-link" data-scroll-target="#fuzzy-matching">Fuzzy matching</a></li>
+  <li><a href="#keep_na" id="toc-keep_na" class="nav-link" data-scroll-target="#keep_na">Keep_na</a>
+  <ul class="collapse">
+  <li><a href="#filter-records-for-keep-na" id="toc-filter-records-for-keep-na" class="nav-link" data-scroll-target="#filter-records-for-keep-na">Filter Records for Keep NA</a></li>
+  <li><a href="#check-keep_na-file" id="toc-check-keep_na-file" class="nav-link" data-scroll-target="#check-keep_na-file">Check keep_na File</a></li>
+  </ul></li>
+  <li><a href="#phl-final-roster" id="toc-phl-final-roster" class="nav-link" data-scroll-target="#phl-final-roster">PHL Final Roster</a></li>
+  <li><a href="#for-review-records" id="toc-for-review-records" class="nav-link" data-scroll-target="#for-review-records">For review records</a></li>
+  <li><a href="#processed-record-list" id="toc-processed-record-list" class="nav-link" data-scroll-target="#processed-record-list">Processed Record List</a></li>
+  <li><a href="#save-outputs-for-seq-2.0-comparison" id="toc-save-outputs-for-seq-2.0-comparison" class="nav-link" data-scroll-target="#save-outputs-for-seq-2.0-comparison">Save outputs for Seq 2.0 comparison</a></li>
+  <li><a href="#file-cleanup" id="toc-file-cleanup" class="nav-link" data-scroll-target="#file-cleanup">File cleanup</a></li>
+  <li><a href="#completed-email" id="toc-completed-email" class="nav-link" data-scroll-target="#completed-email">Completed Email</a>
+  <ul class="collapse">
+  <li><a href="#write-email" id="toc-write-email" class="nav-link" data-scroll-target="#write-email">Write Email</a></li>
+  <li><a href="#send-email" id="toc-send-email" class="nav-link" data-scroll-target="#send-email">Send Email</a></li>
+  </ul></li>
+  </ul>
+</nav>
+</div>
+<div id="quarto-margin-sidebar" class="sidebar margin-sidebar zindex-bottom">
+</div>
+<main class="content quarto-banner-title-block" id="quarto-document-content">      
+
+       <div class="cell-container"><div class="cell-decorator"><pre>In [1]:</pre></div><div class="cell">
+<div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a>knitr<span class="sc">::</span>opts_chunk<span class="sc">$</span><span class="fu">set</span>(<span class="at">eval =</span> <span class="cn">FALSE</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div></div>
+<section id="overview" class="level1">
+<h1>Overview</h1>
+<p>The PHL COVID-19 dashboard posts results of COVID-19 RT-PCR tests and sequencing. Some of the specimens in the PHL sequencing dashboard were tested and sequenced at the PHL, others were tested at other labs and the specimen was shipped to PHL for sequencing. Specimens that are tested and sequenced can be matched to WDRS using the SpecimenID in the sequencing dashboard. Matching data for specimens from other laboratories are located on the REDCap or Surveillance dashboard. The REDCap specimens are assigned a WA number when they arrive at the lab for sequencing, but this WA number is not usually in WDRS. These specimens also have an AccessionNumber, which contains the clinical identifier tied to the specimen at its originating lab, but this ID can sometimes link to other records in WDRS, therefore RedCap records are sent to fuzzy matching for record linkage. The Surveillance specimens can often be matched to WDRS by the AccessionId column in the Surveillance dashboard, which contains the clinical identifier tied to the specimen at its originating lab.</p>
+<p>This script is run after downloading the data using the sel_Dashboard_All.Rmd script, and reads in found files downloaded from the PHL COVID-19 dashboard: the PHL sequencing dashboard file, the accompanying REDCAp viewer file, the Surveillance viewer file, and the Epi (All Specimens) dashboard, which contains additional name and DOB info. It matches specimens to WDRS CASE_ID’s first using the WA number in the SpecimenID column of the PHL dashboard as the sequence clinical accession. It then uses the SpecimenID to find the AccessionId from the Surveillance file for sequenced specimens, and attempts to match the sequence data to a WDRS CASE_ID using the AccessionId as the sequence clinical accession. The SpecimenID and AccessionId are matched to [FILLER__ORDER__NUM] in the ELR Entire table of WDRS.</p>
+<p>If a specimen cannot be matched using a sequence clinical accession number, then it is split out from the rest of the data and printed in a file to be matched to WDRS using demographic data in a separate FUZZY_MATCHING script, or, if it lacks demographic information, it is sent to the keep_na list.</p>
+<p>Quality filters are applied at multiple stages of the script. Columns for sequence reason, sequence status, sequence accession are checked to make sure they contain only values that we expect to see. The script also checks that the Collected Date column is in the expected format and that the specimen collected date is not off by more than 14 days from the collected date in WDRS, and that other fields follow the expected format. These checks are contained in the roster_filters function within the quality_filters script. Some data that is filtered out in these various checks are sent to For_Review, so that errors can be addressed and the data can be rostered.</p>
+<p>Rows that contain a sequence accession number already found in WDRS are removed from the data as early as possible to reduce the workload of the rest of the script. Records are also checked to see if they have already been processed by the script. Data from PHL is cumulative, meaning that new records need to be separated out from records that have already been processed so that duplicates are not written to output folders. A running list of all of the sequence accessions (or Seq IDs as they are sometimes referred) that have been processed by the script is kept, and used to identify records that are new. A sequence accession is assigned for all PHL records (even if the sequencing fails), even though only sequence accessions associated with complete sequencing are uploaded to WDRS, and can therefore be used to track records.</p>
+</section>
+<section id="flowchart" class="level1">
+<h1>Flowchart</h1>
+<p>This is a detailed summary of the logic in this script. Note that you can click on the image and zoom in.</p>
+<div id="fig-phlworkflow" class="quarto-figure quarto-figure-center quarto-float anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-phlworkflow-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<a href="../assets/phl_1-0.drawio.svg" class="lightbox" data-gallery="quarto-lightbox-gallery-1" title="Figure&nbsp;1: "><img src="../assets/phl_1-0.drawio.svg" id="fig-phlworkflow" class="img-fluid figure-img"></a>
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig quarto-uncaptioned" id="fig-phlworkflow-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;1
+</figcaption>
+</figure>
+</div>
+</section>
+<section id="setup" class="level1 tabset">
+<h1 class="tabset">Setup</h1>
+<div class="cell-container"><div class="cell-decorator"><pre>In [2]:</pre></div><div class="cell">
+<div class="sourceCode cell-code" id="cb2"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(tidyverse)</span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(stringr)</span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(dplyr)</span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(lubridate)</span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>renv<span class="sc">::</span><span class="fu">load</span>(<span class="fu">file.path</span>(<span class="fu">Sys.getenv</span>(<span class="st">"USERPROFILE"</span>),<span class="st">"Projects/Sequencing/"</span>))</span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (<span class="fu">wday</span>(<span class="fu">today</span>()) <span class="sc">%in%</span> <span class="fu">c</span>(<span class="dv">2</span>, <span class="dv">3</span>, <span class="dv">4</span>)){</span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">try</span>(</span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a>    rmarkdown<span class="sc">::</span><span class="fu">render</span>(<span class="fu">file.path</span>(<span class="fu">Sys.getenv</span>(<span class="st">"USERPROFILE"</span>),</span>
+<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a>                                <span class="st">"Projects/Sequencing/Roster_scripts"</span>,</span>
+<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a>                                <span class="st">"sel_Dashboard_All.Rmd"</span>),</span>
+<span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a>                    <span class="at">output_file=</span><span class="fu">file.path</span>(<span class="fu">Sys.getenv</span>(<span class="st">"USERPROFILE"</span>),</span>
+<span id="cb2-14"><a href="#cb2-14" aria-hidden="true" tabindex="-1"></a>                                <span class="st">"Projects/Sequencing/Roster_scripts"</span>,</span>
+<span id="cb2-15"><a href="#cb2-15" aria-hidden="true" tabindex="-1"></a>                                <span class="st">"sel_Dashboard_All.html"</span>)),</span>
+<span id="cb2-16"><a href="#cb2-16" aria-hidden="true" tabindex="-1"></a>    <span class="fu">stop</span>(<span class="st">"Selenium script failed"</span>)</span>
+<span id="cb2-17"><a href="#cb2-17" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb2-18"><a href="#cb2-18" aria-hidden="true" tabindex="-1"></a>}</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div></div>
+<section id="load-all-libraries" class="level2">
+<h2 class="anchored" data-anchor-id="load-all-libraries">Load all libraries</h2>
+<div class="cell-container"><div class="cell-decorator"><pre>In [3]:</pre></div><div class="cell">
+<div class="sourceCode cell-code" id="cb3"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(tidyverse)</span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(fuzzyjoin)</span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(here)</span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(lubridate)</span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(readxl)</span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(DBI)</span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(odbc)</span>
+<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(dtplyr)</span>
+<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(fs)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div></div>
+</section>
+<section id="load-data-objects-and-files" class="level2">
+<h2 class="anchored" data-anchor-id="load-data-objects-and-files">Load Data Objects and Files</h2>
+<div class="cell-container"><div class="cell-decorator"><pre>In [4]:</pre></div><div class="cell">
+<div class="sourceCode cell-code" id="cb4"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="co"># read in r_creds.RDS</span></span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>r_creds <span class="ot">&lt;-</span><span class="fu">readRDS</span>(<span class="fu">file.path</span>(<span class="fu">Sys.getenv</span>(<span class="st">"USERPROFILE"</span>), <span class="st">"Projects/Sequencing/Data_Objects"</span>, <span class="st">"r_creds.RDS"</span>))</span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a><span class="co"># read in sequence reasons and lab names</span></span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a>lab_vars <span class="ot">&lt;-</span> <span class="fu">readRDS</span>(<span class="st">"/Data_Objects/lab_variables.rds"</span>)</span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a><span class="co"># load list of all valid lineages</span></span>
+<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a>lineages <span class="ot">&lt;-</span> <span class="fu">read_csv</span>(<span class="st">"Data_Objects/Lineages/Lineages.csv"</span>)</span>
+<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a><span class="co"># Read in quality_filters</span></span>
+<span id="cb4-11"><a href="#cb4-11" aria-hidden="true" tabindex="-1"></a><span class="fu">source</span>(<span class="fu">file.path</span>(<span class="fu">Sys.getenv</span>(<span class="st">"USERPROFILE"</span>), <span class="st">"Projects/Sequencing/Roster_scripts/quality_filters.R"</span>))</span>
+<span id="cb4-12"><a href="#cb4-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-13"><a href="#cb4-13" aria-hidden="true" tabindex="-1"></a><span class="co"># Extract a list of valid lineages from the lineages_list object (this should be updated daily via an automated script)</span></span>
+<span id="cb4-14"><a href="#cb4-14" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Append "" and NA, as records with a LOW QUALITY or FAILED sequence status will not contain lineage information</span></span>
+<span id="cb4-15"><a href="#cb4-15" aria-hidden="true" tabindex="-1"></a>lineages_list <span class="ot">&lt;-</span> <span class="fu">c</span>(</span>
+<span id="cb4-16"><a href="#cb4-16" aria-hidden="true" tabindex="-1"></a>  lineages[[<span class="dv">1</span>]], </span>
+<span id="cb4-17"><a href="#cb4-17" aria-hidden="true" tabindex="-1"></a>  <span class="st">"Unassigned"</span></span>
+<span id="cb4-18"><a href="#cb4-18" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb4-19"><a href="#cb4-19" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-20"><a href="#cb4-20" aria-hidden="true" tabindex="-1"></a><span class="co"># Get PHL input sequence reasons that do not have a corresponding reason in the list of output reasons</span></span>
+<span id="cb4-21"><a href="#cb4-21" aria-hidden="true" tabindex="-1"></a><span class="co"># Records with one of these reasons will be filtered out of the final roster and, potentially, sent for review</span></span>
+<span id="cb4-22"><a href="#cb4-22" aria-hidden="true" tabindex="-1"></a><span class="co"># PT is an expected output here, as records with that reason are not added to the roster</span></span>
+<span id="cb4-23"><a href="#cb4-23" aria-hidden="true" tabindex="-1"></a>unmatched_seq_reasons <span class="ot">&lt;-</span> lab_vars<span class="sc">$</span>phl_seq_reasons[<span class="fu">setdiff</span>(<span class="fu">seq</span>(<span class="dv">1</span><span class="sc">:</span><span class="fu">length</span>(lab_vars<span class="sc">$</span>phl_seq_reasons)), <span class="fu">seq</span>(<span class="dv">1</span><span class="sc">:</span><span class="fu">length</span>(lab_vars<span class="sc">$</span>output_seq_reasons_phl)))]</span>
+<span id="cb4-24"><a href="#cb4-24" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-25"><a href="#cb4-25" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(unmatched_seq_reasons)</span>
+<span id="cb4-26"><a href="#cb4-26" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-27"><a href="#cb4-27" aria-hidden="true" tabindex="-1"></a><span class="co"># maximum number of rows used to identify the type of each column when reading data in</span></span>
+<span id="cb4-28"><a href="#cb4-28" aria-hidden="true" tabindex="-1"></a><span class="co"># number can be larger than the number of rows in the data - it is currently set to be larger than any of the data sets</span></span>
+<span id="cb4-29"><a href="#cb4-29" aria-hidden="true" tabindex="-1"></a><span class="co"># if too small, read_xlsx may incorrectly infer the column type, causing it to not read in all the data</span></span>
+<span id="cb4-30"><a href="#cb4-30" aria-hidden="true" tabindex="-1"></a>type_n_rows <span class="ot">&lt;-</span> <span class="dv">100000</span></span>
+<span id="cb4-31"><a href="#cb4-31" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-32"><a href="#cb4-32" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-33"><a href="#cb4-33" aria-hidden="true" tabindex="-1"></a><span class="co"># list of PHL records that have already been processed</span></span>
+<span id="cb4-34"><a href="#cb4-34" aria-hidden="true" tabindex="-1"></a>phl_processed_records <span class="ot">&lt;-</span> <span class="fu">read_csv</span>(<span class="st">"/Completed_Submissions/PHL_Records/phl_processed_records.csv"</span>)</span>
+<span id="cb4-35"><a href="#cb4-35" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-36"><a href="#cb4-36" aria-hidden="true" tabindex="-1"></a><span class="co"># list used to store records currently being processed</span></span>
+<span id="cb4-37"><a href="#cb4-37" aria-hidden="true" tabindex="-1"></a>new_records <span class="ot">&lt;-</span> <span class="fu">c</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div></div>
+</section>
+</section>
+<section id="load-input-data" class="level1 tabset">
+<h1 class="tabset">Load Input Data</h1>
+<section id="phl-data" class="level2">
+<h2 class="anchored" data-anchor-id="phl-data">PHL Data</h2>
+<p>The primary PHL dashboard that contains most of the relevant columns used to create the PHL roster</p>
+<div class="cell-container"><div class="cell-decorator"><pre>In [5]:</pre></div><div class="cell">
+<div class="sourceCode cell-code" id="cb5"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="co"># get filepath for files containing PHL_20 in the PHL Submissions folder</span></span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>phl_filename <span class="ot">&lt;-</span> <span class="fu">dir_ls</span>(<span class="st">"Submissions/PHL"</span>,</span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>                       <span class="at">type =</span> <span class="st">'file'</span></span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>                       ) <span class="sc">%&gt;%</span></span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">str_subset</span>(<span class="st">"PHL/PHL_20"</span>)</span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a><span class="co"># stop script if no PHL file</span></span>
+<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span>(<span class="fu">length</span>(phl_filename) <span class="sc">==</span> <span class="dv">0</span>){</span>
+<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a>   <span class="fu">stop</span>(<span class="st">"No PHL file in Submissions/PHL folder"</span>)</span>
+<span id="cb5-10"><a href="#cb5-10" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb5-11"><a href="#cb5-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-12"><a href="#cb5-12" aria-hidden="true" tabindex="-1"></a><span class="co"># throw warning if there is more than one PHL file, then take the most recent file</span></span>
+<span id="cb5-13"><a href="#cb5-13" aria-hidden="true" tabindex="-1"></a><span class="co"># and continue</span></span>
+<span id="cb5-14"><a href="#cb5-14" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (<span class="fu">length</span>(phl_filename) <span class="sc">&gt;</span> <span class="dv">1</span>){</span>
+<span id="cb5-15"><a href="#cb5-15" aria-hidden="true" tabindex="-1"></a>  <span class="fu">print</span>(<span class="st">"More than one PHL file, selecting just the most recent file"</span>)</span>
+<span id="cb5-16"><a href="#cb5-16" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb5-17"><a href="#cb5-17" aria-hidden="true" tabindex="-1"></a>  <span class="co"># get the file with the most recent mtime:</span></span>
+<span id="cb5-18"><a href="#cb5-18" aria-hidden="true" tabindex="-1"></a>  phl_filename <span class="ot">&lt;-</span> phl_filename[<span class="fu">file.mtime</span>(phl_filename) <span class="sc">==</span> <span class="fu">max</span>(<span class="fu">file.mtime</span>(phl_filename))]</span>
+<span id="cb5-19"><a href="#cb5-19" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb5-20"><a href="#cb5-20" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-21"><a href="#cb5-21" aria-hidden="true" tabindex="-1"></a><span class="co"># define the list of columns of interest from the PHL dashboard</span></span>
+<span id="cb5-22"><a href="#cb5-22" aria-hidden="true" tabindex="-1"></a>phl_columns <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">"Seq ID"</span>, <span class="st">"SpecimenId"</span>, <span class="st">"Sequencing Result"</span>, <span class="st">"Reason"</span>, <span class="st">"Collected Date"</span>, <span class="st">"Lineage"</span>) </span>
+<span id="cb5-23"><a href="#cb5-23" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-24"><a href="#cb5-24" aria-hidden="true" tabindex="-1"></a><span class="co"># read in PHL file, only including selected files</span></span>
+<span id="cb5-25"><a href="#cb5-25" aria-hidden="true" tabindex="-1"></a>phl <span class="ot">&lt;-</span> <span class="fu">read_xlsx</span>(phl_filename, <span class="at">guess_max =</span> type_n_rows,</span>
+<span id="cb5-26"><a href="#cb5-26" aria-hidden="true" tabindex="-1"></a>                 <span class="at">na =</span> <span class="fu">c</span>(<span class="st">""</span>, <span class="st">"NA"</span>, <span class="st">"N/A"</span>)) <span class="sc">%&gt;%</span></span>
+<span id="cb5-27"><a href="#cb5-27" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(<span class="fu">all_of</span>(phl_columns))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div></div>
+</section>
+<section id="redcap-data" class="level2">
+<h2 class="anchored" data-anchor-id="redcap-data">REDCAP Data</h2>
+<p>Data from the RedCap dashboard</p>
+<div class="cell-container"><div class="cell-decorator"><pre>In [6]:</pre></div><div class="cell">
+<div class="sourceCode cell-code" id="cb6"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="co"># get filepath for files containing REDCAP in the PHL Submissions folder</span></span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>redcap_filename <span class="ot">&lt;-</span> <span class="fu">dir_ls</span>(<span class="st">"Submissions/PHL"</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">str_subset</span>(<span class="st">"REDCAP"</span>)</span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a><span class="co"># stop script if no REDCAP file</span></span>
+<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span>(<span class="fu">length</span>(redcap_filename) <span class="sc">==</span> <span class="dv">0</span>){</span>
+<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a>   <span class="fu">stop</span>(<span class="st">"No REDCAP file in Submissions/PHL folder"</span>)</span>
+<span id="cb6-8"><a href="#cb6-8" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb6-9"><a href="#cb6-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-10"><a href="#cb6-10" aria-hidden="true" tabindex="-1"></a><span class="co"># throw warning if there is more than one REDCAP file, then take the most recent file</span></span>
+<span id="cb6-11"><a href="#cb6-11" aria-hidden="true" tabindex="-1"></a><span class="co"># and continue</span></span>
+<span id="cb6-12"><a href="#cb6-12" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (<span class="fu">length</span>(redcap_filename) <span class="sc">&gt;</span> <span class="dv">1</span>){</span>
+<span id="cb6-13"><a href="#cb6-13" aria-hidden="true" tabindex="-1"></a>  <span class="fu">print</span>(<span class="st">"More than one REDCAP file, selecting just the most recent file"</span>)</span>
+<span id="cb6-14"><a href="#cb6-14" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb6-15"><a href="#cb6-15" aria-hidden="true" tabindex="-1"></a>  <span class="co"># get the file with the most recent mtime:</span></span>
+<span id="cb6-16"><a href="#cb6-16" aria-hidden="true" tabindex="-1"></a>  redcap_filename <span class="ot">&lt;-</span> redcap_filename[<span class="fu">file.mtime</span>(redcap_filename) <span class="sc">==</span> <span class="fu">max</span>(<span class="fu">file.mtime</span>(redcap_filename))]</span>
+<span id="cb6-17"><a href="#cb6-17" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb6-18"><a href="#cb6-18" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-19"><a href="#cb6-19" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-20"><a href="#cb6-20" aria-hidden="true" tabindex="-1"></a><span class="co"># read in REDCAP file</span></span>
+<span id="cb6-21"><a href="#cb6-21" aria-hidden="true" tabindex="-1"></a>redcap <span class="ot">&lt;-</span> <span class="fu">read_xlsx</span>(redcap_filename, <span class="at">guess_max =</span> type_n_rows) <span class="sc">%&gt;%</span></span>
+<span id="cb6-22"><a href="#cb6-22" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(<span class="sc">!</span><span class="fu">is.na</span>(SpecimenId)) </span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div></div>
+</section>
+<section id="surveillance-data" class="level2">
+<h2 class="anchored" data-anchor-id="surveillance-data">Surveillance Data</h2>
+<p>Sentinel Surveillance Samples</p>
+<div class="cell-container"><div class="cell-decorator"><pre>In [7]:</pre></div><div class="cell">
+<div class="sourceCode cell-code" id="cb7"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="co"># get filepath for files containing Surveillance in the PHL Submissions folder</span></span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>surveillance_filename <span class="ot">&lt;-</span> <span class="fu">dir_ls</span>(<span class="st">"Submissions/PHL"</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">str_subset</span>(<span class="st">"Surveillance"</span>)</span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a><span class="co"># stop script if no Surveillance file</span></span>
+<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span>(<span class="fu">length</span>(surveillance_filename) <span class="sc">==</span> <span class="dv">0</span>){</span>
+<span id="cb7-7"><a href="#cb7-7" aria-hidden="true" tabindex="-1"></a>   <span class="fu">stop</span>(<span class="st">"No Surveillance file in Submissions/PHL folder"</span>)</span>
+<span id="cb7-8"><a href="#cb7-8" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb7-9"><a href="#cb7-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-10"><a href="#cb7-10" aria-hidden="true" tabindex="-1"></a><span class="co"># throw warning if there is more than one Surveillance file, then take the most recent file</span></span>
+<span id="cb7-11"><a href="#cb7-11" aria-hidden="true" tabindex="-1"></a><span class="co"># and continue</span></span>
+<span id="cb7-12"><a href="#cb7-12" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (<span class="fu">length</span>(surveillance_filename) <span class="sc">&gt;</span> <span class="dv">1</span>){</span>
+<span id="cb7-13"><a href="#cb7-13" aria-hidden="true" tabindex="-1"></a>  <span class="fu">print</span>(<span class="st">"More than one Surveillance file, selecting just the most recent file"</span>)</span>
+<span id="cb7-14"><a href="#cb7-14" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb7-15"><a href="#cb7-15" aria-hidden="true" tabindex="-1"></a>  <span class="co"># get the file with the most recent mtime:</span></span>
+<span id="cb7-16"><a href="#cb7-16" aria-hidden="true" tabindex="-1"></a>  surveillance_filename <span class="ot">&lt;-</span> surveillance_filename[<span class="fu">file.mtime</span>(surveillance_filename) <span class="sc">==</span> <span class="fu">max</span>(<span class="fu">file.mtime</span>(surveillance_filename))]</span>
+<span id="cb7-17"><a href="#cb7-17" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb7-18"><a href="#cb7-18" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-19"><a href="#cb7-19" aria-hidden="true" tabindex="-1"></a><span class="co"># read in Surveillance file</span></span>
+<span id="cb7-20"><a href="#cb7-20" aria-hidden="true" tabindex="-1"></a>surveillance <span class="ot">&lt;-</span> <span class="fu">read_xlsx</span>(surveillance_filename, <span class="at">guess_max =</span> type_n_rows) <span class="sc">%&gt;%</span></span>
+<span id="cb7-21"><a href="#cb7-21" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(<span class="sc">!</span><span class="fu">is.na</span>(SpecimenId)) </span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div></div>
+</section>
+<section id="epi-data" class="level2">
+<h2 class="anchored" data-anchor-id="epi-data">Epi Data</h2>
+<p>The Epi (All Specimens) dashboard that contains name and DOB for more records</p>
+<div class="cell-container"><div class="cell-decorator"><pre>In [8]:</pre></div><div class="cell">
+<div class="sourceCode cell-code" id="cb8"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="co"># get filepath for files containing Epi in the PHL Submissions folder</span></span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>epi_filename <span class="ot">&lt;-</span> <span class="fu">dir_ls</span>(<span class="st">"Submissions/PHL"</span>, </span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a>                       <span class="at">type =</span> <span class="st">'file'</span></span>
+<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a>                       ) <span class="sc">%&gt;%</span></span>
+<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">str_subset</span>(<span class="st">"Epi"</span>)</span>
+<span id="cb8-6"><a href="#cb8-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-7"><a href="#cb8-7" aria-hidden="true" tabindex="-1"></a><span class="co"># stop script if no Epi file</span></span>
+<span id="cb8-8"><a href="#cb8-8" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span>(<span class="fu">length</span>(epi_filename) <span class="sc">==</span> <span class="dv">0</span>){</span>
+<span id="cb8-9"><a href="#cb8-9" aria-hidden="true" tabindex="-1"></a>   <span class="fu">stop</span>(<span class="st">"No Epi file in Submissions/PHL folder"</span>)</span>
+<span id="cb8-10"><a href="#cb8-10" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb8-11"><a href="#cb8-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-12"><a href="#cb8-12" aria-hidden="true" tabindex="-1"></a><span class="co"># throw warning if there is more than one Epi file, then take the most recent file</span></span>
+<span id="cb8-13"><a href="#cb8-13" aria-hidden="true" tabindex="-1"></a><span class="co"># and continue</span></span>
+<span id="cb8-14"><a href="#cb8-14" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (<span class="fu">length</span>(epi_filename) <span class="sc">&gt;</span> <span class="dv">1</span>){</span>
+<span id="cb8-15"><a href="#cb8-15" aria-hidden="true" tabindex="-1"></a>  <span class="fu">print</span>(<span class="st">"More than one Epi file, selecting just the most recent file"</span>)</span>
+<span id="cb8-16"><a href="#cb8-16" aria-hidden="true" tabindex="-1"></a>  <span class="co"># get the file with the most recent mtime:</span></span>
+<span id="cb8-17"><a href="#cb8-17" aria-hidden="true" tabindex="-1"></a>  epi_filename <span class="ot">&lt;-</span> epi_filename[<span class="fu">file.mtime</span>(epi_filename) <span class="sc">==</span> <span class="fu">max</span>(<span class="fu">file.mtime</span>(epi_filename))]</span>
+<span id="cb8-18"><a href="#cb8-18" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb8-19"><a href="#cb8-19" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-20"><a href="#cb8-20" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-21"><a href="#cb8-21" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-22"><a href="#cb8-22" aria-hidden="true" tabindex="-1"></a><span class="co"># read in epi file, only selecting relevant columns</span></span>
+<span id="cb8-23"><a href="#cb8-23" aria-hidden="true" tabindex="-1"></a>epi <span class="ot">&lt;-</span> <span class="fu">read_xlsx</span>(epi_filename, <span class="at">guess_max =</span> type_n_rows,</span>
+<span id="cb8-24"><a href="#cb8-24" aria-hidden="true" tabindex="-1"></a>                 <span class="at">na =</span> <span class="fu">c</span>(<span class="st">""</span>, <span class="st">"NA"</span>, <span class="st">"N/A"</span>)) <span class="sc">%&gt;%</span></span>
+<span id="cb8-25"><a href="#cb8-25" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(<span class="st">`</span><span class="at">Specimen ID</span><span class="st">`</span>, <span class="st">`</span><span class="at">First Name</span><span class="st">`</span>, <span class="st">`</span><span class="at">Last Name</span><span class="st">`</span>, <span class="st">`</span><span class="at">Birth Date</span><span class="st">`</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div></div>
+</section>
+</section>
+<section id="initial-quality-checks" class="level1 tabset">
+<h1 class="tabset">Initial quality checks</h1>
+<section id="work-stoppers" class="level2">
+<h2 class="anchored" data-anchor-id="work-stoppers">Work Stoppers</h2>
+<p>These errors will prompt the script to stop running</p>
+<div class="cell-container"><div class="cell-decorator"><pre>In [9]:</pre></div><div class="cell">
+<div class="sourceCode cell-code" id="cb9"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Check for empty columns within the PHL input, and stop script if a column is empty</span></span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a><span class="co"># Empty column may indicate that the input file was not properly downloaded or</span></span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a><span class="co"># an error occurred when reading in the file</span></span>
+<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a>stop_script <span class="ot">&lt;-</span> <span class="cf">function</span>(x) {</span>
+<span id="cb9-6"><a href="#cb9-6" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (<span class="fu">any</span>(<span class="sc">!</span><span class="fu">is.na</span>(phl[ ,x])) <span class="sc">==</span> <span class="cn">FALSE</span>) {</span>
+<span id="cb9-7"><a href="#cb9-7" aria-hidden="true" tabindex="-1"></a>    <span class="fu">stop</span>(<span class="fu">paste0</span>(x, <span class="st">" column in the phl file is empty"</span>))</span>
+<span id="cb9-8"><a href="#cb9-8" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb9-9"><a href="#cb9-9" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb9-10"><a href="#cb9-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-11"><a href="#cb9-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-12"><a href="#cb9-12" aria-hidden="true" tabindex="-1"></a><span class="fu">lapply</span>(phl_columns, stop_script)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div></div>
+</section>
+<section id="warning-generators" class="level2">
+<h2 class="anchored" data-anchor-id="warning-generators">Warning Generators</h2>
+<p>Some errors warrant a warning but are not work stoppers. These should generate an alert that something has changed with the PHL data and we should contact PHL or molecular epi to ask for new mappings or an explanation of the meaning of the new conditions observed in the data.</p>
+<p>Check for unexpected values or major changes to the data that invalidate it for processing via this script. PHL Reason “Outbreak Investigation” rows are mapped to “OUTBREAK” later in this script. PT (which stands for “proficiency test”) rows are later dropped from the data.</p>
+<div class="cell-container"><div class="cell-decorator"><pre>In [10]:</pre></div><div class="cell">
+<div class="sourceCode cell-code" id="cb10"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="co"># expected conditions</span></span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a>mapped_status <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">"COMPLETED {1822}"</span>, <span class="st">"FAILED {1823}"</span>, <span class="cn">NA</span>)</span>
+<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-5"><a href="#cb10-5" aria-hidden="true" tabindex="-1"></a><span class="co"># conditions observed in data downloaded from dashboard</span></span>
+<span id="cb10-6"><a href="#cb10-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-7"><a href="#cb10-7" aria-hidden="true" tabindex="-1"></a>phl_reasons <span class="ot">&lt;-</span> <span class="fu">str_trim</span>(<span class="fu">toupper</span>(<span class="fu">unique</span>(phl<span class="sc">$</span>Reason)))</span>
+<span id="cb10-8"><a href="#cb10-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-9"><a href="#cb10-9" aria-hidden="true" tabindex="-1"></a>phl_status <span class="ot">&lt;-</span> <span class="fu">str_trim</span>(<span class="fu">toupper</span>(<span class="fu">unique</span>(phl<span class="sc">$</span><span class="st">`</span><span class="at">Sequencing Result</span><span class="st">`</span>)))</span>
+<span id="cb10-10"><a href="#cb10-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-11"><a href="#cb10-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-12"><a href="#cb10-12" aria-hidden="true" tabindex="-1"></a><span class="co"># check that phl conditions match mapped conditions</span></span>
+<span id="cb10-13"><a href="#cb10-13" aria-hidden="true" tabindex="-1"></a>new <span class="ot">&lt;-</span> <span class="fu">c</span>()</span>
+<span id="cb10-14"><a href="#cb10-14" aria-hidden="true" tabindex="-1"></a>reason_messages <span class="ot">&lt;-</span> <span class="fu">c</span>()</span>
+<span id="cb10-15"><a href="#cb10-15" aria-hidden="true" tabindex="-1"></a>status_messages <span class="ot">&lt;-</span> <span class="fu">c</span>()</span>
+<span id="cb10-16"><a href="#cb10-16" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-17"><a href="#cb10-17" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-18"><a href="#cb10-18" aria-hidden="true" tabindex="-1"></a><span class="co"># Report new sequence reasons</span></span>
+<span id="cb10-19"><a href="#cb10-19" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span>(<span class="fu">any</span>(<span class="sc">!</span>(phl_reasons <span class="sc">%in%</span> lab_vars<span class="sc">$</span>phl_seq_reasons) <span class="sc">==</span> <span class="cn">TRUE</span>)) {</span>
+<span id="cb10-20"><a href="#cb10-20" aria-hidden="true" tabindex="-1"></a>  new <span class="ot">&lt;-</span> <span class="fu">setdiff</span>(phl_reasons, lab_vars<span class="sc">$</span>phl_seq_reasons)</span>
+<span id="cb10-21"><a href="#cb10-21" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb10-22"><a href="#cb10-22" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (<span class="fu">length</span>(new) <span class="sc">&gt;</span> <span class="dv">0</span>) {</span>
+<span id="cb10-23"><a href="#cb10-23" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> (i <span class="cf">in</span> <span class="dv">1</span><span class="sc">:</span><span class="fu">length</span>(new)) {</span>
+<span id="cb10-24"><a href="#cb10-24" aria-hidden="true" tabindex="-1"></a>      reason_messages[i] <span class="ot">&lt;-</span></span>
+<span id="cb10-25"><a href="#cb10-25" aria-hidden="true" tabindex="-1"></a>        <span class="fu">paste0</span>(</span>
+<span id="cb10-26"><a href="#cb10-26" aria-hidden="true" tabindex="-1"></a>          new[i],</span>
+<span id="cb10-27"><a href="#cb10-27" aria-hidden="true" tabindex="-1"></a>          <span class="st">" is an unmapped sequence reason found in the Reason column of the PHL COVID-19 dashboard today"</span></span>
+<span id="cb10-28"><a href="#cb10-28" aria-hidden="true" tabindex="-1"></a>        )</span>
+<span id="cb10-29"><a href="#cb10-29" aria-hidden="true" tabindex="-1"></a>    }</span>
+<span id="cb10-30"><a href="#cb10-30" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb10-31"><a href="#cb10-31" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb10-32"><a href="#cb10-32" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-33"><a href="#cb10-33" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-34"><a href="#cb10-34" aria-hidden="true" tabindex="-1"></a><span class="co"># Report new sequence status not found in expected list</span></span>
+<span id="cb10-35"><a href="#cb10-35" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span>(<span class="fu">any</span>(<span class="sc">!</span>(phl_status <span class="sc">%in%</span> mapped_status) <span class="sc">==</span> <span class="cn">TRUE</span>)) {</span>
+<span id="cb10-36"><a href="#cb10-36" aria-hidden="true" tabindex="-1"></a>  new <span class="ot">&lt;-</span> <span class="fu">setdiff</span>(phl_status, mapped_status)</span>
+<span id="cb10-37"><a href="#cb10-37" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb10-38"><a href="#cb10-38" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (<span class="fu">length</span>(new) <span class="sc">&gt;</span> <span class="dv">0</span>) {</span>
+<span id="cb10-39"><a href="#cb10-39" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> (i <span class="cf">in</span> <span class="dv">1</span><span class="sc">:</span><span class="fu">length</span>(new)) {</span>
+<span id="cb10-40"><a href="#cb10-40" aria-hidden="true" tabindex="-1"></a>      status_messages[i] <span class="ot">&lt;-</span></span>
+<span id="cb10-41"><a href="#cb10-41" aria-hidden="true" tabindex="-1"></a>        <span class="fu">paste0</span>(</span>
+<span id="cb10-42"><a href="#cb10-42" aria-hidden="true" tabindex="-1"></a>          new[i],</span>
+<span id="cb10-43"><a href="#cb10-43" aria-hidden="true" tabindex="-1"></a>          <span class="st">" is an unmapped sequence status found in the Sequencing Result column of the PHL COVID-19 dashboard today"</span></span>
+<span id="cb10-44"><a href="#cb10-44" aria-hidden="true" tabindex="-1"></a>        )</span>
+<span id="cb10-45"><a href="#cb10-45" aria-hidden="true" tabindex="-1"></a>    }</span>
+<span id="cb10-46"><a href="#cb10-46" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb10-47"><a href="#cb10-47" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb10-48"><a href="#cb10-48" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-49"><a href="#cb10-49" aria-hidden="true" tabindex="-1"></a><span class="co"># check that the format of the Collected Date column is the expected format</span></span>
+<span id="cb10-50"><a href="#cb10-50" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-51"><a href="#cb10-51" aria-hidden="true" tabindex="-1"></a>date_messages <span class="ot">&lt;-</span> <span class="fu">c</span>()</span>
+<span id="cb10-52"><a href="#cb10-52" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-53"><a href="#cb10-53" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span>(<span class="fu">any</span>(<span class="fu">str_detect</span>(phl<span class="sc">$</span><span class="st">`</span><span class="at">Collected Date</span><span class="st">`</span>, <span class="st">"(?&lt;=2020|2021)-[[:digit:]]{1,12}-[[:digit:]]{1,31}"</span>)) <span class="sc">!=</span> <span class="cn">TRUE</span>) {</span>
+<span id="cb10-54"><a href="#cb10-54" aria-hidden="true" tabindex="-1"></a>  date_messages <span class="ot">&lt;-</span> <span class="st">"The Collected Date column has one or more dates that do not follow the expected format"</span></span>
+<span id="cb10-55"><a href="#cb10-55" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb10-56"><a href="#cb10-56" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-57"><a href="#cb10-57" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-58"><a href="#cb10-58" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-59"><a href="#cb10-59" aria-hidden="true" tabindex="-1"></a>warnings <span class="ot">&lt;-</span> <span class="fu">c</span>(reason_messages, status_messages, date_messages)</span>
+<span id="cb10-60"><a href="#cb10-60" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-61"><a href="#cb10-61" aria-hidden="true" tabindex="-1"></a>warnings</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div></div>
+</section>
+</section>
+<section id="wdrs-queries" class="level1 tabset">
+<h1 class="tabset">WDRS Queries</h1>
+<section id="open-connection-to-wdrs" class="level3">
+<h3 class="anchored" data-anchor-id="open-connection-to-wdrs">Open connection to WDRS</h3>
+<p><strong>IMPORTANT</strong> the variables used to connect to WDRS are held within conn_list.RDS, you will need to make your own private .RDS.</p>
+<p>We do not include server connections in code uploaded to GitHub.</p>
+<p><strong>So: DO NOT alter the code used to open the connection to WDRS in any way that creates a security risk. Continue to treat this connection as a secret and store its variables in a .RDS object (or other external object that is excluded from Git commits) rather than calling them directly here.</strong></p>
+<div class="cell-container"><div class="cell-decorator"><pre>In [11]:</pre></div><div class="cell">
+<div class="sourceCode cell-code" id="cb11"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="co"># connect</span></span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a>connection <span class="ot">&lt;-</span> DBI<span class="sc">::</span><span class="fu">dbConnect</span>(odbc<span class="sc">::</span><span class="fu">odbc</span>(), </span>
+<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a>                             <span class="at">Driver =</span> r_creds<span class="sc">$</span>conn_list[<span class="dv">1</span>], </span>
+<span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a>                             <span class="at">Server =</span> r_creds<span class="sc">$</span>conn_list[<span class="dv">2</span>], </span>
+<span id="cb11-5"><a href="#cb11-5" aria-hidden="true" tabindex="-1"></a>                             <span class="at">Database =</span> r_creds<span class="sc">$</span>conn_list[<span class="dv">3</span>], </span>
+<span id="cb11-6"><a href="#cb11-6" aria-hidden="true" tabindex="-1"></a>                             <span class="at">Trusted_connection =</span> r_creds<span class="sc">$</span>conn_list[<span class="dv">4</span>], </span>
+<span id="cb11-7"><a href="#cb11-7" aria-hidden="true" tabindex="-1"></a>                             <span class="at">ApplicationIntent =</span> r_creds<span class="sc">$</span>conn_list[<span class="dv">5</span>])</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div></div>
+</section>
+<section id="wdrs-flattened" class="level2">
+<h2 class="anchored" data-anchor-id="wdrs-flattened">WDRS FLATTENED</h2>
+<p>This queries the flattened table and provides a list of unique sequence accessions and sequence clinical accessions that we use to avoid adding duplicate data to the final roster.</p>
+<section id="flattened-sequence-accessions" class="level3">
+<h3 class="anchored" data-anchor-id="flattened-sequence-accessions">Flattened Sequence Accessions</h3>
+<div class="cell-container"><div class="cell-decorator"><pre>In [12]:</pre></div><div class="cell">
+<div class="sourceCode cell-code" id="cb12"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Query WDRS flattened table</span></span>
+<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a><span class="co"># result is saved to cache - this is useful for testing the code, but</span></span>
+<span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a><span class="co"># when running not in test code cached data will first be deleted</span></span>
+<span id="cb12-4"><a href="#cb12-4" aria-hidden="true" tabindex="-1"></a><span class="co">#wdrs_sa_flat &lt;- xfun::cache_rds({</span></span>
+<span id="cb12-5"><a href="#cb12-5" aria-hidden="true" tabindex="-1"></a>  <span class="co"># wdrs_sa_flat &lt;- dbGetQuery(</span></span>
+<span id="cb12-6"><a href="#cb12-6" aria-hidden="true" tabindex="-1"></a>  <span class="co">#   connection,</span></span>
+<span id="cb12-7"><a href="#cb12-7" aria-hidden="true" tabindex="-1"></a>  <span class="co">#   "SELECT DISTINCT CDC_N_COV_2019_SEQUENCE_ACCESSION_NUMBER,</span></span>
+<span id="cb12-8"><a href="#cb12-8" aria-hidden="true" tabindex="-1"></a>  <span class="co">#    CDC_N_COV_2019_SEQUENCE_CLINICAL_ACCESSION_NUMBER</span></span>
+<span id="cb12-9"><a href="#cb12-9" aria-hidden="true" tabindex="-1"></a>  <span class="co">#    FROM [dbo].[DD_GCD_COVID_19_FLATTENED]</span></span>
+<span id="cb12-10"><a href="#cb12-10" aria-hidden="true" tabindex="-1"></a>  <span class="co">#    "</span></span>
+<span id="cb12-11"><a href="#cb12-11" aria-hidden="true" tabindex="-1"></a>  <span class="co"># )</span></span>
+<span id="cb12-12"><a href="#cb12-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-13"><a href="#cb12-13" aria-hidden="true" tabindex="-1"></a>wdrs_sa_flat <span class="ot">&lt;-</span> <span class="fu">dbGetQuery</span>(connection,</span>
+<span id="cb12-14"><a href="#cb12-14" aria-hidden="true" tabindex="-1"></a>                        <span class="st">"</span></span>
+<span id="cb12-15"><a href="#cb12-15" aria-hidden="true" tabindex="-1"></a><span class="st">    SELECT SEQUENCE_ACCESSION_NUMBER, SEQUENCE_CLINICAL_ACCESSION_NUMBER</span></span>
+<span id="cb12-16"><a href="#cb12-16" aria-hidden="true" tabindex="-1"></a><span class="st">    FROM DD_GCD_COVID19_SEQUENCING</span></span>
+<span id="cb12-17"><a href="#cb12-17" aria-hidden="true" tabindex="-1"></a><span class="st">    WHERE SEQUENCE_SPECIMEN IS NOT NULL</span></span>
+<span id="cb12-18"><a href="#cb12-18" aria-hidden="true" tabindex="-1"></a><span class="st">    AND CASE_STATUS IN (0, 3)</span></span>
+<span id="cb12-19"><a href="#cb12-19" aria-hidden="true" tabindex="-1"></a><span class="st">    ORDER BY SEQUENCE_ROSTER_PREPARE_DATE DESC;</span></span>
+<span id="cb12-20"><a href="#cb12-20" aria-hidden="true" tabindex="-1"></a><span class="st">                       "</span>)</span>
+<span id="cb12-21"><a href="#cb12-21" aria-hidden="true" tabindex="-1"></a><span class="co">#},</span></span>
+<span id="cb12-22"><a href="#cb12-22" aria-hidden="true" tabindex="-1"></a><span class="co">#file = "wdrs_sa_flat")</span></span>
+<span id="cb12-23"><a href="#cb12-23" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-24"><a href="#cb12-24" aria-hidden="true" tabindex="-1"></a><span class="co"># for fields that have multiple comma separated SEQUENCE_ACCESSIONs split them by ","</span></span>
+<span id="cb12-25"><a href="#cb12-25" aria-hidden="true" tabindex="-1"></a><span class="co"># wdrs_sa_flat_split &lt;- unlist(str_split(wdrs_sa_flat[[1]], ","))</span></span>
+<span id="cb12-26"><a href="#cb12-26" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb12-27"><a href="#cb12-27" aria-hidden="true" tabindex="-1"></a><span class="co"># omit any NA's</span></span>
+<span id="cb12-28"><a href="#cb12-28" aria-hidden="true" tabindex="-1"></a>wdrs_sa_flat_clean <span class="ot">&lt;-</span></span>
+<span id="cb12-29"><a href="#cb12-29" aria-hidden="true" tabindex="-1"></a>    wdrs_sa_flat<span class="sc">$</span>SEQUENCE_ACCESSION_NUMBER[<span class="sc">!</span><span class="fu">is.na</span>(wdrs_sa_flat<span class="sc">$</span>SEQUENCE_ACCESSION_NUMBER)] <span class="sc">%&gt;%</span></span>
+<span id="cb12-30"><a href="#cb12-30" aria-hidden="true" tabindex="-1"></a>    <span class="co">#for fields that have "hCoV-19/" appended to the beginning of the SEQUENCE_ACCESSION remove it by str_replace() with ""</span></span>
+<span id="cb12-31"><a href="#cb12-31" aria-hidden="true" tabindex="-1"></a>    <span class="fu">str_replace</span>(<span class="st">"hCoV-19/"</span>, <span class="st">""</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb12-32"><a href="#cb12-32" aria-hidden="true" tabindex="-1"></a>    <span class="co"># trim off the white space resulting from str_split, this also gets rid of " " values</span></span>
+<span id="cb12-33"><a href="#cb12-33" aria-hidden="true" tabindex="-1"></a>    <span class="fu">str_trim</span>(<span class="st">"both"</span>)</span>
+<span id="cb12-34"><a href="#cb12-34" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb12-35"><a href="#cb12-35" aria-hidden="true" tabindex="-1"></a><span class="co"># remove any values that are ""</span></span>
+<span id="cb12-36"><a href="#cb12-36" aria-hidden="true" tabindex="-1"></a>wdrs_sa_flat_values <span class="ot">&lt;-</span> wdrs_sa_flat_clean[wdrs_sa_flat_clean <span class="sc">!=</span> <span class="st">""</span>]</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div></div>
+</section>
+<section id="flattened-sequence-clinical-accessions" class="level3">
+<h3 class="anchored" data-anchor-id="flattened-sequence-clinical-accessions">Flattened Sequence Clinical Accessions</h3>
+<div class="cell-container"><div class="cell-decorator"><pre>In [13]:</pre></div><div class="cell">
+<div class="sourceCode cell-code" id="cb13"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a><span class="co"># for fields that have multiple comma separated SEQUENCE_CLINICAL_ACCESSIONs split them by ","</span></span>
+<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a><span class="co"># wdrs_sca_flat_split &lt;- unlist(str_split(wdrs_sa_flat[[2]], ","))</span></span>
+<span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-4"><a href="#cb13-4" aria-hidden="true" tabindex="-1"></a><span class="co"># omit any NA's</span></span>
+<span id="cb13-5"><a href="#cb13-5" aria-hidden="true" tabindex="-1"></a>wdrs_sca_flat_clean <span class="ot">&lt;-</span> wdrs_sa_flat<span class="sc">$</span>SEQUENCE_CLINICAL_ACCESSION_NUMBER[<span class="sc">!</span><span class="fu">is.na</span>(wdrs_sa_flat<span class="sc">$</span>SEQUENCE_CLINICAL_ACCESSION_NUMBER)] <span class="sc">%&gt;%</span></span>
+<span id="cb13-6"><a href="#cb13-6" aria-hidden="true" tabindex="-1"></a><span class="co">#for fields that have "hCoV-19/" appended to the beginning of the SEQUENCE_CLINICAL_ACCESSION remove it by str_replace() with ""</span></span>
+<span id="cb13-7"><a href="#cb13-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">str_replace</span>(<span class="st">"hCoV-19/"</span>, <span class="st">""</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb13-8"><a href="#cb13-8" aria-hidden="true" tabindex="-1"></a><span class="co"># trim off the white space resulting from str_split, this also gets rid of " " values  </span></span>
+<span id="cb13-9"><a href="#cb13-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">str_trim</span>(<span class="st">"both"</span>)</span>
+<span id="cb13-10"><a href="#cb13-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-11"><a href="#cb13-11" aria-hidden="true" tabindex="-1"></a><span class="co"># remove any values that are ""</span></span>
+<span id="cb13-12"><a href="#cb13-12" aria-hidden="true" tabindex="-1"></a>wdrs_sca_flat_values <span class="ot">&lt;-</span> wdrs_sca_flat_clean[wdrs_sca_flat_clean <span class="sc">!=</span> <span class="st">""</span>]</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div></div>
+</section>
+</section>
+<section id="wdrs-entire" class="level2">
+<h2 class="anchored" data-anchor-id="wdrs-entire">WDRS ENTIRE</h2>
+<p>Pull COVID-19 records from the WDRS ENTIRE and LAB tables. The sequence clinical accession numbers and specimen collection date are used to match new sequencing data to WDRS.</p>
+<div class="cell-container"><div class="cell-decorator"><pre>In [14]:</pre></div><div class="cell">
+<div class="sourceCode cell-code" id="cb14"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Query WDRS ELR Entire Table</span></span>
+<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a><span class="co"># result is saved to cache - this is useful for testing the code, but</span></span>
+<span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a><span class="co"># when running not in test code cached data will first be deleted</span></span>
+<span id="cb14-4"><a href="#cb14-4" aria-hidden="true" tabindex="-1"></a><span class="co">#wdrs_seq &lt;- xfun::cache_rds({</span></span>
+<span id="cb14-5"><a href="#cb14-5" aria-hidden="true" tabindex="-1"></a>  wdrs_seq <span class="ot">&lt;-</span> <span class="fu">dbGetQuery</span>(</span>
+<span id="cb14-6"><a href="#cb14-6" aria-hidden="true" tabindex="-1"></a>    connection,</span>
+<span id="cb14-7"><a href="#cb14-7" aria-hidden="true" tabindex="-1"></a>    <span class="st">"</span></span>
+<span id="cb14-8"><a href="#cb14-8" aria-hidden="true" tabindex="-1"></a><span class="st">  SELECT Distinct CASE_ID,</span></span>
+<span id="cb14-9"><a href="#cb14-9" aria-hidden="true" tabindex="-1"></a><span class="st">    [FILLER__ORDER__NUM] as SpecimenId,</span></span>
+<span id="cb14-10"><a href="#cb14-10" aria-hidden="true" tabindex="-1"></a><span class="st">    [SPECIMEN__ID__ACCESSION__NUM__MANUAL] as SPECIMEN_ID,</span></span>
+<span id="cb14-11"><a href="#cb14-11" aria-hidden="true" tabindex="-1"></a><span class="st">    [SPECIMEN__COLLECTION__DTTM] as COLLECTION_DATE_WDRS</span></span>
+<span id="cb14-12"><a href="#cb14-12" aria-hidden="true" tabindex="-1"></a><span class="st">    FROM [dbo].[DD_ELR_DD_ENTIRE]</span></span>
+<span id="cb14-13"><a href="#cb14-13" aria-hidden="true" tabindex="-1"></a><span class="st">  WHERE CODE = 'SARS'</span></span>
+<span id="cb14-14"><a href="#cb14-14" aria-hidden="true" tabindex="-1"></a><span class="st">  AND STATUS != '6'</span></span>
+<span id="cb14-15"><a href="#cb14-15" aria-hidden="true" tabindex="-1"></a><span class="st">  "</span></span>
+<span id="cb14-16"><a href="#cb14-16" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb14-17"><a href="#cb14-17" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb14-18"><a href="#cb14-18" aria-hidden="true" tabindex="-1"></a>  wdrs_seq <span class="ot">&lt;-</span></span>
+<span id="cb14-19"><a href="#cb14-19" aria-hidden="true" tabindex="-1"></a>  wdrs_seq <span class="sc">%&gt;%</span> <span class="fu">unite</span>(</span>
+<span id="cb14-20"><a href="#cb14-20" aria-hidden="true" tabindex="-1"></a>    SpecimenId,</span>
+<span id="cb14-21"><a href="#cb14-21" aria-hidden="true" tabindex="-1"></a>    <span class="fu">c</span>(SpecimenId, SPECIMEN_ID),</span>
+<span id="cb14-22"><a href="#cb14-22" aria-hidden="true" tabindex="-1"></a>    <span class="at">sep =</span> <span class="st">","</span>,</span>
+<span id="cb14-23"><a href="#cb14-23" aria-hidden="true" tabindex="-1"></a>    <span class="at">remove =</span> <span class="cn">FALSE</span>,</span>
+<span id="cb14-24"><a href="#cb14-24" aria-hidden="true" tabindex="-1"></a>    <span class="at">na.rm =</span> <span class="cn">TRUE</span></span>
+<span id="cb14-25"><a href="#cb14-25" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb14-26"><a href="#cb14-26" aria-hidden="true" tabindex="-1"></a><span class="co">#},</span></span>
+<span id="cb14-27"><a href="#cb14-27" aria-hidden="true" tabindex="-1"></a><span class="co">#file = "wdrs_seq")</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div></div>
+</section>
+<section id="wdrs-lab" class="level2">
+<h2 class="anchored" data-anchor-id="wdrs-lab">WDRS LAB</h2>
+<p>Additional cases to match may be found in the COVID19 lab table. This is especially true for redcap cases.</p>
+<div class="cell-container"><div class="cell-decorator"><pre>In [15]:</pre></div><div class="cell">
+<div class="sourceCode cell-code" id="cb15"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Query WDRS lab table</span></span>
+<span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a><span class="co"># result is saved to cache - this is useful for testing the code, but</span></span>
+<span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a><span class="co"># when running not in test code cached data will first be deleted</span></span>
+<span id="cb15-4"><a href="#cb15-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-5"><a href="#cb15-5" aria-hidden="true" tabindex="-1"></a><span class="co">#wdrs_lab_cases &lt;-</span></span>
+<span id="cb15-6"><a href="#cb15-6" aria-hidden="true" tabindex="-1"></a>  <span class="co">#xfun::cache_rds({</span></span>
+<span id="cb15-7"><a href="#cb15-7" aria-hidden="true" tabindex="-1"></a>    wdrs_lab_cases <span class="ot">&lt;-</span>  <span class="fu">dbGetQuery</span>(</span>
+<span id="cb15-8"><a href="#cb15-8" aria-hidden="true" tabindex="-1"></a>      connection,</span>
+<span id="cb15-9"><a href="#cb15-9" aria-hidden="true" tabindex="-1"></a>      <span class="st">"SELECT Distinct CASE_ID, [FILLER__ORDER__NUM] as FILLER_ORDER_NUM,</span></span>
+<span id="cb15-10"><a href="#cb15-10" aria-hidden="true" tabindex="-1"></a><span class="st">                             [SPECIMEN__ID__ACCESSION__NUM__MANUAL] as SPECIMEN_ID,</span></span>
+<span id="cb15-11"><a href="#cb15-11" aria-hidden="true" tabindex="-1"></a><span class="st">                             [SPECIMEN__COLLECTION__DTTM] as COLLECTION_DATE_WDRS</span></span>
+<span id="cb15-12"><a href="#cb15-12" aria-hidden="true" tabindex="-1"></a><span class="st">                             FROM [dbo].[DD_GCD_COVID19_LAB]"</span></span>
+<span id="cb15-13"><a href="#cb15-13" aria-hidden="true" tabindex="-1"></a>    )</span>
+<span id="cb15-14"><a href="#cb15-14" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb15-15"><a href="#cb15-15" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb15-16"><a href="#cb15-16" aria-hidden="true" tabindex="-1"></a>    wdrs_lab_cases <span class="ot">&lt;-</span></span>
+<span id="cb15-17"><a href="#cb15-17" aria-hidden="true" tabindex="-1"></a>      wdrs_lab_cases <span class="sc">%&gt;%</span> <span class="fu">unite</span>(</span>
+<span id="cb15-18"><a href="#cb15-18" aria-hidden="true" tabindex="-1"></a>        SpecimenId,</span>
+<span id="cb15-19"><a href="#cb15-19" aria-hidden="true" tabindex="-1"></a>        <span class="fu">c</span>(FILLER_ORDER_NUM, SPECIMEN_ID),</span>
+<span id="cb15-20"><a href="#cb15-20" aria-hidden="true" tabindex="-1"></a>        <span class="at">sep =</span> <span class="st">","</span>,</span>
+<span id="cb15-21"><a href="#cb15-21" aria-hidden="true" tabindex="-1"></a>        <span class="at">remove =</span> <span class="cn">FALSE</span>,</span>
+<span id="cb15-22"><a href="#cb15-22" aria-hidden="true" tabindex="-1"></a>        <span class="at">na.rm =</span> <span class="cn">TRUE</span></span>
+<span id="cb15-23"><a href="#cb15-23" aria-hidden="true" tabindex="-1"></a>      )</span>
+<span id="cb15-24"><a href="#cb15-24" aria-hidden="true" tabindex="-1"></a>  <span class="co">#},</span></span>
+<span id="cb15-25"><a href="#cb15-25" aria-hidden="true" tabindex="-1"></a>  <span class="co">#file = "wdrs_lab_cases")</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div></div>
+</section>
+<section id="combine-wdrs-records" class="level2">
+<h2 class="anchored" data-anchor-id="combine-wdrs-records">Combine WDRS Records</h2>
+<p>Combine all COVID19 records from WDRS</p>
+<div class="cell-container"><div class="cell-decorator"><pre>In [16]:</pre></div><div class="cell">
+<div class="sourceCode cell-code" id="cb16"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a><span class="co"># combine WDRS entire and lab tables</span></span>
+<span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a>wdrs_all_cases <span class="ot">&lt;-</span></span>
+<span id="cb16-3"><a href="#cb16-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">full_join</span>(wdrs_lab_cases, wdrs_seq) <span class="sc">%&gt;%</span> <span class="fu">select</span>(CASE_ID, SpecimenId, COLLECTION_DATE_WDRS)</span>
+<span id="cb16-4"><a href="#cb16-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb16-5"><a href="#cb16-5" aria-hidden="true" tabindex="-1"></a><span class="co"># Remove  samples from wdrs where the case id and specimen id are duplicated, keeping only the first instance</span></span>
+<span id="cb16-6"><a href="#cb16-6" aria-hidden="true" tabindex="-1"></a>unique_wdrs <span class="ot">&lt;-</span></span>
+<span id="cb16-7"><a href="#cb16-7" aria-hidden="true" tabindex="-1"></a>   wdrs_all_cases[<span class="sc">!</span><span class="fu">duplicated</span>(wdrs_all_cases[,<span class="fu">c</span>(<span class="st">"CASE_ID"</span>, <span class="st">"SpecimenId"</span>)]), ]</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div></div>
+</section>
+</section>
+<section id="filters-and-transformations" class="level1 tabset">
+<h1 class="tabset">Filters and Transformations</h1>
+<p>A new data frame phl_clean is generated from phl raw data.</p>
+<p>The sequence result and Seq ID columns are transformed to the WDRS roster format. The data is filtered to remove rows that are missing a sequence result (these are incomplete), or that have a Seq ID that has already been entered in the flattened table as a sequence accession. The data is filtered to remove rows with a Sequencing Reason of PT.</p>
+<div class="cell-container"><div class="cell-decorator"><pre>In [17]:</pre></div><div class="cell">
+<div class="sourceCode cell-code" id="cb17"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Clean up/simplify Sequencing Result and Seq ID columns</span></span>
+<span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a><span class="co"># Remove samples with the sequencing reason PT</span></span>
+<span id="cb17-3"><a href="#cb17-3" aria-hidden="true" tabindex="-1"></a>phl_clean <span class="ot">&lt;-</span> phl <span class="sc">%&gt;%</span></span>
+<span id="cb17-4"><a href="#cb17-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
+<span id="cb17-5"><a href="#cb17-5" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Format Sequencing Result</span></span>
+<span id="cb17-6"><a href="#cb17-6" aria-hidden="true" tabindex="-1"></a>    <span class="st">`</span><span class="at">Sequencing Result</span><span class="st">`</span> <span class="ot">=</span> <span class="fu">case_when</span>(</span>
+<span id="cb17-7"><a href="#cb17-7" aria-hidden="true" tabindex="-1"></a>      <span class="fu">toupper</span>(<span class="st">`</span><span class="at">Sequencing Result</span><span class="st">`</span>) <span class="sc">==</span> <span class="st">"COMPLETED {1822}"</span> <span class="sc">~</span> <span class="st">"COMPLETE"</span>,</span>
+<span id="cb17-8"><a href="#cb17-8" aria-hidden="true" tabindex="-1"></a>      <span class="fu">toupper</span>(<span class="st">`</span><span class="at">Sequencing Result</span><span class="st">`</span>) <span class="sc">==</span> <span class="st">"FAILED {1823}"</span> <span class="sc">~</span> <span class="st">"FAILED"</span>,</span>
+<span id="cb17-9"><a href="#cb17-9" aria-hidden="true" tabindex="-1"></a>      <span class="sc">!</span>(<span class="fu">toupper</span>(<span class="st">`</span><span class="at">Sequencing Result</span><span class="st">`</span>) <span class="sc">%in%</span> <span class="fu">c</span>(<span class="st">"COMPLETED {1822}"</span>, <span class="st">"FAILED {1823}"</span>)) <span class="sc">&amp;</span></span>
+<span id="cb17-10"><a href="#cb17-10" aria-hidden="true" tabindex="-1"></a>        <span class="sc">!</span><span class="fu">is.na</span>(phl<span class="sc">$</span><span class="st">`</span><span class="at">Sequencing Result</span><span class="st">`</span>) <span class="sc">~</span> phl<span class="sc">$</span><span class="st">`</span><span class="at">Sequencing Result</span><span class="st">`</span></span>
+<span id="cb17-11"><a href="#cb17-11" aria-hidden="true" tabindex="-1"></a>    )</span>
+<span id="cb17-12"><a href="#cb17-12" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span></span>
+<span id="cb17-13"><a href="#cb17-13" aria-hidden="true" tabindex="-1"></a>  <span class="co"># adjust format of Seq ID (Sequence Accession)</span></span>
+<span id="cb17-14"><a href="#cb17-14" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="st">`</span><span class="at">Seq ID</span><span class="st">`</span> <span class="ot">=</span> <span class="fu">ifelse</span>(</span>
+<span id="cb17-15"><a href="#cb17-15" aria-hidden="true" tabindex="-1"></a>    <span class="fu">str_detect</span>(<span class="st">`</span><span class="at">Seq ID</span><span class="st">`</span>, <span class="st">"hCoV-19/"</span>),</span>
+<span id="cb17-16"><a href="#cb17-16" aria-hidden="true" tabindex="-1"></a>    <span class="fu">str_replace</span>(<span class="st">`</span><span class="at">Seq ID</span><span class="st">`</span>, <span class="st">"hCoV-19/"</span>, <span class="st">""</span>),</span>
+<span id="cb17-17"><a href="#cb17-17" aria-hidden="true" tabindex="-1"></a>    <span class="st">`</span><span class="at">Seq ID</span><span class="st">`</span></span>
+<span id="cb17-18"><a href="#cb17-18" aria-hidden="true" tabindex="-1"></a>  )) <span class="sc">%&gt;%</span></span>
+<span id="cb17-19"><a href="#cb17-19" aria-hidden="true" tabindex="-1"></a>  <span class="co"># remove records with a sequencing reason of PT</span></span>
+<span id="cb17-20"><a href="#cb17-20" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(<span class="sc">!</span>Reason <span class="sc">==</span> <span class="st">"PT"</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb17-21"><a href="#cb17-21" aria-hidden="true" tabindex="-1"></a>  <span class="co"># only process results that have been sequenced</span></span>
+<span id="cb17-22"><a href="#cb17-22" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(<span class="st">`</span><span class="at">Sequencing Result</span><span class="st">`</span> <span class="sc">%in%</span> <span class="fu">c</span>(<span class="st">"COMPLETE"</span>, <span class="st">"FAILED"</span>))</span>
+<span id="cb17-23"><a href="#cb17-23" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-24"><a href="#cb17-24" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-25"><a href="#cb17-25" aria-hidden="true" tabindex="-1"></a><span class="co"># Remove samples that are already in WDRS</span></span>
+<span id="cb17-26"><a href="#cb17-26" aria-hidden="true" tabindex="-1"></a>phl_new <span class="ot">&lt;-</span> phl_clean[<span class="sc">!</span>(phl_clean<span class="sc">$</span><span class="st">`</span><span class="at">Seq ID</span><span class="st">`</span> <span class="sc">%in%</span> wdrs_sa_flat_values), ]</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div></div>
+</section>
+<section id="joins" class="level1 tabset">
+<h1 class="tabset">Joins</h1>
+<section id="phl-and-redcap-join" class="level2">
+<h2 class="anchored" data-anchor-id="phl-and-redcap-join">PHL and REDCap Join</h2>
+<p>PHL and Redcap data is joined by SpecimenId and ProjectOption is brought into SEQUENCE_REASON in all cases where ProjectOption == “SENTINEL SURVEILLANCE”. In cases where ProjectOption is other than SENTINEL SURVEILLANCE, the Reason column from the phl sequencing dashboard is retained as SEQUENCE_REASON. All redcap data with demographics will be sent to fuzzy matching.</p>
+<div class="cell-container"><div class="cell-decorator"><pre>In [18]:</pre></div><div class="cell">
+<div class="sourceCode cell-code" id="cb18"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Join PHL and REDCAP data</span></span>
+<span id="cb18-2"><a href="#cb18-2" aria-hidden="true" tabindex="-1"></a>dashboard_all <span class="ot">&lt;-</span> <span class="fu">left_join</span>(phl_new, redcap, <span class="at">by =</span> <span class="st">"SpecimenId"</span>) <span class="sc">%&gt;%</span> </span>
+<span id="cb18-3"><a href="#cb18-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">SEQUENCE_REASON =</span> <span class="fu">case_when</span>(</span>
+<span id="cb18-4"><a href="#cb18-4" aria-hidden="true" tabindex="-1"></a>      <span class="fu">toupper</span>(ProjectOption) <span class="sc">==</span> <span class="st">"SENTINEL SURVEILLANCE"</span> <span class="sc">~</span> <span class="st">"SENTINEL SURVEILLANCE"</span>,</span>
+<span id="cb18-5"><a href="#cb18-5" aria-hidden="true" tabindex="-1"></a>      <span class="sc">!</span>(<span class="fu">toupper</span>(ProjectOption) <span class="sc">==</span> <span class="st">"SENTINEL SURVEILLANCE"</span>) <span class="sc">~</span> <span class="fu">toupper</span>(Reason),</span>
+<span id="cb18-6"><a href="#cb18-6" aria-hidden="true" tabindex="-1"></a>      <span class="cn">TRUE</span> <span class="sc">~</span> <span class="fu">toupper</span>(Reason)</span>
+<span id="cb18-7"><a href="#cb18-7" aria-hidden="true" tabindex="-1"></a>    )</span>
+<span id="cb18-8"><a href="#cb18-8" aria-hidden="true" tabindex="-1"></a>  )</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div></div>
+</section>
+<section id="phl-and-surveillance-join" class="level2">
+<h2 class="anchored" data-anchor-id="phl-and-surveillance-join">PHL and Surveillance Join</h2>
+<p>Use specimen id to join the sentinel surveillance to the data from the primary PHL dashboard</p>
+<div class="cell-container"><div class="cell-decorator"><pre>In [19]:</pre></div><div class="cell">
+<div class="sourceCode cell-code" id="cb19"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Join Surveillance data with the combined PHL and REDCAP data</span></span>
+<span id="cb19-2"><a href="#cb19-2" aria-hidden="true" tabindex="-1"></a>dashboard_all <span class="ot">&lt;-</span> <span class="fu">left_join</span>(dashboard_all, surveillance, <span class="at">by =</span> <span class="st">"SpecimenId"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div></div>
+</section>
+<section id="phl-and-epi-join" class="level2">
+<h2 class="anchored" data-anchor-id="phl-and-epi-join">PHL and Epi Join</h2>
+<p>Use specimen id to join the Epi (All Specimens) dashboard to PHL dashboard and fill in name and data of birth</p>
+<div class="cell-container"><div class="cell-decorator"><pre>In [20]:</pre></div><div class="cell">
+<div class="sourceCode cell-code" id="cb20"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Join Epi dashboard to PHL, REDCAP, and Surveillance data</span></span>
+<span id="cb20-2"><a href="#cb20-2" aria-hidden="true" tabindex="-1"></a>dashboard_all <span class="ot">&lt;-</span> <span class="fu">left_join</span>(dashboard_all, epi, <span class="at">by =</span> <span class="fu">c</span>(<span class="st">'SpecimenId'</span> <span class="ot">=</span> <span class="st">'Specimen ID'</span>))</span>
+<span id="cb20-3"><a href="#cb20-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-4"><a href="#cb20-4" aria-hidden="true" tabindex="-1"></a><span class="co"># If name and dob isn't already present in the data,</span></span>
+<span id="cb20-5"><a href="#cb20-5" aria-hidden="true" tabindex="-1"></a><span class="co"># fill in with data from the Epi (All Specimens) dashboard</span></span>
+<span id="cb20-6"><a href="#cb20-6" aria-hidden="true" tabindex="-1"></a>dashboard_all <span class="ot">&lt;-</span> dashboard_all <span class="sc">%&gt;%</span> </span>
+<span id="cb20-7"><a href="#cb20-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">FirstName =</span> <span class="fu">ifelse</span>(<span class="sc">!</span><span class="fu">is.na</span>(FirstName), FirstName, <span class="st">`</span><span class="at">First Name</span><span class="st">`</span>),</span>
+<span id="cb20-8"><a href="#cb20-8" aria-hidden="true" tabindex="-1"></a>         <span class="at">LastName =</span> <span class="fu">ifelse</span>(<span class="sc">!</span><span class="fu">is.na</span>(LastName), LastName, <span class="st">`</span><span class="at">Last Name</span><span class="st">`</span>),</span>
+<span id="cb20-9"><a href="#cb20-9" aria-hidden="true" tabindex="-1"></a>         <span class="at">BirthDate =</span> <span class="fu">ifelse</span>(<span class="sc">!</span><span class="fu">is.na</span>(BirthDate), BirthDate, <span class="st">`</span><span class="at">Birth Date</span><span class="st">`</span>)) <span class="sc">%&gt;%</span></span>
+<span id="cb20-10"><a href="#cb20-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(<span class="sc">-</span><span class="st">`</span><span class="at">First Name</span><span class="st">`</span>, <span class="sc">-</span><span class="st">`</span><span class="at">Last Name</span><span class="st">`</span>, <span class="sc">-</span><span class="st">`</span><span class="at">Birth Date</span><span class="st">`</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div></div>
+</section>
+<section id="join-sequence-data-to-wdrs" class="level2">
+<h2 class="anchored" data-anchor-id="join-sequence-data-to-wdrs">Join sequence data to WDRS</h2>
+<p>Use specimen id (sequence clinical accession) to join the PHL specimens to WDRS records</p>
+<div class="cell-container"><div class="cell-decorator"><pre>In [21]:</pre></div><div class="cell">
+<div class="sourceCode cell-code" id="cb21"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Join dashboard data with WDRS by Specimen ID (sequence clinical accession), still keeping samples not found in WDRS</span></span>
+<span id="cb21-2"><a href="#cb21-2" aria-hidden="true" tabindex="-1"></a>join_dash_wdrs <span class="ot">&lt;-</span></span>
+<span id="cb21-3"><a href="#cb21-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">left_join</span>(dashboard_all,</span>
+<span id="cb21-4"><a href="#cb21-4" aria-hidden="true" tabindex="-1"></a>            unique_wdrs,</span>
+<span id="cb21-5"><a href="#cb21-5" aria-hidden="true" tabindex="-1"></a>            <span class="at">by =</span> <span class="st">"SpecimenId"</span>,</span>
+<span id="cb21-6"><a href="#cb21-6" aria-hidden="true" tabindex="-1"></a>            <span class="at">na_matches =</span> <span class="st">"never"</span>) </span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div></div>
+</section>
+<section id="leftovers" class="level2">
+<h2 class="anchored" data-anchor-id="leftovers">Leftovers</h2>
+<p>Try to match records not matched with SpecimenId to WDRS using Accession ID from Surveillance. Records without a match are kept in the table and will be passed on to fuzzy matching or keep_na, as relevant.</p>
+<div class="cell-container"><div class="cell-decorator"><pre>In [22]:</pre></div><div class="cell">
+<div class="sourceCode cell-code" id="cb22"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Select samples where the Specimen ID was not in WDRS</span></span>
+<span id="cb22-2"><a href="#cb22-2" aria-hidden="true" tabindex="-1"></a>leftovers <span class="ot">&lt;-</span> <span class="fu">filter</span>(join_dash_wdrs, <span class="fu">is.na</span>(CASE_ID)) <span class="sc">%&gt;%</span></span>
+<span id="cb22-3"><a href="#cb22-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(<span class="sc">!</span>CASE_ID) <span class="co">#removes so column can be added back on new join</span></span>
+<span id="cb22-4"><a href="#cb22-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb22-5"><a href="#cb22-5" aria-hidden="true" tabindex="-1"></a><span class="co"># Identify samples where the Accession ID is in WDRS, using Surveillance dashboard data</span></span>
+<span id="cb22-6"><a href="#cb22-6" aria-hidden="true" tabindex="-1"></a><span class="co"># Only use the COLLECTION_DATE_WDRS column from unique_wdrs</span></span>
+<span id="cb22-7"><a href="#cb22-7" aria-hidden="true" tabindex="-1"></a>leftovers_matching_via_surveillance <span class="ot">&lt;-</span> <span class="fu">left_join</span>(leftovers <span class="sc">%&gt;%</span> <span class="fu">select</span>(<span class="sc">-</span>COLLECTION_DATE_WDRS), unique_wdrs, </span>
+<span id="cb22-8"><a href="#cb22-8" aria-hidden="true" tabindex="-1"></a>                                           <span class="at">by =</span> <span class="fu">c</span>(<span class="st">"AccessionId"</span> <span class="ot">=</span> <span class="st">"SpecimenId"</span>), <span class="at">na_matches =</span> <span class="st">"never"</span>) <span class="sc">%&gt;%</span> </span>
+<span id="cb22-9"><a href="#cb22-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(<span class="sc">!</span><span class="fu">is.na</span>(CASE_ID), <span class="sc">!</span><span class="fu">is.na</span>(AccessionId))</span>
+<span id="cb22-10"><a href="#cb22-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb22-11"><a href="#cb22-11" aria-hidden="true" tabindex="-1"></a><span class="co"># Remove records that matched on accession id, but include records with no match</span></span>
+<span id="cb22-12"><a href="#cb22-12" aria-hidden="true" tabindex="-1"></a>join_dash_wdrs <span class="ot">&lt;-</span> <span class="fu">filter</span>(join_dash_wdrs, <span class="sc">!</span>AccessionId <span class="sc">%in%</span> leftovers_matching_via_surveillance<span class="sc">$</span>AccessionId)</span>
+<span id="cb22-13"><a href="#cb22-13" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb22-14"><a href="#cb22-14" aria-hidden="true" tabindex="-1"></a><span class="co"># Recombine all inputs, those with and without matches and select relevant columns</span></span>
+<span id="cb22-15"><a href="#cb22-15" aria-hidden="true" tabindex="-1"></a>phl_and_other_matches <span class="ot">&lt;-</span></span>
+<span id="cb22-16"><a href="#cb22-16" aria-hidden="true" tabindex="-1"></a>  <span class="fu">rbind</span>(join_dash_wdrs, leftovers_matching_via_surveillance) <span class="sc">%&gt;%</span> <span class="fu">select</span>(</span>
+<span id="cb22-17"><a href="#cb22-17" aria-hidden="true" tabindex="-1"></a>    <span class="st">"SEQUENCE_REASON"</span>,</span>
+<span id="cb22-18"><a href="#cb22-18" aria-hidden="true" tabindex="-1"></a>    <span class="st">"Seq ID"</span>,</span>
+<span id="cb22-19"><a href="#cb22-19" aria-hidden="true" tabindex="-1"></a>    <span class="st">"SpecimenId"</span>,</span>
+<span id="cb22-20"><a href="#cb22-20" aria-hidden="true" tabindex="-1"></a>    <span class="st">"Sequencing Result"</span>,</span>
+<span id="cb22-21"><a href="#cb22-21" aria-hidden="true" tabindex="-1"></a>    <span class="st">"AccessionNumber"</span>,</span>
+<span id="cb22-22"><a href="#cb22-22" aria-hidden="true" tabindex="-1"></a>    <span class="st">"AccessionId"</span>,</span>
+<span id="cb22-23"><a href="#cb22-23" aria-hidden="true" tabindex="-1"></a>    <span class="st">"CASE_ID"</span>,</span>
+<span id="cb22-24"><a href="#cb22-24" aria-hidden="true" tabindex="-1"></a>    <span class="st">"Collected Date"</span>,</span>
+<span id="cb22-25"><a href="#cb22-25" aria-hidden="true" tabindex="-1"></a>    <span class="st">"Lineage"</span>,</span>
+<span id="cb22-26"><a href="#cb22-26" aria-hidden="true" tabindex="-1"></a>    <span class="st">"COLLECTION_DATE_WDRS"</span>,</span>
+<span id="cb22-27"><a href="#cb22-27" aria-hidden="true" tabindex="-1"></a>    <span class="st">"FirstName"</span>,</span>
+<span id="cb22-28"><a href="#cb22-28" aria-hidden="true" tabindex="-1"></a>    <span class="st">"LastName"</span>,</span>
+<span id="cb22-29"><a href="#cb22-29" aria-hidden="true" tabindex="-1"></a>    <span class="st">"BirthDate"</span></span>
+<span id="cb22-30"><a href="#cb22-30" aria-hidden="true" tabindex="-1"></a>  ) </span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div></div>
+</section>
+</section>
+<section id="transform-data" class="level1 tabset">
+<h1 class="tabset">Transform Data</h1>
+<section id="roster-columns" class="level2">
+<h2 class="anchored" data-anchor-id="roster-columns">Roster Columns</h2>
+<div class="cell-container"><div class="cell-decorator"><pre>In [23]:</pre></div><div class="cell">
+<div class="sourceCode cell-code" id="cb23"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a><span class="co"># rename Seq ID as Sequence_ACCESSION and add variant column</span></span>
+<span id="cb23-2"><a href="#cb23-2" aria-hidden="true" tabindex="-1"></a>phl_and_other_matches_clean <span class="ot">&lt;-</span> phl_and_other_matches <span class="sc">%&gt;%</span></span>
+<span id="cb23-3"><a href="#cb23-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">rename</span>(<span class="at">SEQUENCE_ACCESSION =</span> <span class="st">"Seq ID"</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb23-4"><a href="#cb23-4" aria-hidden="true" tabindex="-1"></a>  <span class="co"># new free text column for lineage</span></span>
+<span id="cb23-5"><a href="#cb23-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">SEQUENCE_VARIANT_OPEN_TEXT =</span> Lineage)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div></div>
+</section>
+<section id="sequence-clinical-accession-formats" class="level2">
+<h2 class="anchored" data-anchor-id="sequence-clinical-accession-formats">Sequence Clinical Accession Formats</h2>
+<div class="cell-container"><div class="cell-decorator"><pre>In [24]:</pre></div><div class="cell">
+<div class="sourceCode cell-code" id="cb24"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Create column for the sequence clinical accession, getting the value from the</span></span>
+<span id="cb24-2"><a href="#cb24-2" aria-hidden="true" tabindex="-1"></a><span class="co"># relevant column for the phl or surveillance data</span></span>
+<span id="cb24-3"><a href="#cb24-3" aria-hidden="true" tabindex="-1"></a>phl_and_other_matches_clean <span class="ot">&lt;-</span></span>
+<span id="cb24-4"><a href="#cb24-4" aria-hidden="true" tabindex="-1"></a>  phl_and_other_matches_clean <span class="sc">%&gt;%</span> <span class="fu">mutate</span>(</span>
+<span id="cb24-5"><a href="#cb24-5" aria-hidden="true" tabindex="-1"></a>    <span class="at">SEQUENCE_CLINICAL_ACCESSION =</span> <span class="fu">case_when</span>(</span>
+<span id="cb24-6"><a href="#cb24-6" aria-hidden="true" tabindex="-1"></a>      <span class="sc">!</span><span class="fu">is.na</span>(phl_and_other_matches_clean<span class="sc">$</span>AccessionId) <span class="sc">~</span> phl_and_other_matches_clean<span class="sc">$</span>AccessionId,</span>
+<span id="cb24-7"><a href="#cb24-7" aria-hidden="true" tabindex="-1"></a>      <span class="cn">TRUE</span> <span class="sc">~</span> phl_and_other_matches_clean<span class="sc">$</span>SpecimenId</span>
+<span id="cb24-8"><a href="#cb24-8" aria-hidden="true" tabindex="-1"></a>    ))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div></div>
+</section>
+<section id="generate-format-for-roster" class="level2">
+<h2 class="anchored" data-anchor-id="generate-format-for-roster">Generate Format for Roster</h2>
+<div class="cell-container"><div class="cell-decorator"><pre>In [25]:</pre></div><div class="cell">
+<div class="sourceCode cell-code" id="cb25"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Format matched data to fit format for roster</span></span>
+<span id="cb25-2"><a href="#cb25-2" aria-hidden="true" tabindex="-1"></a>phl_roster <span class="ot">&lt;-</span> phl_and_other_matches_clean <span class="sc">%&gt;%</span></span>
+<span id="cb25-3"><a href="#cb25-3" aria-hidden="true" tabindex="-1"></a>  <span class="co"># keep track of sequence accession, important for filtering out already processed records</span></span>
+<span id="cb25-4"><a href="#cb25-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">ID =</span> SEQUENCE_ACCESSION) <span class="sc">%&gt;%</span></span>
+<span id="cb25-5"><a href="#cb25-5" aria-hidden="true" tabindex="-1"></a>  <span class="co"># format collection date</span></span>
+<span id="cb25-6"><a href="#cb25-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">SEQUENCE_SPECIMEN_COLLECTION_DATE =</span> <span class="fu">as.character</span>(<span class="fu">format</span>(</span>
+<span id="cb25-7"><a href="#cb25-7" aria-hidden="true" tabindex="-1"></a>    <span class="fu">as.Date</span>(phl_and_other_matches_clean<span class="sc">$</span><span class="st">`</span><span class="at">Collected Date</span><span class="st">`</span>), <span class="st">'%m/%d/%Y'</span> <span class="co"># adjust date to m/d/Y format</span></span>
+<span id="cb25-8"><a href="#cb25-8" aria-hidden="true" tabindex="-1"></a>  ))) <span class="sc">%&gt;%</span></span>
+<span id="cb25-9"><a href="#cb25-9" aria-hidden="true" tabindex="-1"></a>  <span class="co"># format wdrs collection date</span></span>
+<span id="cb25-10"><a href="#cb25-10" aria-hidden="true" tabindex="-1"></a>   <span class="fu">mutate</span>(<span class="at">COLLECTION_DATE_WDRS =</span> <span class="fu">as.character</span>(<span class="fu">format</span>(</span>
+<span id="cb25-11"><a href="#cb25-11" aria-hidden="true" tabindex="-1"></a>    <span class="fu">as.Date</span>(phl_and_other_matches_clean<span class="sc">$</span>COLLECTION_DATE_WDRS), <span class="st">'%m/%d/%Y'</span>  <span class="co"># adjust date to m/d/Y format</span></span>
+<span id="cb25-12"><a href="#cb25-12" aria-hidden="true" tabindex="-1"></a>  ))) <span class="sc">%&gt;%</span></span>
+<span id="cb25-13"><a href="#cb25-13" aria-hidden="true" tabindex="-1"></a>  <span class="co"># add empty sgtf column</span></span>
+<span id="cb25-14"><a href="#cb25-14" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">SEQUENCE_SGTF =</span> <span class="cn">NA_character_</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb25-15"><a href="#cb25-15" aria-hidden="true" tabindex="-1"></a>  <span class="co"># add sequence speciment column</span></span>
+<span id="cb25-16"><a href="#cb25-16" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">SEQUENCE_SPECIMEN =</span> <span class="st">"YES"</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb25-17"><a href="#cb25-17" aria-hidden="true" tabindex="-1"></a>  <span class="co"># map input sequence reasons to simplified set of sequence reasons</span></span>
+<span id="cb25-18"><a href="#cb25-18" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">SEQUENCE_REASON =</span> lab_vars<span class="sc">$</span>output_seq_reasons_phl[<span class="fu">match</span>(SEQUENCE_REASON, lab_vars<span class="sc">$</span>phl_seq_reasons)]) <span class="sc">%&gt;%</span></span>
+<span id="cb25-19"><a href="#cb25-19" aria-hidden="true" tabindex="-1"></a>  <span class="co"># if the new sequence reason is NA </span></span>
+<span id="cb25-20"><a href="#cb25-20" aria-hidden="true" tabindex="-1"></a>  <span class="co"># (meaning it wasn't in the input list or didn't have a mapping to the output list)</span></span>
+<span id="cb25-21"><a href="#cb25-21" aria-hidden="true" tabindex="-1"></a>  <span class="co"># return it to the original reason, otherwise keep the new reason</span></span>
+<span id="cb25-22"><a href="#cb25-22" aria-hidden="true" tabindex="-1"></a>  <span class="co"># records with sequence reasons not in the accepted output seq reason list will be filtered out</span></span>
+<span id="cb25-23"><a href="#cb25-23" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">SEQUENCE_REASON =</span> <span class="fu">if_else</span>(<span class="fu">is.na</span>(SEQUENCE_REASON), phl_and_other_matches_clean<span class="sc">$</span>SEQUENCE_REASON, SEQUENCE_REASON)) <span class="sc">%&gt;%</span></span>
+<span id="cb25-24"><a href="#cb25-24" aria-hidden="true" tabindex="-1"></a>  <span class="co"># add empty sequence date column</span></span>
+<span id="cb25-25"><a href="#cb25-25" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">SEQUENCE_DATE =</span> <span class="cn">NA_character_</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb25-26"><a href="#cb25-26" aria-hidden="true" tabindex="-1"></a>  <span class="co"># set lab to PHL</span></span>
+<span id="cb25-27"><a href="#cb25-27" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">SEQUENCE_LAB =</span> <span class="st">"PHL"</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb25-28"><a href="#cb25-28" aria-hidden="true" tabindex="-1"></a>  <span class="co"># sequence status column</span></span>
+<span id="cb25-29"><a href="#cb25-29" aria-hidden="true" tabindex="-1"></a>  <span class="co"># mutate(SEQUENCE_STATUS = phl_and_other_matches_clean$`Sequencing Result`) %&gt;% </span></span>
+<span id="cb25-30"><a href="#cb25-30" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Change all None to Unassigned</span></span>
+<span id="cb25-31"><a href="#cb25-31" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">SEQUENCE_VARIANT_OPEN_TEXT =</span> <span class="fu">if_else</span>(Lineage <span class="sc">==</span> <span class="st">"None"</span>, <span class="st">"Unassigned"</span>, Lineage)) <span class="sc">%&gt;%</span></span>
+<span id="cb25-32"><a href="#cb25-32" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Change all Unassigned lineages to have LOW QUALITY status</span></span>
+<span id="cb25-33"><a href="#cb25-33" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">SEQUENCE_STATUS =</span> <span class="fu">case_when</span>(</span>
+<span id="cb25-34"><a href="#cb25-34" aria-hidden="true" tabindex="-1"></a>    SEQUENCE_VARIANT_OPEN_TEXT <span class="sc">==</span> <span class="st">"Unassigned"</span> <span class="sc">~</span> <span class="st">"LOW QUALITY"</span>,</span>
+<span id="cb25-35"><a href="#cb25-35" aria-hidden="true" tabindex="-1"></a>    <span class="cn">TRUE</span> <span class="sc">~</span> phl_and_other_matches_clean<span class="sc">$</span><span class="st">`</span><span class="at">Sequencing Result</span><span class="st">`</span></span>
+<span id="cb25-36"><a href="#cb25-36" aria-hidden="true" tabindex="-1"></a>    )) <span class="sc">%&gt;%</span></span>
+<span id="cb25-37"><a href="#cb25-37" aria-hidden="true" tabindex="-1"></a>  <span class="co"># If the sequence is FAILED status, leave SEQUENCE_REPOSITORY as null, else set sequence repo to GISAID</span></span>
+<span id="cb25-38"><a href="#cb25-38" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">SEQUENCE_REPOSITORY =</span> <span class="fu">case_when</span>(</span>
+<span id="cb25-39"><a href="#cb25-39" aria-hidden="true" tabindex="-1"></a>    SEQUENCE_STATUS <span class="sc">==</span> <span class="st">"FAILED"</span> <span class="sc">~</span> <span class="cn">NA_character_</span>, </span>
+<span id="cb25-40"><a href="#cb25-40" aria-hidden="true" tabindex="-1"></a>    <span class="cn">TRUE</span> <span class="sc">~</span> <span class="st">"GISAID"</span></span>
+<span id="cb25-41"><a href="#cb25-41" aria-hidden="true" tabindex="-1"></a>    )) <span class="sc">%&gt;%</span></span>
+<span id="cb25-42"><a href="#cb25-42" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">SEQUENCE_ACCESSION =</span> SEQUENCE_ACCESSION) <span class="sc">%&gt;%</span></span>
+<span id="cb25-43"><a href="#cb25-43" aria-hidden="true" tabindex="-1"></a>  <span class="co"># add empty sequence reviewed column</span></span>
+<span id="cb25-44"><a href="#cb25-44" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">SEQUENCE_REVIEWED =</span> <span class="cn">NA_character_</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb25-45"><a href="#cb25-45" aria-hidden="true" tabindex="-1"></a>  <span class="co"># add standard case note</span></span>
+<span id="cb25-46"><a href="#cb25-46" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">Case.Note =</span> <span class="st">"External data question package updated by COVID19 Sequencing Roster."</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb25-47"><a href="#cb25-47" aria-hidden="true" tabindex="-1"></a> </span>
+<span id="cb25-48"><a href="#cb25-48" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb25-49"><a href="#cb25-49" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb25-50"><a href="#cb25-50" aria-hidden="true" tabindex="-1"></a>  <span class="co"># use lineage column to create sequence notes column</span></span>
+<span id="cb25-51"><a href="#cb25-51" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">SEQUENCE_NOTES =</span> <span class="fu">case_when</span>(</span>
+<span id="cb25-52"><a href="#cb25-52" aria-hidden="true" tabindex="-1"></a>    <span class="sc">!</span><span class="fu">is.na</span>(Lineage) <span class="sc">&amp;</span> Lineage <span class="sc">!=</span> <span class="st">"Unassigned"</span> <span class="sc">~</span> <span class="fu">paste0</span>(</span>
+<span id="cb25-53"><a href="#cb25-53" aria-hidden="true" tabindex="-1"></a>      <span class="st">"Lineage identified as "</span>,</span>
+<span id="cb25-54"><a href="#cb25-54" aria-hidden="true" tabindex="-1"></a>      phl_and_other_matches_clean<span class="sc">$</span>Lineage,</span>
+<span id="cb25-55"><a href="#cb25-55" aria-hidden="true" tabindex="-1"></a>      <span class="st">" on "</span>,</span>
+<span id="cb25-56"><a href="#cb25-56" aria-hidden="true" tabindex="-1"></a>      <span class="fu">today</span>(),</span>
+<span id="cb25-57"><a href="#cb25-57" aria-hidden="true" tabindex="-1"></a>      <span class="st">". Lineage assignments may change over time."</span></span>
+<span id="cb25-58"><a href="#cb25-58" aria-hidden="true" tabindex="-1"></a>    ),</span>
+<span id="cb25-59"><a href="#cb25-59" aria-hidden="true" tabindex="-1"></a>    <span class="fu">is.na</span>(Lineage) <span class="sc">~</span> <span class="cn">NA_character_</span> <span class="co"># Add sequence notes column containing the lineage information</span></span>
+<span id="cb25-60"><a href="#cb25-60" aria-hidden="true" tabindex="-1"></a>  )) <span class="sc">%&gt;%</span></span>
+<span id="cb25-61"><a href="#cb25-61" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(</span>
+<span id="cb25-62"><a href="#cb25-62" aria-hidden="true" tabindex="-1"></a>    CASE_ID,</span>
+<span id="cb25-63"><a href="#cb25-63" aria-hidden="true" tabindex="-1"></a>    SEQUENCE_SGTF,</span>
+<span id="cb25-64"><a href="#cb25-64" aria-hidden="true" tabindex="-1"></a>    SEQUENCE_SPECIMEN,</span>
+<span id="cb25-65"><a href="#cb25-65" aria-hidden="true" tabindex="-1"></a>    SEQUENCE_REASON,</span>
+<span id="cb25-66"><a href="#cb25-66" aria-hidden="true" tabindex="-1"></a>    SEQUENCE_DATE,</span>
+<span id="cb25-67"><a href="#cb25-67" aria-hidden="true" tabindex="-1"></a>    SEQUENCE_LAB,</span>
+<span id="cb25-68"><a href="#cb25-68" aria-hidden="true" tabindex="-1"></a>    SEQUENCE_STATUS,</span>
+<span id="cb25-69"><a href="#cb25-69" aria-hidden="true" tabindex="-1"></a>    SEQUENCE_REPOSITORY,</span>
+<span id="cb25-70"><a href="#cb25-70" aria-hidden="true" tabindex="-1"></a>    SEQUENCE_ACCESSION,</span>
+<span id="cb25-71"><a href="#cb25-71" aria-hidden="true" tabindex="-1"></a>    SEQUENCE_VARIANT_OPEN_TEXT,</span>
+<span id="cb25-72"><a href="#cb25-72" aria-hidden="true" tabindex="-1"></a>    SEQUENCE_CLINICAL_ACCESSION,</span>
+<span id="cb25-73"><a href="#cb25-73" aria-hidden="true" tabindex="-1"></a>    SEQUENCE_SPECIMEN_COLLECTION_DATE,</span>
+<span id="cb25-74"><a href="#cb25-74" aria-hidden="true" tabindex="-1"></a>    SEQUENCE_NOTES,</span>
+<span id="cb25-75"><a href="#cb25-75" aria-hidden="true" tabindex="-1"></a>    SEQUENCE_REVIEWED,</span>
+<span id="cb25-76"><a href="#cb25-76" aria-hidden="true" tabindex="-1"></a>    ID,</span>
+<span id="cb25-77"><a href="#cb25-77" aria-hidden="true" tabindex="-1"></a>    Case.Note,</span>
+<span id="cb25-78"><a href="#cb25-78" aria-hidden="true" tabindex="-1"></a>    COLLECTION_DATE_WDRS,</span>
+<span id="cb25-79"><a href="#cb25-79" aria-hidden="true" tabindex="-1"></a>    <span class="co"># include demographic columns for fuzzy matching</span></span>
+<span id="cb25-80"><a href="#cb25-80" aria-hidden="true" tabindex="-1"></a>    <span class="at">FIRST_NAME =</span> FirstName,</span>
+<span id="cb25-81"><a href="#cb25-81" aria-hidden="true" tabindex="-1"></a>    <span class="at">LAST_NAME =</span> LastName,</span>
+<span id="cb25-82"><a href="#cb25-82" aria-hidden="true" tabindex="-1"></a>    <span class="at">DOB =</span> BirthDate</span>
+<span id="cb25-83"><a href="#cb25-83" aria-hidden="true" tabindex="-1"></a>  )</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div></div>
+</section>
+</section>
+<section id="roster-quality-checks" class="level1 tabset">
+<h1 class="tabset">Roster Quality Checks</h1>
+<section id="processed-records" class="level2">
+<h2 class="anchored" data-anchor-id="processed-records">Processed Records</h2>
+<p>Filter out records that have already been processed by the script in past runs</p>
+<div class="cell-container"><div class="cell-decorator"><pre>In [26]:</pre></div><div class="cell">
+<div class="sourceCode cell-code" id="cb26"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Remove records that have already been processed</span></span>
+<span id="cb26-2"><a href="#cb26-2" aria-hidden="true" tabindex="-1"></a>phl_roster <span class="ot">&lt;-</span> <span class="fu">filter</span>(phl_roster, <span class="sc">!</span>ID <span class="sc">%in%</span> phl_processed_records<span class="sc">$</span>SEQUENCE_ACCESSION)</span>
+<span id="cb26-3"><a href="#cb26-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb26-4"><a href="#cb26-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb26-5"><a href="#cb26-5" aria-hidden="true" tabindex="-1"></a><span class="co"># Temp addition to change PHL Historic data (2020/2021) to sequence reason "OTHER"</span></span>
+<span id="cb26-6"><a href="#cb26-6" aria-hidden="true" tabindex="-1"></a>phl_roster <span class="ot">&lt;-</span> phl_roster <span class="sc">%&gt;%</span> <span class="fu">mutate</span>(<span class="at">SEQUENCE_REASON =</span> <span class="fu">case_when</span>(</span>
+<span id="cb26-7"><a href="#cb26-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">str_detect</span>(SEQUENCE_SPECIMEN_COLLECTION_DATE, <span class="st">"2020$|2021$"</span>) <span class="sc">~</span> <span class="st">"OTHER"</span>,</span>
+<span id="cb26-8"><a href="#cb26-8" aria-hidden="true" tabindex="-1"></a>             <span class="cn">TRUE</span> <span class="sc">~</span> SEQUENCE_REASON))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div></div>
+</section>
+<section id="sca-failed-in-wdrs" class="level2">
+<h2 class="anchored" data-anchor-id="sca-failed-in-wdrs">SCA Failed in WDRS</h2>
+<p>Filter out records that have a status of FAILED and the sequence clinical accession is already in wdrs</p>
+<div class="cell-container"><div class="cell-decorator"><pre>In [27]:</pre></div><div class="cell">
+<div class="sourceCode cell-code" id="cb27"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb27-1"><a href="#cb27-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Remove records that are failed and the SCA is in WDRS</span></span>
+<span id="cb27-2"><a href="#cb27-2" aria-hidden="true" tabindex="-1"></a>phl_roster <span class="ot">&lt;-</span> <span class="fu">filter</span>(phl_roster, <span class="sc">!</span>((SEQUENCE_CLINICAL_ACCESSION <span class="sc">%in%</span> wdrs_sca_flat_values) <span class="sc">&amp;</span> (SEQUENCE_STATUS <span class="sc">==</span> <span class="st">'FAILED'</span>)))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div></div>
+</section>
+<section id="roster-filters" class="level2">
+<h2 class="anchored" data-anchor-id="roster-filters">Roster Filters</h2>
+<p>Filter the phl roster and split the data into acceptable rows and rows needing review or exclusion. Print “bad” rows to files for review.</p>
+<div class="cell-container"><div class="cell-decorator"><pre>In [28]:</pre></div><div class="cell">
+<div class="sourceCode cell-code" id="cb28"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb28-1"><a href="#cb28-1" aria-hidden="true" tabindex="-1"></a><span class="co"># run formatted data through the roster_filters function (from  quality_filters.R) to check for various errors</span></span>
+<span id="cb28-2"><a href="#cb28-2" aria-hidden="true" tabindex="-1"></a><span class="co"># will print how many records have each error type</span></span>
+<span id="cb28-3"><a href="#cb28-3" aria-hidden="true" tabindex="-1"></a>phl_quality <span class="ot">&lt;-</span> <span class="fu">roster_filters</span>(phl_roster, lab_vars, wdrs_sa_flat_values, wdrs_sca_flat_values, lineages_list)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div></div>
+</section>
+</section>
+<section id="fuzzy-matching" class="level1">
+<h1>Fuzzy matching</h1>
+<p>Specimens that did not match to a record in WDRS need to be matched on demographics in a separate fuzzy matching process</p>
+<div class="cell-container"><div class="cell-decorator"><pre>In [29]:</pre></div><div class="cell">
+<div class="sourceCode cell-code" id="cb29"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb29-1"><a href="#cb29-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Send records to fuzzy matching that did not match to a record in WDRS or which have duplicate SCA but different CASE ID</span></span>
+<span id="cb29-2"><a href="#cb29-2" aria-hidden="true" tabindex="-1"></a><span class="co"># All records sent to fuzzy matching should have demographic info</span></span>
+<span id="cb29-3"><a href="#cb29-3" aria-hidden="true" tabindex="-1"></a>fuzzy_matching_input <span class="ot">&lt;-</span> <span class="fu">filter</span>(phl_quality, <span class="sc">!</span><span class="fu">is.na</span>(QA_CASE_ID) <span class="sc">|</span> <span class="sc">!</span><span class="fu">is.na</span>(QA_SCA_INT_DUPE),</span>
+<span id="cb29-4"><a href="#cb29-4" aria-hidden="true" tabindex="-1"></a>                         <span class="sc">!</span><span class="fu">is.na</span>(FIRST_NAME),</span>
+<span id="cb29-5"><a href="#cb29-5" aria-hidden="true" tabindex="-1"></a>                         FIRST_NAME <span class="sc">!=</span> <span class="st">""</span>,</span>
+<span id="cb29-6"><a href="#cb29-6" aria-hidden="true" tabindex="-1"></a>                         <span class="sc">!</span><span class="fu">is.na</span>(LAST_NAME),</span>
+<span id="cb29-7"><a href="#cb29-7" aria-hidden="true" tabindex="-1"></a>                         LAST_NAME <span class="sc">!=</span> <span class="st">""</span>,</span>
+<span id="cb29-8"><a href="#cb29-8" aria-hidden="true" tabindex="-1"></a>                         <span class="sc">!</span><span class="fu">is.na</span>(DOB),</span>
+<span id="cb29-9"><a href="#cb29-9" aria-hidden="true" tabindex="-1"></a>                         DOB <span class="sc">!=</span> <span class="st">""</span>)</span>
+<span id="cb29-10"><a href="#cb29-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb29-11"><a href="#cb29-11" aria-hidden="true" tabindex="-1"></a><span class="co"># Format data for submission to fuzzing matching</span></span>
+<span id="cb29-12"><a href="#cb29-12" aria-hidden="true" tabindex="-1"></a>fuzzy_matching_input <span class="ot">&lt;-</span> fuzzy_matching_input <span class="sc">%&gt;%</span></span>
+<span id="cb29-13"><a href="#cb29-13" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">MIDDLE_NAME =</span> <span class="cn">NA</span>,</span>
+<span id="cb29-14"><a href="#cb29-14" aria-hidden="true" tabindex="-1"></a>         <span class="at">ALTERNATIVE_ID =</span> <span class="cn">NA</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb29-15"><a href="#cb29-15" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(SEQUENCE_REASON,</span>
+<span id="cb29-16"><a href="#cb29-16" aria-hidden="true" tabindex="-1"></a>         <span class="at">GISAID_ID =</span> SEQUENCE_ACCESSION,</span>
+<span id="cb29-17"><a href="#cb29-17" aria-hidden="true" tabindex="-1"></a>         <span class="at">PANGO_LINEAGE =</span> SEQUENCE_VARIANT_OPEN_TEXT,</span>
+<span id="cb29-18"><a href="#cb29-18" aria-hidden="true" tabindex="-1"></a>         FIRST_NAME,</span>
+<span id="cb29-19"><a href="#cb29-19" aria-hidden="true" tabindex="-1"></a>         LAST_NAME ,</span>
+<span id="cb29-20"><a href="#cb29-20" aria-hidden="true" tabindex="-1"></a>         MIDDLE_NAME,</span>
+<span id="cb29-21"><a href="#cb29-21" aria-hidden="true" tabindex="-1"></a>         <span class="at">SUBMITTING_LAB =</span> SEQUENCE_LAB,</span>
+<span id="cb29-22"><a href="#cb29-22" aria-hidden="true" tabindex="-1"></a>         DOB,</span>
+<span id="cb29-23"><a href="#cb29-23" aria-hidden="true" tabindex="-1"></a>         <span class="at">SPECIMEN_COLLECTION_DATE =</span> SEQUENCE_SPECIMEN_COLLECTION_DATE,</span>
+<span id="cb29-24"><a href="#cb29-24" aria-hidden="true" tabindex="-1"></a>         CASE_ID,</span>
+<span id="cb29-25"><a href="#cb29-25" aria-hidden="true" tabindex="-1"></a>         SEQUENCE_STATUS,</span>
+<span id="cb29-26"><a href="#cb29-26" aria-hidden="true" tabindex="-1"></a>         ALTERNATIVE_ID,</span>
+<span id="cb29-27"><a href="#cb29-27" aria-hidden="true" tabindex="-1"></a>         <span class="at">LAB_ACCESSION_ID =</span> SEQUENCE_CLINICAL_ACCESSION,</span>
+<span id="cb29-28"><a href="#cb29-28" aria-hidden="true" tabindex="-1"></a>         ID)</span>
+<span id="cb29-29"><a href="#cb29-29" aria-hidden="true" tabindex="-1"></a>                         </span>
+<span id="cb29-30"><a href="#cb29-30" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb29-31"><a href="#cb29-31" aria-hidden="true" tabindex="-1"></a><span class="co"># remove records sent to fuzzy matching from the records sent to the roster or for review</span></span>
+<span id="cb29-32"><a href="#cb29-32" aria-hidden="true" tabindex="-1"></a>phl_quality <span class="ot">&lt;-</span> <span class="fu">filter</span>(phl_quality, <span class="sc">!</span>ID <span class="sc">%in%</span> fuzzy_matching_input<span class="sc">$</span>ID) <span class="sc">%&gt;%</span> </span>
+<span id="cb29-33"><a href="#cb29-33" aria-hidden="true" tabindex="-1"></a>  <span class="co"># remove demographic info</span></span>
+<span id="cb29-34"><a href="#cb29-34" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(<span class="sc">-</span>FIRST_NAME, <span class="sc">-</span>LAST_NAME, <span class="sc">-</span>DOB)</span>
+<span id="cb29-35"><a href="#cb29-35" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb29-36"><a href="#cb29-36" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb29-37"><a href="#cb29-37" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb29-38"><a href="#cb29-38" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span>(<span class="fu">nrow</span>(fuzzy_matching_input) <span class="sc">&gt;</span> <span class="dv">0</span>){</span>
+<span id="cb29-39"><a href="#cb29-39" aria-hidden="true" tabindex="-1"></a>  <span class="co"># keep track of records written</span></span>
+<span id="cb29-40"><a href="#cb29-40" aria-hidden="true" tabindex="-1"></a>  new_records <span class="ot">&lt;-</span> <span class="fu">c</span>(new_records, fuzzy_matching_input<span class="sc">$</span>ID)</span>
+<span id="cb29-41"><a href="#cb29-41" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb29-42"><a href="#cb29-42" aria-hidden="true" tabindex="-1"></a>  fuzzy_matching_input <span class="ot">&lt;-</span> fuzzy_matching_input <span class="sc">%&gt;%</span> <span class="fu">select</span>(<span class="sc">-</span>ID)</span>
+<span id="cb29-43"><a href="#cb29-43" aria-hidden="true" tabindex="-1"></a>  <span class="co"># write records to fuzzy matching input folder</span></span>
+<span id="cb29-44"><a href="#cb29-44" aria-hidden="true" tabindex="-1"></a>  fuzzy_matching_filepath <span class="ot">&lt;-</span> <span class="fu">file.path</span>(<span class="st">"Submissions/Fuzzy_Match"</span>, <span class="fu">paste0</span>(<span class="st">"PHL_FUZZY_MATCHING"</span>, <span class="fu">today</span>(), <span class="st">".csv"</span>))</span>
+<span id="cb29-45"><a href="#cb29-45" aria-hidden="true" tabindex="-1"></a>  <span class="fu">write_csv</span>(fuzzy_matching_input, fuzzy_matching_filepath)</span>
+<span id="cb29-46"><a href="#cb29-46" aria-hidden="true" tabindex="-1"></a>}</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div></div>
+</section>
+<section id="keep_na" class="level1 tabset">
+<h1 class="tabset">Keep_na</h1>
+<section id="filter-records-for-keep-na" class="level2">
+<h2 class="anchored" data-anchor-id="filter-records-for-keep-na">Filter Records for Keep NA</h2>
+<p>These rows were missing important data and need to be sent to the keep_na file so that we can attempt to match them later.</p>
+<div class="cell-container"><div class="cell-decorator"><pre>In [30]:</pre></div><div class="cell">
+<div class="sourceCode cell-code" id="cb30"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb30-1"><a href="#cb30-1" aria-hidden="true" tabindex="-1"></a><span class="co"># add to keep na records that are missing case or sequence accession or sequence clinical accession, but where the status is not pending and the sequence clinical accession is not in wdrs</span></span>
+<span id="cb30-2"><a href="#cb30-2" aria-hidden="true" tabindex="-1"></a>keep_na <span class="ot">&lt;-</span> <span class="fu">filter</span>(phl_quality, (<span class="sc">!</span><span class="fu">is.na</span>(QA_CASE_ID) <span class="sc">|</span></span>
+<span id="cb30-3"><a href="#cb30-3" aria-hidden="true" tabindex="-1"></a>                                  <span class="sc">!</span><span class="fu">is.na</span>(QA_SCA_NA) <span class="sc">|</span></span>
+<span id="cb30-4"><a href="#cb30-4" aria-hidden="true" tabindex="-1"></a>                                  <span class="sc">!</span><span class="fu">is.na</span>(QA_SEQ_STAT)) <span class="sc">&amp;</span></span>
+<span id="cb30-5"><a href="#cb30-5" aria-hidden="true" tabindex="-1"></a>                    SEQUENCE_STATUS <span class="sc">!=</span> <span class="st">"PENDING"</span> <span class="sc">&amp;</span></span>
+<span id="cb30-6"><a href="#cb30-6" aria-hidden="true" tabindex="-1"></a>                    <span class="fu">is.na</span>(QA_SCA_WDRS_DUPE))</span>
+<span id="cb30-7"><a href="#cb30-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb30-8"><a href="#cb30-8" aria-hidden="true" tabindex="-1"></a><span class="co"># remove records sent to keep_na from the records sent elsewhere</span></span>
+<span id="cb30-9"><a href="#cb30-9" aria-hidden="true" tabindex="-1"></a>phl_quality <span class="ot">&lt;-</span> <span class="fu">filter</span>(phl_quality, <span class="sc">!</span>ID <span class="sc">%in%</span> keep_na<span class="sc">$</span>ID)</span>
+<span id="cb30-10"><a href="#cb30-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb30-11"><a href="#cb30-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb30-12"><a href="#cb30-12" aria-hidden="true" tabindex="-1"></a><span class="co"># Read in current keep na list</span></span>
+<span id="cb30-13"><a href="#cb30-13" aria-hidden="true" tabindex="-1"></a>keep_na_running <span class="ot">&lt;-</span> <span class="fu">read_csv</span>(<span class="st">"keep_na/keep_na.csv"</span>,</span>
+<span id="cb30-14"><a href="#cb30-14" aria-hidden="true" tabindex="-1"></a>                   <span class="at">col_types =</span> <span class="fu">cols</span>(<span class="at">.default =</span> <span class="st">"c"</span>),</span>
+<span id="cb30-15"><a href="#cb30-15" aria-hidden="true" tabindex="-1"></a>                   <span class="at">na =</span> <span class="fu">c</span>(<span class="st">""</span>, <span class="st">"NA"</span>, <span class="st">"N/A"</span>)) </span>
+<span id="cb30-16"><a href="#cb30-16" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb30-17"><a href="#cb30-17" aria-hidden="true" tabindex="-1"></a><span class="co"># Filter out records already in keep na</span></span>
+<span id="cb30-18"><a href="#cb30-18" aria-hidden="true" tabindex="-1"></a><span class="co"># and select the relevant columns</span></span>
+<span id="cb30-19"><a href="#cb30-19" aria-hidden="true" tabindex="-1"></a>keep_na_final <span class="ot">&lt;-</span> <span class="fu">filter</span>(keep_na, <span class="sc">!</span>SEQUENCE_CLINICAL_ACCESSION <span class="sc">%in%</span> keep_na_running<span class="sc">$</span>SEQUENCE_CLINICAL_ACCESSION) <span class="sc">%&gt;%</span></span>
+<span id="cb30-20"><a href="#cb30-20" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(CASE_ID<span class="sc">:</span>Case.Note) <span class="sc">%&gt;%</span></span>
+<span id="cb30-21"><a href="#cb30-21" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">DATE_PROCESSED =</span> <span class="fu">as.character</span>(<span class="fu">today</span>()))</span>
+<span id="cb30-22"><a href="#cb30-22" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb30-23"><a href="#cb30-23" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span>(<span class="fu">nrow</span>(keep_na_final <span class="sc">&gt;</span> <span class="dv">0</span>)) {</span>
+<span id="cb30-24"><a href="#cb30-24" aria-hidden="true" tabindex="-1"></a>  <span class="co"># keep track of records written</span></span>
+<span id="cb30-25"><a href="#cb30-25" aria-hidden="true" tabindex="-1"></a>  new_records <span class="ot">&lt;-</span> <span class="fu">c</span>(new_records, keep_na_final<span class="sc">$</span>ID)</span>
+<span id="cb30-26"><a href="#cb30-26" aria-hidden="true" tabindex="-1"></a>  keep_na_final <span class="ot">&lt;-</span> keep_na_final <span class="sc">%&gt;%</span> <span class="fu">select</span>(<span class="sc">-</span>ID)</span>
+<span id="cb30-27"><a href="#cb30-27" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb30-28"><a href="#cb30-28" aria-hidden="true" tabindex="-1"></a>    keep_na_final <span class="sc">%&gt;%</span></span>
+<span id="cb30-29"><a href="#cb30-29" aria-hidden="true" tabindex="-1"></a>      <span class="fu">write_csv</span>(<span class="st">"keep_na/keep_na.csv"</span>, <span class="at">na =</span> <span class="st">""</span>, <span class="at">append =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb30-30"><a href="#cb30-30" aria-hidden="true" tabindex="-1"></a>  }  </span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div></div>
+</section>
+<section id="check-keep_na-file" class="level2">
+<h2 class="anchored" data-anchor-id="check-keep_na-file">Check keep_na File</h2>
+<p>Ensures that records are appended to the keep_na file. If the number of records that should have appended to the keep_na file does not match then it outputs the keep_na_final as a separate file so data is not lost</p>
+<div class="cell-container"><div class="cell-decorator"><pre>In [31]:</pre></div><div class="cell">
+<div class="sourceCode cell-code" id="cb31"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb31-1"><a href="#cb31-1" aria-hidden="true" tabindex="-1"></a><span class="co"># if keep_na_final &gt; 0 </span></span>
+<span id="cb31-2"><a href="#cb31-2" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span>(<span class="fu">nrow</span>(keep_na_final) <span class="sc">&gt;</span> <span class="dv">0</span>) {</span>
+<span id="cb31-3"><a href="#cb31-3" aria-hidden="true" tabindex="-1"></a><span class="co"># bring in the updated keep_na </span></span>
+<span id="cb31-4"><a href="#cb31-4" aria-hidden="true" tabindex="-1"></a>keep_na_running_update <span class="ot">&lt;-</span> <span class="fu">read_csv</span>(<span class="st">"keep_na/keep_na.csv"</span>,</span>
+<span id="cb31-5"><a href="#cb31-5" aria-hidden="true" tabindex="-1"></a>                   <span class="at">col_types =</span> <span class="fu">cols</span>(<span class="at">.default =</span> <span class="st">"c"</span>),</span>
+<span id="cb31-6"><a href="#cb31-6" aria-hidden="true" tabindex="-1"></a>                   <span class="at">na =</span> <span class="fu">c</span>(<span class="st">""</span>, <span class="st">"NA"</span>, <span class="st">"N/A"</span>)) </span>
+<span id="cb31-7"><a href="#cb31-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb31-8"><a href="#cb31-8" aria-hidden="true" tabindex="-1"></a>}  </span>
+<span id="cb31-9"><a href="#cb31-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb31-10"><a href="#cb31-10" aria-hidden="true" tabindex="-1"></a><span class="co"># if the difference in the nrow between the keep_na originally brought in and the keep_na updated with keep_na_final does not equal the nrow of keep_na_final</span></span>
+<span id="cb31-11"><a href="#cb31-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb31-12"><a href="#cb31-12" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span>(<span class="fu">nrow</span>(keep_na_final) <span class="sc">&gt;</span> <span class="dv">0</span>) {</span>
+<span id="cb31-13"><a href="#cb31-13" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> ((<span class="sc">!</span>((<span class="fu">nrow</span>(</span>
+<span id="cb31-14"><a href="#cb31-14" aria-hidden="true" tabindex="-1"></a>    keep_na_running_update</span>
+<span id="cb31-15"><a href="#cb31-15" aria-hidden="true" tabindex="-1"></a>  )) <span class="sc">-</span> (<span class="fu">nrow</span>(keep_na_running))) <span class="sc">==</span> <span class="fu">nrow</span>(keep_na_final))) {</span>
+<span id="cb31-16"><a href="#cb31-16" aria-hidden="true" tabindex="-1"></a>    <span class="co"># output keep_na_final as a separate file into a holding folder (to ensure this is added to keep_na later on)</span></span>
+<span id="cb31-17"><a href="#cb31-17" aria-hidden="true" tabindex="-1"></a>    keep_na_final <span class="sc">%&gt;%</span></span>
+<span id="cb31-18"><a href="#cb31-18" aria-hidden="true" tabindex="-1"></a>      <span class="fu">write_csv</span>(<span class="fu">file.path</span>(<span class="st">"keep_na/Add_Holding"</span>,</span>
+<span id="cb31-19"><a href="#cb31-19" aria-hidden="true" tabindex="-1"></a>                <span class="fu">paste0</span>(<span class="st">"PHL_"</span>,<span class="fu">format</span>(<span class="fu">now</span>(), <span class="st">"%Y-%m-%d-%H%M%S"</span>), <span class="st">".csv"</span>)), <span class="at">na =</span> <span class="st">""</span>)</span>
+<span id="cb31-20"><a href="#cb31-20" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb31-21"><a href="#cb31-21" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb31-22"><a href="#cb31-22" aria-hidden="true" tabindex="-1"></a>}</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div></div>
+</section>
+</section>
+<section id="phl-final-roster" class="level1">
+<h1>PHL Final Roster</h1>
+<p>Apply all of the filters and print the rows that make it through these quality checks to the write_roster_here folder.</p>
+<div class="cell-container"><div class="cell-decorator"><pre>In [32]:</pre></div><div class="cell">
+<div class="sourceCode cell-code" id="cb32"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb32-1"><a href="#cb32-1" aria-hidden="true" tabindex="-1"></a><span class="co"># filter out records that fail any quality check</span></span>
+<span id="cb32-2"><a href="#cb32-2" aria-hidden="true" tabindex="-1"></a>phl_roster_final <span class="ot">&lt;-</span> <span class="fu">filter</span>(phl_quality, sum<span class="sc">==</span><span class="dv">0</span>) <span class="sc">%&gt;%</span> <span class="fu">select</span>(CASE_ID<span class="sc">:</span>Case.Note)</span>
+<span id="cb32-3"><a href="#cb32-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb32-4"><a href="#cb32-4" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span>(<span class="fu">nrow</span>(phl_roster_final <span class="sc">&gt;</span> <span class="dv">0</span>)) {</span>
+<span id="cb32-5"><a href="#cb32-5" aria-hidden="true" tabindex="-1"></a>  <span class="co"># keep track of records written</span></span>
+<span id="cb32-6"><a href="#cb32-6" aria-hidden="true" tabindex="-1"></a>  new_records <span class="ot">&lt;-</span> <span class="fu">c</span>(new_records, phl_roster_final<span class="sc">$</span>ID)</span>
+<span id="cb32-7"><a href="#cb32-7" aria-hidden="true" tabindex="-1"></a>  phl_roster_final <span class="ot">&lt;-</span> phl_roster_final <span class="sc">%&gt;%</span> <span class="fu">select</span>(<span class="sc">-</span>ID)</span>
+<span id="cb32-8"><a href="#cb32-8" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb32-9"><a href="#cb32-9" aria-hidden="true" tabindex="-1"></a>  roster_filepath <span class="ot">&lt;-</span> <span class="fu">file.path</span>(<span class="st">"write_roster_here"</span>, <span class="fu">paste0</span>(<span class="st">"phl_NewSeq_"</span>, <span class="fu">format</span>(<span class="fu">now</span>(), <span class="st">"%Y-%m-%d-%H%M%S"</span>), <span class="st">".csv"</span>))</span>
+<span id="cb32-10"><a href="#cb32-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">write_csv</span>(phl_roster_final, roster_filepath, <span class="at">na =</span> <span class="st">""</span>)</span>
+<span id="cb32-11"><a href="#cb32-11" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb32-12"><a href="#cb32-12" aria-hidden="true" tabindex="-1"></a>}</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div></div>
+</section>
+<section id="for-review-records" class="level1">
+<h1>For review records</h1>
+<p>Select records that failed various filters and write to the For_Review folder for manual review</p>
+<div class="cell-container"><div class="cell-decorator"><pre>In [33]:</pre></div><div class="cell">
+<div class="sourceCode cell-code" id="cb33"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb33-1"><a href="#cb33-1" aria-hidden="true" tabindex="-1"></a>phl_for_review <span class="ot">&lt;-</span> <span class="fu">filter</span>(phl_quality, sum <span class="sc">&gt;</span> <span class="dv">0</span>)</span>
+<span id="cb33-2"><a href="#cb33-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb33-3"><a href="#cb33-3" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span>(<span class="fu">nrow</span>(phl_for_review)) {</span>
+<span id="cb33-4"><a href="#cb33-4" aria-hidden="true" tabindex="-1"></a>  new_records <span class="ot">&lt;-</span> <span class="fu">c</span>(new_records, phl_for_review<span class="sc">$</span>ID)</span>
+<span id="cb33-5"><a href="#cb33-5" aria-hidden="true" tabindex="-1"></a>   </span>
+<span id="cb33-6"><a href="#cb33-6" aria-hidden="true" tabindex="-1"></a>  phl_for_review <span class="ot">&lt;-</span> phl_for_review <span class="sc">%&gt;%</span></span>
+<span id="cb33-7"><a href="#cb33-7" aria-hidden="true" tabindex="-1"></a>    <span class="fu">select</span>(<span class="sc">-</span>ID, <span class="sc">-</span>sum)</span>
+<span id="cb33-8"><a href="#cb33-8" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb33-9"><a href="#cb33-9" aria-hidden="true" tabindex="-1"></a>  for_review_filepath <span class="ot">&lt;-</span> <span class="fu">file.path</span>(<span class="st">"For_Review/to_process"</span>, <span class="fu">paste0</span>(<span class="st">"PHL_review_"</span>, <span class="fu">today</span>(), <span class="st">".csv"</span>))</span>
+<span id="cb33-10"><a href="#cb33-10" aria-hidden="true" tabindex="-1"></a>    <span class="co"># write to csv</span></span>
+<span id="cb33-11"><a href="#cb33-11" aria-hidden="true" tabindex="-1"></a>  <span class="fu">write_csv</span>(phl_for_review, for_review_filepath, <span class="at">na =</span> <span class="st">""</span>)</span>
+<span id="cb33-12"><a href="#cb33-12" aria-hidden="true" tabindex="-1"></a>}</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div></div>
+</section>
+<section id="processed-record-list" class="level1">
+<h1>Processed Record List</h1>
+<p>Add to list of records that have been processed by the script</p>
+<div class="cell-container"><div class="cell-decorator"><pre>In [34]:</pre></div><div class="cell">
+<div class="sourceCode cell-code" id="cb34"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb34-1"><a href="#cb34-1" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span>(<span class="fu">length</span>(new_records) <span class="sc">&gt;</span> <span class="dv">0</span>) {</span>
+<span id="cb34-2"><a href="#cb34-2" aria-hidden="true" tabindex="-1"></a>  <span class="co"># add records processed during this run to the list</span></span>
+<span id="cb34-3"><a href="#cb34-3" aria-hidden="true" tabindex="-1"></a>  new_records <span class="ot">&lt;-</span> <span class="fu">as.data.frame</span>(new_records) <span class="sc">%&gt;%</span> magrittr<span class="sc">::</span><span class="fu">set_colnames</span>(<span class="st">"SEQUENCE_ACCESSION"</span>)</span>
+<span id="cb34-4"><a href="#cb34-4" aria-hidden="true" tabindex="-1"></a>  new_records<span class="sc">$</span>date_processed <span class="ot">&lt;-</span> <span class="fu">today</span>()</span>
+<span id="cb34-5"><a href="#cb34-5" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb34-6"><a href="#cb34-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">write_csv</span>(new_records, <span class="st">"Completed_Submissions/PHL_Records/phl_processed_records.csv"</span>, <span class="at">na =</span> <span class="st">""</span>, <span class="at">append =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb34-7"><a href="#cb34-7" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb34-8"><a href="#cb34-8" aria-hidden="true" tabindex="-1"></a>}</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div></div>
+</section>
+<section id="save-outputs-for-seq-2.0-comparison" class="level1">
+<h1>Save outputs for Seq 2.0 comparison</h1>
+<div class="cell-container"><div class="cell-decorator"><pre>In [35]:</pre></div><div class="cell">
+<div class="sourceCode cell-code" id="cb35"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb35-1"><a href="#cb35-1" aria-hidden="true" tabindex="-1"></a>keep_na_final<span class="sc">$</span>output_location <span class="ot">&lt;-</span> <span class="st">"keep_na"</span></span>
+<span id="cb35-2"><a href="#cb35-2" aria-hidden="true" tabindex="-1"></a>phl_for_review<span class="sc">$</span>output_location <span class="ot">&lt;-</span> <span class="st">"for_review"</span></span>
+<span id="cb35-3"><a href="#cb35-3" aria-hidden="true" tabindex="-1"></a>fuzzy_matching_input<span class="sc">$</span>output_location <span class="ot">&lt;-</span> <span class="st">"fuzzy"</span></span>
+<span id="cb35-4"><a href="#cb35-4" aria-hidden="true" tabindex="-1"></a>phl_roster_final<span class="sc">$</span>output_location <span class="ot">&lt;-</span> <span class="st">"WDRS"</span></span>
+<span id="cb35-5"><a href="#cb35-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb35-6"><a href="#cb35-6" aria-hidden="true" tabindex="-1"></a>all <span class="ot">&lt;-</span> <span class="fu">bind_rows</span>(keep_na_final,</span>
+<span id="cb35-7"><a href="#cb35-7" aria-hidden="true" tabindex="-1"></a>          phl_for_review,</span>
+<span id="cb35-8"><a href="#cb35-8" aria-hidden="true" tabindex="-1"></a>          fuzzy_matching_input,</span>
+<span id="cb35-9"><a href="#cb35-9" aria-hidden="true" tabindex="-1"></a>          phl_roster_final)</span>
+<span id="cb35-10"><a href="#cb35-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb35-11"><a href="#cb35-11" aria-hidden="true" tabindex="-1"></a><span class="fu">write_csv</span>(all,</span>
+<span id="cb35-12"><a href="#cb35-12" aria-hidden="true" tabindex="-1"></a>          <span class="fu">paste0</span>(<span class="st">"2.0_dev_env/seq_1.0_outputs/"</span>,<span class="fu">Sys.Date</span>(),<span class="st">"_phl_outputs.csv"</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div></div>
+</section>
+<section id="file-cleanup" class="level1">
+<h1>File cleanup</h1>
+<p>Move files from Submissions folder to Completed_Submissions and rename as complete</p>
+<div class="cell-container"><div class="cell-decorator"><pre>In [36]:</pre></div><div class="cell">
+<div class="sourceCode cell-code" id="cb36"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb36-1"><a href="#cb36-1" aria-hidden="true" tabindex="-1"></a><span class="co"># PHL primary dashboard</span></span>
+<span id="cb36-2"><a href="#cb36-2" aria-hidden="true" tabindex="-1"></a>new_file_path <span class="ot">&lt;-</span></span>
+<span id="cb36-3"><a href="#cb36-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">file.path</span>(<span class="st">"Completed_Submissions/PHL"</span>,</span>
+<span id="cb36-4"><a href="#cb36-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">paste0</span>(<span class="st">"complete_"</span>, <span class="fu">today</span>(), <span class="st">".xlsx"</span>))</span>
+<span id="cb36-5"><a href="#cb36-5" aria-hidden="true" tabindex="-1"></a><span class="fu">file_move</span>(phl_filename,</span>
+<span id="cb36-6"><a href="#cb36-6" aria-hidden="true" tabindex="-1"></a>          new_file_path)</span>
+<span id="cb36-7"><a href="#cb36-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb36-8"><a href="#cb36-8" aria-hidden="true" tabindex="-1"></a><span class="co"># RedCap</span></span>
+<span id="cb36-9"><a href="#cb36-9" aria-hidden="true" tabindex="-1"></a>new_file_path2 <span class="ot">&lt;-</span></span>
+<span id="cb36-10"><a href="#cb36-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">file.path</span>(<span class="st">"Completed_Submissions/REDCap_Source_Viewer"</span>,</span>
+<span id="cb36-11"><a href="#cb36-11" aria-hidden="true" tabindex="-1"></a>  <span class="fu">paste0</span>(<span class="st">"complete_"</span>, <span class="fu">today</span>(), <span class="st">".xlsx"</span>))</span>
+<span id="cb36-12"><a href="#cb36-12" aria-hidden="true" tabindex="-1"></a><span class="fu">file_move</span>(redcap_filename,</span>
+<span id="cb36-13"><a href="#cb36-13" aria-hidden="true" tabindex="-1"></a>          new_file_path2)</span>
+<span id="cb36-14"><a href="#cb36-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb36-15"><a href="#cb36-15" aria-hidden="true" tabindex="-1"></a><span class="co"># Sentinel Surveillance</span></span>
+<span id="cb36-16"><a href="#cb36-16" aria-hidden="true" tabindex="-1"></a>new_file_path3 <span class="ot">&lt;-</span></span>
+<span id="cb36-17"><a href="#cb36-17" aria-hidden="true" tabindex="-1"></a>  <span class="fu">file.path</span>(<span class="st">"Completed_Submissions/Surveillance_Source_Viewer"</span>,</span>
+<span id="cb36-18"><a href="#cb36-18" aria-hidden="true" tabindex="-1"></a>  <span class="fu">paste0</span>(<span class="st">"complete_"</span>, <span class="fu">today</span>(), <span class="st">".xlsx"</span>))</span>
+<span id="cb36-19"><a href="#cb36-19" aria-hidden="true" tabindex="-1"></a><span class="fu">file_move</span>(surveillance_filename,</span>
+<span id="cb36-20"><a href="#cb36-20" aria-hidden="true" tabindex="-1"></a>          new_file_path3)</span>
+<span id="cb36-21"><a href="#cb36-21" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb36-22"><a href="#cb36-22" aria-hidden="true" tabindex="-1"></a><span class="co"># Epi (All Specimens)</span></span>
+<span id="cb36-23"><a href="#cb36-23" aria-hidden="true" tabindex="-1"></a>new_file_path4 <span class="ot">&lt;-</span></span>
+<span id="cb36-24"><a href="#cb36-24" aria-hidden="true" tabindex="-1"></a>  <span class="fu">file.path</span>(<span class="st">"Completed_Submissions/PHL"</span>,</span>
+<span id="cb36-25"><a href="#cb36-25" aria-hidden="true" tabindex="-1"></a>  <span class="fu">paste0</span>(<span class="st">"epi_complete_"</span>, <span class="fu">today</span>(), <span class="st">".xlsx"</span>))</span>
+<span id="cb36-26"><a href="#cb36-26" aria-hidden="true" tabindex="-1"></a><span class="fu">file_move</span>(epi_filename,</span>
+<span id="cb36-27"><a href="#cb36-27" aria-hidden="true" tabindex="-1"></a>          new_file_path4)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div></div>
+</section>
+<section id="completed-email" class="level1 tabset">
+<h1 class="tabset">Completed Email</h1>
+<section id="write-email" class="level2">
+<h2 class="anchored" data-anchor-id="write-email">Write Email</h2>
+<div class="cell-container"><div class="cell-decorator"><pre>In [37]:</pre></div><div class="cell">
+<div class="sourceCode cell-code" id="cb37"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb37-1"><a href="#cb37-1" aria-hidden="true" tabindex="-1"></a><span class="co"># initialize empty message</span></span>
+<span id="cb37-2"><a href="#cb37-2" aria-hidden="true" tabindex="-1"></a>PHL_message <span class="ot">&lt;-</span> <span class="st">""</span></span>
+<span id="cb37-3"><a href="#cb37-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb37-4"><a href="#cb37-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Write separate messages if PHL records were added to write roster or not</span></span>
+<span id="cb37-5"><a href="#cb37-5" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span>(<span class="fu">nrow</span>(phl_roster_final) <span class="sc">&gt;</span> <span class="dv">0</span>) {</span>
+<span id="cb37-6"><a href="#cb37-6" aria-hidden="true" tabindex="-1"></a>  valid_files_message <span class="ot">&lt;-</span>  <span class="fu">paste0</span>(<span class="st">"There were a total of "</span>, <span class="fu">nrow</span>(phl_roster_final), <span class="st">" record(s) from PHL that are ready to be rostered. A table of these records was added to the write_roster_here folder."</span>)</span>
+<span id="cb37-7"><a href="#cb37-7" aria-hidden="true" tabindex="-1"></a>} <span class="cf">else</span> {</span>
+<span id="cb37-8"><a href="#cb37-8" aria-hidden="true" tabindex="-1"></a>  valid_files_message <span class="ot">&lt;-</span> <span class="fu">paste0</span>(<span class="st">"There were no new valid records from PHL that are ready to be rostered. No new table was added to the write_roster_here folder."</span>)</span>
+<span id="cb37-9"><a href="#cb37-9" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb37-10"><a href="#cb37-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb37-11"><a href="#cb37-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb37-12"><a href="#cb37-12" aria-hidden="true" tabindex="-1"></a>PHL_message <span class="ot">&lt;-</span> <span class="fu">paste0</span>(PHL_message, valid_files_message)</span>
+<span id="cb37-13"><a href="#cb37-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb37-14"><a href="#cb37-14" aria-hidden="true" tabindex="-1"></a><span class="co"># initialize empty sting for files written to For_Review</span></span>
+<span id="cb37-15"><a href="#cb37-15" aria-hidden="true" tabindex="-1"></a>invalid_files <span class="ot">&lt;-</span> <span class="st">""</span></span>
+<span id="cb37-16"><a href="#cb37-16" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb37-17"><a href="#cb37-17" aria-hidden="true" tabindex="-1"></a><span class="co"># if there were records requiring review, append it to the message</span></span>
+<span id="cb37-18"><a href="#cb37-18" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (<span class="fu">nrow</span>(phl_for_review) <span class="sc">&gt;</span> <span class="dv">0</span>) {</span>
+<span id="cb37-19"><a href="#cb37-19" aria-hidden="true" tabindex="-1"></a>  invalid_files <span class="ot">&lt;-</span> <span class="fu">paste0</span>(invalid_files,<span class="st">"</span><span class="sc">\n\n</span><span class="st">"</span> , <span class="st">"There were a total of "</span>, <span class="fu">nrow</span>(phl_for_review), <span class="st">" record(s) processed that contained an error. A table of these records was added to the For_Review/to_process folder."</span>)</span>
+<span id="cb37-20"><a href="#cb37-20" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb37-21"><a href="#cb37-21" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb37-22"><a href="#cb37-22" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb37-23"><a href="#cb37-23" aria-hidden="true" tabindex="-1"></a><span class="co"># write different messages depending on whether files were written to the For_Review folders or not</span></span>
+<span id="cb37-24"><a href="#cb37-24" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span>(<span class="fu">nchar</span>(invalid_files) <span class="sc">&gt;</span> <span class="dv">0</span>) {</span>
+<span id="cb37-25"><a href="#cb37-25" aria-hidden="true" tabindex="-1"></a>  PHL_message <span class="ot">&lt;-</span> <span class="fu">paste0</span>(PHL_message, <span class="st">"</span><span class="sc">\n\n</span><span class="st">A subset of records that were processed require manual review: "</span>, invalid_files)</span>
+<span id="cb37-26"><a href="#cb37-26" aria-hidden="true" tabindex="-1"></a>} <span class="cf">else</span> {</span>
+<span id="cb37-27"><a href="#cb37-27" aria-hidden="true" tabindex="-1"></a>  PHL_message <span class="ot">&lt;-</span> <span class="fu">paste0</span>(PHL_message, <span class="st">"</span><span class="sc">\n\n</span><span class="st">No PHL records were added to the For_Review folders for manual review."</span>)</span>
+<span id="cb37-28"><a href="#cb37-28" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb37-29"><a href="#cb37-29" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb37-30"><a href="#cb37-30" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb37-31"><a href="#cb37-31" aria-hidden="true" tabindex="-1"></a><span class="co"># if there were records that required fuzzy matching, append it to the message</span></span>
+<span id="cb37-32"><a href="#cb37-32" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (<span class="fu">nrow</span>(fuzzy_matching_input) <span class="sc">&gt;</span> <span class="dv">0</span>) {</span>
+<span id="cb37-33"><a href="#cb37-33" aria-hidden="true" tabindex="-1"></a>  fuzzy_match_filepath <span class="ot">&lt;-</span> <span class="fu">file.path</span>(<span class="st">"Submissions/Fuzzy_Match"</span>, <span class="fu">paste0</span>(<span class="st">"PHL_FUZZY_MATCHING"</span>, <span class="fu">today</span>(), <span class="st">".csv"</span>))</span>
+<span id="cb37-34"><a href="#cb37-34" aria-hidden="true" tabindex="-1"></a>  PHL_message <span class="ot">&lt;-</span> <span class="fu">paste0</span>(PHL_message, <span class="st">"</span><span class="sc">\n\n</span><span class="st">"</span>, <span class="st">"There are "</span>, <span class="fu">nrow</span>(fuzzy_matching_input), <span class="st">" records that require fuzzy matching. These records do not match to an event in WDRS by an accession ID but do contain demographic information that can be used to match. These records can be found at: "</span>, <span class="st">"</span><span class="sc">\n</span><span class="st">"</span>, fuzzy_match_filepath)</span>
+<span id="cb37-35"><a href="#cb37-35" aria-hidden="true" tabindex="-1"></a>} <span class="cf">else</span> {</span>
+<span id="cb37-36"><a href="#cb37-36" aria-hidden="true" tabindex="-1"></a>  PHL_message <span class="ot">&lt;-</span> <span class="fu">paste0</span>(PHL_message, <span class="st">"</span><span class="sc">\n\n</span><span class="st">"</span>, <span class="st">"There were no records from PHL for fuzzy matching."</span>)</span>
+<span id="cb37-37"><a href="#cb37-37" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb37-38"><a href="#cb37-38" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb37-39"><a href="#cb37-39" aria-hidden="true" tabindex="-1"></a><span class="co"># if there were records added to keep na, append it to the message</span></span>
+<span id="cb37-40"><a href="#cb37-40" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (<span class="fu">nrow</span>(keep_na_final) <span class="sc">&gt;</span> <span class="dv">0</span>) {</span>
+<span id="cb37-41"><a href="#cb37-41" aria-hidden="true" tabindex="-1"></a>  PHL_message <span class="ot">&lt;-</span> <span class="fu">paste0</span>(PHL_message, <span class="st">"</span><span class="sc">\n\n</span><span class="st">"</span>, <span class="st">"There are "</span>, <span class="fu">nrow</span>(keep_na_final), <span class="st">" records that were added to the keep na file."</span>)</span>
+<span id="cb37-42"><a href="#cb37-42" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb37-43"><a href="#cb37-43" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb37-44"><a href="#cb37-44" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb37-45"><a href="#cb37-45" aria-hidden="true" tabindex="-1"></a><span class="co"># Finalize message</span></span>
+<span id="cb37-46"><a href="#cb37-46" aria-hidden="true" tabindex="-1"></a>PHL_message <span class="ot">&lt;-</span> <span class="fu">paste0</span>(PHL_message, <span class="st">"</span><span class="sc">\n\n</span><span class="st">"</span>, <span class="st">"Note: This is an automated message. Please enable your outlook to include extra line breaks to view this message in its proper format."</span>, <span class="st">"</span><span class="sc">\n\n</span><span class="st">"</span>, <span class="st">"This message is in development, and will be updated. If you see any errors reach out to DIQA. Thanks!"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div></div>
+</section>
+<section id="send-email" class="level2">
+<h2 class="anchored" data-anchor-id="send-email">Send Email</h2>
+<div class="cell-container"><div class="cell-decorator"><pre>In [38]:</pre></div><div class="cell">
+<div class="sourceCode cell-code" id="cb38"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb38-1"><a href="#cb38-1" aria-hidden="true" tabindex="-1"></a><span class="co"># assign email components to vectors</span></span>
+<span id="cb38-2"><a href="#cb38-2" aria-hidden="true" tabindex="-1"></a>email_from <span class="ot">&lt;-</span> <span class="st">""</span></span>
+<span id="cb38-3"><a href="#cb38-3" aria-hidden="true" tabindex="-1"></a>email_to <span class="ot">&lt;-</span> <span class="st">""</span></span>
+<span id="cb38-4"><a href="#cb38-4" aria-hidden="true" tabindex="-1"></a>email_subject <span class="ot">&lt;-</span> <span class="fu">paste0</span>(<span class="st">"SEQUENCING - PHL Dashboard Run Summary Automated Email"</span>, <span class="fu">month</span>(<span class="fu">today</span>()), <span class="st">"/"</span>, <span class="fu">day</span>(<span class="fu">today</span>()))</span>
+<span id="cb38-5"><a href="#cb38-5" aria-hidden="true" tabindex="-1"></a>email_body <span class="ot">&lt;-</span> <span class="fu">paste0</span>(<span class="st">"The PHL Submission(s) have been processed for "</span>, <span class="fu">today</span>(), <span class="st">". "</span>, <span class="st">"See below for a summary.</span><span class="sc">\n\n</span><span class="st">"</span>, PHL_message)</span>
+<span id="cb38-6"><a href="#cb38-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb38-7"><a href="#cb38-7" aria-hidden="true" tabindex="-1"></a><span class="co"># send it only if running in production mode, where data is read from and written to the Y drive</span></span>
+<span id="cb38-8"><a href="#cb38-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb38-9"><a href="#cb38-9" aria-hidden="true" tabindex="-1"></a>sendmailR<span class="sc">::</span><span class="fu">sendmail</span>(<span class="at">from =</span> email_from,</span>
+<span id="cb38-10"><a href="#cb38-10" aria-hidden="true" tabindex="-1"></a>                    <span class="at">to =</span> email_to,</span>
+<span id="cb38-11"><a href="#cb38-11" aria-hidden="true" tabindex="-1"></a>                    <span class="at">subject =</span> email_subject,</span>
+<span id="cb38-12"><a href="#cb38-12" aria-hidden="true" tabindex="-1"></a>                    <span class="at">msg =</span> email_body,</span>
+<span id="cb38-13"><a href="#cb38-13" aria-hidden="true" tabindex="-1"></a>                    <span class="at">headers=</span> <span class="fu">list</span>(<span class="st">"Reply-To"</span> <span class="ot">=</span> email_from),</span>
+<span id="cb38-14"><a href="#cb38-14" aria-hidden="true" tabindex="-1"></a>                    <span class="at">control =</span> <span class="fu">list</span>(<span class="at">smtpServer =</span> <span class="st">""</span>)</span>
+<span id="cb38-15"><a href="#cb38-15" aria-hidden="true" tabindex="-1"></a>                    )</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div></div>
+</section>
+</section>
+     </main>
+<!-- /main column -->  <script id="quarto-html-after-body" type="application/javascript">
+window.document.addEventListener("DOMContentLoaded", function (event) {
+  const toggleBodyColorMode = (bsSheetEl) => {
+    const mode = bsSheetEl.getAttribute("data-mode");
+    const bodyEl = window.document.querySelector("body");
+    if (mode === "dark") {
+      bodyEl.classList.add("quarto-dark");
+      bodyEl.classList.remove("quarto-light");
+    } else {
+      bodyEl.classList.add("quarto-light");
+      bodyEl.classList.remove("quarto-dark");
+    }
+  }
+  const toggleBodyColorPrimary = () => {
+    const bsSheetEl = window.document.querySelector("link#quarto-bootstrap");
+    if (bsSheetEl) {
+      toggleBodyColorMode(bsSheetEl);
+    }
+  }
+  toggleBodyColorPrimary();  
+  const icon = "";
+  const anchorJS = new window.AnchorJS();
+  anchorJS.options = {
+    placement: 'right',
+    icon: icon
+  };
+  anchorJS.add('.anchored');
+  const isCodeAnnotation = (el) => {
+    for (const clz of el.classList) {
+      if (clz.startsWith('code-annotation-')) {                     
+        return true;
+      }
+    }
+    return false;
+  }
+  const clipboard = new window.ClipboardJS('.code-copy-button', {
+    text: function(trigger) {
+      const codeEl = trigger.previousElementSibling.cloneNode(true);
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+  });
+  clipboard.on('success', function(e) {
+    // button target
+    const button = e.trigger;
+    // don't keep focus
+    button.blur();
+    // flash "checked"
+    button.classList.add('code-copy-button-checked');
+    var currentTitle = button.getAttribute("title");
+    button.setAttribute("title", "Copied!");
+    let tooltip;
+    if (window.bootstrap) {
+      button.setAttribute("data-bs-toggle", "tooltip");
+      button.setAttribute("data-bs-placement", "left");
+      button.setAttribute("data-bs-title", "Copied!");
+      tooltip = new bootstrap.Tooltip(button, 
+        { trigger: "manual", 
+          customClass: "code-copy-button-tooltip",
+          offset: [0, -8]});
+      tooltip.show();    
+    }
+    setTimeout(function() {
+      if (tooltip) {
+        tooltip.hide();
+        button.removeAttribute("data-bs-title");
+        button.removeAttribute("data-bs-toggle");
+        button.removeAttribute("data-bs-placement");
+      }
+      button.setAttribute("title", currentTitle);
+      button.classList.remove('code-copy-button-checked');
+    }, 1000);
+    // clear code selection
+    e.clearSelection();
+  });
+    var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+    var mailtoRegex = new RegExp(/^mailto:/);
+      var filterRegex = new RegExp('/' + window.location.host + '/');
+    var isInternal = (href) => {
+        return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+    }
+    // Inspect non-navigation links and adorn them if external
+ 	var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool)');
+    for (var i=0; i<links.length; i++) {
+      const link = links[i];
+      if (!isInternal(link.href)) {
+        // undo the damage that might have been done by quarto-nav.js in the case of
+        // links that we want to consider external
+        if (link.dataset.originalHref !== undefined) {
+          link.href = link.dataset.originalHref;
+        }
+      }
+    }
+  function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+    const config = {
+      allowHTML: true,
+      maxWidth: 500,
+      delay: 100,
+      arrow: false,
+      appendTo: function(el) {
+          return el.parentElement;
+      },
+      interactive: true,
+      interactiveBorder: 10,
+      theme: 'quarto',
+      placement: 'bottom-start',
+    };
+    if (contentFn) {
+      config.content = contentFn;
+    }
+    if (onTriggerFn) {
+      config.onTrigger = onTriggerFn;
+    }
+    if (onUntriggerFn) {
+      config.onUntrigger = onUntriggerFn;
+    }
+    window.tippy(el, config); 
+  }
+  const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+  for (var i=0; i<noterefs.length; i++) {
+    const ref = noterefs[i];
+    tippyHover(ref, function() {
+      // use id or data attribute instead here
+      let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+      try { href = new URL(href).hash; } catch {}
+      const id = href.replace(/^#\/?/, "");
+      const note = window.document.getElementById(id);
+      if (note) {
+        return note.innerHTML;
+      } else {
+        return "";
+      }
+    });
+  }
+  const xrefs = window.document.querySelectorAll('a.quarto-xref');
+  const processXRef = (id, note) => {
+    // Strip column container classes
+    const stripColumnClz = (el) => {
+      el.classList.remove("page-full", "page-columns");
+      if (el.children) {
+        for (const child of el.children) {
+          stripColumnClz(child);
+        }
+      }
+    }
+    stripColumnClz(note)
+    if (id === null || id.startsWith('sec-')) {
+      // Special case sections, only their first couple elements
+      const container = document.createElement("div");
+      if (note.children && note.children.length > 2) {
+        container.appendChild(note.children[0].cloneNode(true));
+        for (let i = 1; i < note.children.length; i++) {
+          const child = note.children[i];
+          if (child.tagName === "P" && child.innerText === "") {
+            continue;
+          } else {
+            container.appendChild(child.cloneNode(true));
+            break;
+          }
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(container);
+        }
+        return container.innerHTML
+      } else {
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        return note.innerHTML;
+      }
+    } else {
+      // Remove any anchor links if they are present
+      const anchorLink = note.querySelector('a.anchorjs-link');
+      if (anchorLink) {
+        anchorLink.remove();
+      }
+      if (window.Quarto?.typesetMath) {
+        window.Quarto.typesetMath(note);
+      }
+      // TODO in 1.5, we should make sure this works without a callout special case
+      if (note.classList.contains("callout")) {
+        return note.outerHTML;
+      } else {
+        return note.innerHTML;
+      }
+    }
+  }
+  for (var i=0; i<xrefs.length; i++) {
+    const xref = xrefs[i];
+    tippyHover(xref, undefined, function(instance) {
+      instance.disable();
+      let url = xref.getAttribute('href');
+      let hash = undefined; 
+      if (url.startsWith('#')) {
+        hash = url;
+      } else {
+        try { hash = new URL(url).hash; } catch {}
+      }
+      if (hash) {
+        const id = hash.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note !== null) {
+          try {
+            const html = processXRef(id, note.cloneNode(true));
+            instance.setContent(html);
+          } finally {
+            instance.enable();
+            instance.show();
+          }
+        } else {
+          // See if we can fetch this
+          fetch(url.split('#')[0])
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.getElementById(id);
+            if (note !== null) {
+              const html = processXRef(id, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      } else {
+        // See if we can fetch a full url (with no hash to target)
+        // This is a special case and we should probably do some content thinning / targeting
+        fetch(url)
+        .then(res => res.text())
+        .then(html => {
+          const parser = new DOMParser();
+          const htmlDoc = parser.parseFromString(html, "text/html");
+          const note = htmlDoc.querySelector('main.content');
+          if (note !== null) {
+            // This should only happen for chapter cross references
+            // (since there is no id in the URL)
+            // remove the first header
+            if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+              note.children[0].remove();
+            }
+            const html = processXRef(null, note);
+            instance.setContent(html);
+          } 
+        }).finally(() => {
+          instance.enable();
+          instance.show();
+        });
+      }
+    }, function(instance) {
+    });
+  }
+      let selectedAnnoteEl;
+      const selectorForAnnotation = ( cell, annotation) => {
+        let cellAttr = 'data-code-cell="' + cell + '"';
+        let lineAttr = 'data-code-annotation="' +  annotation + '"';
+        const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+        return selector;
+      }
+      const selectCodeLines = (annoteEl) => {
+        const doc = window.document;
+        const targetCell = annoteEl.getAttribute("data-target-cell");
+        const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+        const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+        const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+        const lineIds = lines.map((line) => {
+          return targetCell + "-" + line;
+        })
+        let top = null;
+        let height = null;
+        let parent = null;
+        if (lineIds.length > 0) {
+            //compute the position of the single el (top and bottom and make a div)
+            const el = window.document.getElementById(lineIds[0]);
+            top = el.offsetTop;
+            height = el.offsetHeight;
+            parent = el.parentElement.parentElement;
+          if (lineIds.length > 1) {
+            const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+            const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+            height = bottom - top;
+          }
+          if (top !== null && height !== null && parent !== null) {
+            // cook up a div (if necessary) and position it 
+            let div = window.document.getElementById("code-annotation-line-highlight");
+            if (div === null) {
+              div = window.document.createElement("div");
+              div.setAttribute("id", "code-annotation-line-highlight");
+              div.style.position = 'absolute';
+              parent.appendChild(div);
+            }
+            div.style.top = top - 2 + "px";
+            div.style.height = height + 4 + "px";
+            div.style.left = 0;
+            let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+            if (gutterDiv === null) {
+              gutterDiv = window.document.createElement("div");
+              gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+              gutterDiv.style.position = 'absolute';
+              const codeCell = window.document.getElementById(targetCell);
+              const gutter = codeCell.querySelector('.code-annotation-gutter');
+              gutter.appendChild(gutterDiv);
+            }
+            gutterDiv.style.top = top - 2 + "px";
+            gutterDiv.style.height = height + 4 + "px";
+          }
+          selectedAnnoteEl = annoteEl;
+        }
+      };
+      const unselectCodeLines = () => {
+        const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+        elementsIds.forEach((elId) => {
+          const div = window.document.getElementById(elId);
+          if (div) {
+            div.remove();
+          }
+        });
+        selectedAnnoteEl = undefined;
+      };
+        // Handle positioning of the toggle
+    window.addEventListener(
+      "resize",
+      throttle(() => {
+        elRect = undefined;
+        if (selectedAnnoteEl) {
+          selectCodeLines(selectedAnnoteEl);
+        }
+      }, 10)
+    );
+    function throttle(fn, ms) {
+    let throttle = false;
+    let timer;
+      return (...args) => {
+        if(!throttle) { // first call gets through
+            fn.apply(this, args);
+            throttle = true;
+        } else { // all the others get throttled
+            if(timer) clearTimeout(timer); // cancel #2
+            timer = setTimeout(() => {
+              fn.apply(this, args);
+              timer = throttle = false;
+            }, ms);
+        }
+      };
+    }
+      // Attach click handler to the DT
+      const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+      for (const annoteDlNode of annoteDls) {
+        annoteDlNode.addEventListener('click', (event) => {
+          const clickedEl = event.target;
+          if (clickedEl !== selectedAnnoteEl) {
+            unselectCodeLines();
+            const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+            if (activeEl) {
+              activeEl.classList.remove('code-annotation-active');
+            }
+            selectCodeLines(clickedEl);
+            clickedEl.classList.add('code-annotation-active');
+          } else {
+            // Unselect the line
+            unselectCodeLines();
+            clickedEl.classList.remove('code-annotation-active');
+          }
+        });
+      }
+  const findCites = (el) => {
+    const parentEl = el.parentElement;
+    if (parentEl) {
+      const cites = parentEl.dataset.cites;
+      if (cites) {
+        return {
+          el,
+          cites: cites.split(' ')
+        };
+      } else {
+        return findCites(el.parentElement)
+      }
+    } else {
+      return undefined;
+    }
+  };
+  var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+  for (var i=0; i<bibliorefs.length; i++) {
+    const ref = bibliorefs[i];
+    const citeInfo = findCites(ref);
+    if (citeInfo) {
+      tippyHover(citeInfo.el, function() {
+        var popup = window.document.createElement('div');
+        citeInfo.cites.forEach(function(cite) {
+          var citeDiv = window.document.createElement('div');
+          citeDiv.classList.add('hanging-indent');
+          citeDiv.classList.add('csl-entry');
+          var biblioDiv = window.document.getElementById('ref-' + cite);
+          if (biblioDiv) {
+            citeDiv.innerHTML = biblioDiv.innerHTML;
+          }
+          popup.appendChild(citeDiv);
+        });
+        return popup.innerHTML;
+      });
+    }
+  }
+});
+</script>  </div> <!-- /content -->  <script>var lightboxQuarto = GLightbox({"descPosition":"bottom","closeEffect":"zoom","selector":".lightbox","openEffect":"zoom","loop":false});
+window.onload = () => {
+  lightboxQuarto.on('slide_before_load', (data) => {
+    const { slideIndex, slideNode, slideConfig, player, trigger } = data;
+    const href = trigger.getAttribute('href');
+    if (href !== null) {
+      const imgEl = window.document.querySelector(`a[href="${href}"] img`);
+      if (imgEl !== null) {
+        const srcAttr = imgEl.getAttribute("src");
+        if (srcAttr && srcAttr.startsWith("data:")) {
+          slideConfig.href = srcAttr;
+        }
+      }
+    } 
+  });
+
+  lightboxQuarto.on('slide_after_load', (data) => {
+    const { slideIndex, slideNode, slideConfig, player, trigger } = data;
+    if (window.Quarto?.typesetMath) {
+      window.Quarto.typesetMath(slideNode);
+    }
+  });
+
+};
+          </script> 
+  
+</body></html>

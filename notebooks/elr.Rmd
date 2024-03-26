@@ -1,0 +1,732 @@
+---
+title: "ELR Script"
+author: "DSSU/DIQA"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r}
+knitr::opts_chunk$set(eval = FALSE)
+```
+
+# Overview
+
+**Current Run Schedule:** M, W, F @ 10:00AM  
+*This script must run prior to the roster compile script on roster days*
+
+*What does this script do?* This script accesses the Washington Disease Reporting System (WDRS) to identify records with COVID-19 sequencing information available that need to be added to the sequencing roster. Events reported to WDRS are received via Electronic Laboratory Reporting (ELR), which is an automated process for transmitting health data. The following code extracts new WDRS ENTIRE records from validated ELR submitters (per 3.1.2022: Aegis, Helix, LabCorp, Quest) and transforms the data into the roster format to be added to the WDRS FLATTENED table and included in the sequencing roster. 
+
+*What is output from this script?* 
+
+* write_roster_here: Valid new records are transformed, compiled, and output to the write_roster_here folder for inclusion in the sequencing roster
+* For_Review/to_process: Records that are flagged as invalid by the error logic outlined in the quality filters function are output to the Net Drive For_Review/to_process folder in the manual review format
+* Completed_Submissions/ELR: A list of records that were processed (both valid & invalid) are appended to a running list of records that have run through the ELR script -- this output is not sent anywhere, just kept as a crude record for deduplication purposes. This is necessary because some erroneous WDRS records are corrected by manually creating a new entry rather than editing the existing one, which forms a small subset of invalid records that exist in the ENTIRE table but never get added to the FLATTENED table. These would be be ingested as "new" entries and generate the same error messages every run if not removed from the roster. We have also had submitters send multiple copies of the same record during the validation process. Having a running list to check against prevents these records from being resubmitted and processed more than once.
+
+An email receipt is also generated at the end of each run.
+
+*Why ELR?*  ELR records are parsed from HL7 messages and can be automated and standardized much more readily than piecemeal .csv submissions from individual laboratories, as we see in the Template Submitters script. Ultimately we hope to receive the bulk of our submissions via ELR, as it is a more streamlined process that submits directly to WDRS and therefore does not require matching of patient-level information to WDRS genomic sequencing results -- we simply need to identify new records and transform them into the roster format.
+*Note:* Although ELR is intended to serve as a standardized format, there is still some variation in field use across ELR validated lab submitters. As a result, some components of the current script vary by lab submitter. (This mostly applies to the SEQUENCE ACCESSION and SEQUENCE CLINICAL ACCESSION values.)
+
+## Developer notes
+
+This script is designed to be generalized to WDRS ELR messages and not catered to specific submitters - that way it is easy to quickly ingest records from newly validated submitters. Unless submissions differ dramatically from what we have already encountered, adding a new submitter to the ELR script should be as easy as: 
+
+* Add the new laboratory to the list of validated ELR submitters in the write_lab_variables.R script and update the lab_vars output object
+* Determine the formatting of the SEQUENCE ACCESSION and SEQUENCE CLINICAL ACCESSION variables and update Chunk 9 accordingly - this is the trickiest step 
+* Add the preferred lab name value when creating the SUBMITTING_LAB variable in Chunk 11
+* Update the email message in Chunk 20 to also include the new lab in the output summary
+
+Troubleshooting will be required, but *hopefully* the script will require very few changes to add new submitters. This is an important goal because we continue to encourage laboratories to submit via ELR over Template Submissions and hope to process an increasing number of submissions using this script. 
+
+# Script setup {.tabset}
+
+## Libraries
+
+```{r}
+library(DBI)
+library(odbc)
+library(lubridate)
+library(tidyverse)
+library(readxl)
+library(here)
+library(fs)
+library(vroom)
+```
+
+# Important objects {.tabset}
+
+## Data objects
+
+This part of the script calls several data objects that contain information required for this process.  
+The lab_vars object is curated by Sequencing Project script runners and serves as a master reference for validated variable input. It contains variables marked with the _ELR suffix that pertain specifically to this script.
+
+```{r}
+# read in r_creds.RDS
+r_creds <-readRDS(file.path(Sys.getenv("USERPROFILE"), "Projects/Sequencing/Data_Objects", "r_creds.RDS")) 
+
+# Read in lineages
+lineages <- read_csv("Data_Objects/Lineages/Lineages.csv",
+                   col_names = TRUE,
+                   col_types = cols(.default = "c"),
+                   na = c("", "NA", "N/A")) 
+lineages <- rbind(lineages, c("Unassigned", "", ""))
+
+# Read in lab variables
+lab_vars <- read_rds("Data_Objects/lab_variables.rds")
+
+# Read in list of ELR records that have already been processed
+elr_processed_records <- read_csv(r"{Completed_Submissions/ELR/ELR_processed_records.txt}") %>%
+  mutate(across(everything(), as.character)) %>% # mutate all columns to character format
+  filter(rowSums(is.na(.)) != ncol(.)) %>% # remove any blank rows from .csv
+  # There are multiple date formats in the processed list, convert them to MDY - MDY is the only accepted date in WDRS uploads
+  mutate(SEQUENCE_SPECIMEN_COLLECTION_DATE = case_when(
+    str_count(SEQUENCE_SPECIMEN_COLLECTION_DATE) > 15 ~ NA_character_,
+    is.na(SEQUENCE_SPECIMEN_COLLECTION_DATE) ~ NA_character_,
+    TRUE ~ as.character(format(parse_date_time(SEQUENCE_SPECIMEN_COLLECTION_DATE,
+                                               orders = c("mdy","ymd")),"%m/%d/%Y"))
+    ))
+# Read in quality_filters
+source(file.path(Sys.getenv("USERPROFILE"), "Projects/Sequencing/Roster_scripts/quality_filters.R"))
+```
+
+# Access WDRS {.tabset}
+
+## Connect to WDRS
+
+Establish a connection to WDRS using credentials stored in a data object.
+
+**IMPORTANT** the variables used to connect to WDRS are held within conn_list.RDS. All .RDS objects in this repository except for VOC.RDS are excluded from Git commits by declaring *.RDS in the .gitignore file because they are often used to hold our "secrets" such as credential and server connections. 
+
+We do not include server connections in code uploaded to GitHub. **WHY?** We have been asked by HTS to ensure our use of GitHub does not raise any security red flags. This server is an internal server containing confidential/restricted PHI. We want to hide this server information to reduce our possible “attack surface”. This connection may seem benign but it tells someone information they can use to "hack" into WDRS. SQL Server Native Client is now deprecated software and version 11 was the last release. Unsupported software is at higher risk of having security breaches. Additionally, someone would know the server name. 
+
+**So: DO NOT alter the code used to open the connection to WDRS in any way that creates a security risk. Continue to treat this connection as a secret and store its variables in a .RDS object (or other external object that is excluded from Git commits) rather than calling them directly here.**
+
+```{r}
+# connect
+connection <- DBI::dbConnect(odbc::odbc(), 
+                             Driver = r_creds$conn_list[1], 
+                             Server = r_creds$conn_list[2], 
+                             Database = r_creds$conn_list[3], 
+                             Trusted_connection = r_creds$conn_list[4], 
+                             ApplicationIntent = r_creds$conn_list[5])
+```
+
+## WDRS queries
+
+After connecting to the WDRS database, create ENTIRE and FLATTENED tables in R global environment
+
+* **ENTIRE** table contains all WDRS SARS-CoV-2 entries
+* **FLATTENED** table contains WDRS SARS-CoV-2 entries that have been included in the sequencing roster
+
+```{r}
+# ENTIRE table
+  ## Select variables of interest from the [DD_ELR_DD_ENTIRE] table
+  ## This table contains all WDRS entries
+WDRS_Entire <- dbGetQuery(connection, "
+  SELECT DISTINCT CASE_ID,
+    FILLER__ORDER__NUM,
+    SPECIMEN__COLLECTION__DTTM,
+    SUBMITTER,
+    PATIENT__CENTRIC__OBSERVATION,
+    PATIENT__CENTRIC__OBSERVATION__VALUE,
+    TEST__RESULT,
+    TEST__RESULT__NOTE,
+    TEST__REQUEST__NOTE
+  FROM [dbo].[DD_ELR_DD_ENTIRE]
+  WHERE WDRS__TEST__PERFORMED = 'SARS CoV-2 Sequencing'
+")
+
+# FLATTENED table
+  ## Select variables of interest from sthe [dbo].[DD_GCD_COVID_19_FLATTENED] table
+  ## This table contains WDRS entries that have been included in the sequencing roster
+WDRS_Flat <- dbGetQuery(connection, "
+  SELECT DISTINCT CASE_ID,
+    SEQUENCE_SPECIMEN_COLLECTION_DATE,
+    SEQUENCE_ACCESSION_NUMBER,
+    SEQUENCE_CLINICAL_ACCESSION_NUMBER
+  FROM [dbo].[DD_GCD_COVID19_SEQUENCING]
+")
+```
+
+## Clean up
+Clean and transform the queried tables
+```{r}
+# ENTIRE table
+  ## Create new column for SPECIMEN__COLLECTION__DTTM in a mdy character format
+# WDRS_Entire_Clean <- WDRS_Entire %>%
+#   mutate(SPECIMEN__COLLECTION__DTTM_MDY = as.character(format(SPECIMEN__COLLECTION__DTTM, "%m/%d/%Y")))
+
+WDRS_Entire_Clean <- WDRS_Entire %>%
+  mutate(SPECIMEN__COLLECTION__DTTM_MDY = case_when(
+    str_count(SPECIMEN__COLLECTION__DTTM) > 15 ~ NA_character_,
+    is.na(SPECIMEN__COLLECTION__DTTM) ~ NA_character_,
+    TRUE ~ as.character(format(parse_date_time(SPECIMEN__COLLECTION__DTTM,orders = c("mdy","ymd")),"%m/%d/%Y"))
+    ))
+  
+
+# WDRS_Flat$SEQUENCE_SPECIMEN_COLLECTION_DATE = as.character(as.Date(WDRS_Flat$SEQUENCE_SPECIMEN_COLLECTION_DATE))
+
+WDRS_Flat <- WDRS_Flat %>%
+  mutate(SEQUENCE_SPECIMEN_COLLECTION_DATE_MDY = case_when(
+    str_count(SEQUENCE_SPECIMEN_COLLECTION_DATE) > 15 ~ NA_character_,
+    is.na(SEQUENCE_SPECIMEN_COLLECTION_DATE) ~ NA_character_,
+    TRUE ~ as.character(format(parse_date_time(SEQUENCE_SPECIMEN_COLLECTION_DATE,orders = c("mdy","ymd")),"%m/%d/%Y"))
+    ))
+  
+
+```
+
+# Extract new records {.tabset}
+
+Now that we have the WDRS ENTIRE and FLATTENED tables, we can extract and process new records. 
+
+New records received via ELR are located in the WDRS ENTIRE table, and we can identify them as records that do not yet exist in the WDRS FLATTENED table. To make this comparison, we first have to standardize the SEQUENCE ACCESSION (SA) and SEQUENCE CLINICAL ACCESSION (SCA) variables in the WDRS ENTIRE table. These identifiers are used in the sequencing roster and thereby the WDRS FLATTENED table, and the location and completeness of the components in ELR submissions vary by submitter.
+
+## Create SA and SCA
+
+Mutate SEQUENCE_ACCESSION and SEQUENCE_CLINICAL_ACCESSION numbers for WDRS_Entire table by submitter. Note that the requisite values are generally found in the FILLER__ORDER__NUM or PATIENT__CENTRIC__OBSERVATION__VALUE fields. 
+
+```{r}
+# Generate SEQUENCE_ACCESSION number by submitter
+  ## This is performed for each laboratory due to differences in prefix characters and the location of the identifying information needed to create a sequence accession number
+  ## Add date suffix and text prefix to GISAID_ID, exclude "hCoV-19
+
+WDRS_Entire_Transform <- WDRS_Entire_Clean %>% 
+  mutate(SEQUENCE_ACCESSION = case_when(
+
+  # Aegis
+    ## Generate SEQUENCE_ACCESSION from: FILLER__ORDER__NUM
+    ## Prefix: USA/WA-CDC-ASC
+       
+    str_detect(SUBMITTER, "Aegis") 
+    & !is.na(FILLER__ORDER__NUM)
+    & !is.na(SPECIMEN__COLLECTION__DTTM)
+    & SPECIMEN__COLLECTION__DTTM < "2022-05-01"
+    ~ paste0("USA/WA-CDC-ASC", FILLER__ORDER__NUM, "/", year(SPECIMEN__COLLECTION__DTTM)),
+    
+    str_detect(SUBMITTER, "Aegis") 
+    & !is.na(FILLER__ORDER__NUM)
+    & !is.na(SPECIMEN__COLLECTION__DTTM)
+    & SPECIMEN__COLLECTION__DTTM >= "2022-05-01"
+    ~ paste0("USA/WA-ASC-", FILLER__ORDER__NUM, "/", year(SPECIMEN__COLLECTION__DTTM)),
+
+  # Helix
+    ## Generate SEQUENCE_ACCESSION from: PATIENT__CENTRIC__OBSERVATION__VALUE
+        ## Note that Helix uses multiple formats in PATIENT__CENTRIC__OBSERVATION__VALUE column - one format has a suffix that needs to be removed
+    ## SA Prefix: USA/WA-CDC-STM-
+
+    str_detect(SUBMITTER, "Helix") 
+    & !is.na(PATIENT__CENTRIC__OBSERVATION__VALUE)
+    & !is.na(SPECIMEN__COLLECTION__DTTM)
+    & str_detect(PATIENT__CENTRIC__OBSERVATION__VALUE, "(?<=-).*(?=-)") # Value has a -suffix that must be removed
+    ~ paste0("USA/WA-CDC-STM-", str_extract(PATIENT__CENTRIC__OBSERVATION__VALUE, "(?<=-).*(?=-)"), "/", year(SPECIMEN__COLLECTION__DTTM)),
+  
+    str_detect(SUBMITTER, "Helix") 
+    & !is.na(PATIENT__CENTRIC__OBSERVATION__VALUE)
+    & !is.na(SPECIMEN__COLLECTION__DTTM)
+    & str_detect(PATIENT__CENTRIC__OBSERVATION__VALUE, "(?<=-).{9}") # Value lacks a suffix and can be transformed into an SA as-is
+    ~ paste0("USA/WA-CDC-", PATIENT__CENTRIC__OBSERVATION__VALUE, "/", year(SPECIMEN__COLLECTION__DTTM)),
+
+  # Labcorp 
+    ## Generate SEQUENCE_ACCESSION from: PATIENT__CENTRIC__OBSERVATION__VALUE
+    ## Prefix: USA/WA-CDC-
+  
+    str_detect(SUBMITTER, "LabCorp") 
+    & !is.na(PATIENT__CENTRIC__OBSERVATION__VALUE)
+    & (nchar(PATIENT__CENTRIC__OBSERVATION__VALUE) == 9) # Exclude NA observations that are instead populated with an error message
+    & !is.na(SPECIMEN__COLLECTION__DTTM)
+    ~ paste0("USA/WA-CDC-", PATIENT__CENTRIC__OBSERVATION__VALUE, "/", year(SPECIMEN__COLLECTION__DTTM)),
+  
+ # Quest 
+    ## Generate SEQUENCE_ACCESSION from: FILLER__ORDER__NUM
+    ## Prefix: USA/WA-CDC-QDX
+  
+    str_detect(SUBMITTER, "Quest") 
+    & !is.na(FILLER__ORDER__NUM)
+    & !is.na(SPECIMEN__COLLECTION__DTTM)
+    ~ paste0("USA/WA-CDC-QDX", FILLER__ORDER__NUM, "/", year(SPECIMEN__COLLECTION__DTTM)),
+ 
+ # UW Virology
+ 
+    str_detect(toupper(SUBMITTER), "UW VIROLOGY|UNIVERSITY OF WASHINGTON") 
+    # & !is.na(FILLER__ORDER__NUM)
+    & !is.na(SPECIMEN__COLLECTION__DTTM)
+    ~ paste0("USA/", PATIENT__CENTRIC__OBSERVATION__VALUE, "/", year(SPECIMEN__COLLECTION__DTTM)),
+)) %>%
+  
+# Generate SEQUENCE_CLINICAL_ACCESSION number by submitter
+  ## This is performed for each laboratory due to differences in the location of the identifying information needed to create a sequence clinical accession number
+  mutate(SEQUENCE_CLINICAL_ACCESSION = case_when(
+
+## Aegis does not include an SCA or LAB_ACCESSION_ID
+  str_detect(SUBMITTER, "Aegis") 
+    ~ "",
+
+    str_detect(SUBMITTER, "Helix")
+    & !is.na(FILLER__ORDER__NUM)
+    ~ FILLER__ORDER__NUM,
+    
+    str_detect(SUBMITTER, "LabCorp") 
+    & str_detect(FILLER__ORDER__NUM, "[[:digit:]]{11}") 
+    ~ FILLER__ORDER__NUM,
+    
+    ## Quest does not include an SCA or LAB_ACCESSION_ID
+    str_detect(SUBMITTER, "Quest") 
+    ~ "",
+  
+    str_detect(toupper(SUBMITTER), "UW VIROLOGY|UNIVERSITY OF WASHINGTON")
+    & !is.na(FILLER__ORDER__NUM)
+    ~ FILLER__ORDER__NUM,
+    
+    TRUE ~ "QA CHECK FAIL, CHECK SEQUENCE_CLINICAL_ACCESSION VALUES"
+))
+```
+
+## Locate new records
+
+Now that we have SA and SCA for entries in the WDRS ENTIRE table, we can compare against the WDRS FLATTENED table to identify records that have not been added to the sequencing roster and can therefore be classified as "new". 
+
+This matching varies by submitter because not all laboratories send SCAs per their contract with DOH. SCA is the preferable method of anti-join, but SA can be used when SCA is not available. Because there are sometimes recycled or duplicated values used within laboratory systems, specimen collection date (the other common variable pulled from WDRS FLATTENED) is also used as a criteria for anti-join to locate the same records in each data table. 
+
+*Note: Sometimes records with errors will be classified as "new" using this subtraction criteria. These records remain in WDRS ENTIRE and will never be rostered because corrections have been made in the form of a new record that can be added successfully to WDRS FLATTENED. Once these erroneous records have been transformed into the roster format, we can exclude them from the roster by checking against the processed records list*
+
+After isolating new records, we filter down to those that were submitted by validated submitters. Then we use the TEST__RESULT column to hone in on rows that contain genomic sequencing information to be added to the sequencing roster. (Valid TEST__RESULT values include blanks and NAs as well as PANGO lineages in the lineages data object)
+
+```{r}
+# Identify new records (i.e.: entry is present in WDRS ENTIRE table, but does not yet exist in the FLATTENED table)
+WDRS_Entire_New <- rbind(
+  
+  # Match records by sequence clinical accession number and specimen collection date
+    ## Helix and Labcorp submissions should be matched here  
+  anti_join(subset(WDRS_Entire_Transform, SEQUENCE_CLINICAL_ACCESSION != ""), WDRS_Flat, by = c(
+    "SEQUENCE_CLINICAL_ACCESSION" = "SEQUENCE_CLINICAL_ACCESSION_NUMBER",
+    "SPECIMEN__COLLECTION__DTTM_MDY" = "SEQUENCE_SPECIMEN_COLLECTION_DATE_MDY")),
+ 
+   # Match records by sequence accession number and specimen collection date if necessary
+    ## Aegis and Quest submissions should be matched here
+  anti_join(subset(WDRS_Entire_Transform, SEQUENCE_CLINICAL_ACCESSION == ""), WDRS_Flat, by = c(
+    "SEQUENCE_ACCESSION" = "SEQUENCE_ACCESSION_NUMBER",
+    "SPECIMEN__COLLECTION__DTTM_MDY" = "SEQUENCE_SPECIMEN_COLLECTION_DATE_MDY"))
+  ) %>%
+  filter(SUBMITTER %in% lab_vars$lab_names_elr) # Only include entries from validated submitters
+  
+# Extract records with a valid lineage in the TEST_RESULT column
+WDRS_Entire_New_Lineage <- WDRS_Entire_New %>%
+  filter(str_detect(TEST__RESULT, paste(lineages$lineage_extracted, collapse = "|")))
+
+# Extract records that do not have a valid lineage in the TEST_RESULT column
+WDRS_Entire_New_No_Lineage <- WDRS_Entire_New %>%
+  filter(!(str_detect(TEST__RESULT, paste(lineages$lineage_extracted, collapse = "|"))))
+
+# CHECK THAT ALL NEW RECORDS HAVE BEEN SENT TO EITHER WDRS_ENTIRE_NEW_LINEAGE OR WDRS_ENTIRE_NEW_NO_LINEAGE DATAFRAMES FOR PROCESSING
+stopifnot(isTRUE(sum(nrow(WDRS_Entire_New_Lineage), nrow(WDRS_Entire_New_No_Lineage)) == nrow(WDRS_Entire_New)))
+```
+
+# Create roster {.tabset}
+
+Now we have to format the valid records! This is done in multiple batches given that some variables differ by laboratory submitter and/or sequence status. 
+
+First, we employ a function to generate the roster variables that are populated identically across all laboratory submitters regardless of sequence status.  
+Then, we generate the roster variables that differ by sequence status:
+
+* SEQUENCE_STATUS == COMPLETE
+* SEQUENCE_STATUS == LOW QUALITY or FAILED
+    * **FAILED** SEQUENCE_STATUS is assigned to records lacking a GISAID_ID and lineage information  
+    * **LOW QUALITY** SEQUENCE_STATUS is assigned to records with a valid GISAID_ID but no lineage information   
+
+After performing the above steps on the WDRS_Entire_New_Lineage and WDRS_Entire_New_No_Lineage datasets, we combine the transformed dataframes and extract the final roster variables in the correct order.
+
+## Identical roster variables
+
+This code chunk creates the function to generate roster variables that are populated identically across laboratory submitter and sequence status.
+
+```{r}
+# Function to generate roster variables that are populated identically across laboratory submitters and sequence status
+  ## function input: df = dataframe containing new ELR records pulled from WDRS Entire table (WDRS_Entire_New_Lineage, WDRS_Entire_New_No_Lineage)
+ELR_common_roster_vars <- function(df) {
+  df %>%
+    
+  # filter down to SUBMITTERS that have passed content validation and are ready to be rostered
+  filter(SUBMITTER %in% lab_vars$lab_names_elr) %>%
+  
+  # mutate SEQUENCE_SGTF, populate as blank
+  mutate(SEQUENCE_SGTF = "") %>%
+  
+  # mutate SEQUENCE_SPECIMEN, populate as "YES"
+  mutate(SEQUENCE_SPECIMEN = "YES") %>%
+  
+  # mutate SEQUENCE_REASON, uppercase. If it's UW, extract the reason in TEST__REQUEST__NOTE, else assign SENTINEL SURVEILLANCE
+  mutate(SEQUENCE_REASON = if_else(
+    !is.na(TEST__REQUEST__NOTE) & str_detect(toupper(SUBMITTER),"UW VIROLOGY|UNIVERSITY OF WASHINGTON"),
+    str_replace_all(TEST__REQUEST__NOTE,pattern = "\\*\\*SEQREA\\*\\*",""),
+    "SENTINEL SURVEILLANCE")) %>%
+  
+  # mutate SEQUENCE_DATE, populate as blank
+  mutate(SEQUENCE_DATE = "") %>%
+    
+  # mutate SUBMITTING_LAB, populate with corresponding values
+  mutate(SEQUENCE_LAB = case_when(
+    SUBMITTER == "Aegis Sciences Corporation" ~ "Aegis",
+    SUBMITTER == "Helix Diagnositics" ~ "Helix", # this is the spelling submitted via ELR
+    SUBMITTER == "Laboratory Corporation Of America (LabCorp)" ~ "Labcorp",
+    SUBMITTER == "Quest San Juan Capistrano Laboratory" ~ "Quest",
+    toupper(SUBMITTER) == "UNIVERSITY OF WASHINGTON MEDICAL CENTER LABORATORY" ~ "UW Virology",
+    TRUE ~ "QA CHECK FAIL, CHECK SUBMITTER NAMES"
+  )) %>%
+  
+  # mutate SEQUENCE_ACCESSION, populate with the SA value that was generated by submitter in order to extract new records
+  mutate(SEQUENCE_ACCESSION = SEQUENCE_ACCESSION) %>%
+  
+  # mutate SEQUENCE_REPOSITORY, populate with "GISAID"
+  mutate(SEQUENCE_REPOSITORY = "GISAID")  %>%
+  
+  # mutate SEQUENCE_CLINICAL_ACCESSION
+      ## due to inconsistencies in the way laboratories submit the content for this variable, ELR submissions will not be assigned an SCA
+      ## Molecular Epi has confirmed that they do not require this variable
+  mutate(SEQUENCE_CLINICAL_ACCESSION = SEQUENCE_CLINICAL_ACCESSION) %>%
+    
+  # mutate SEQUENCE_SPECIMEN_COLLECTION_DATE, populate as a mdy format
+  mutate(SEQUENCE_SPECIMEN_COLLECTION_DATE = case_when(
+    str_detect(as.character(format(as.Date(SPECIMEN__COLLECTION__DTTM), "%m/%d/%Y")), "[[:digit:]]{2}/[[:digit:]]{2}/[[:digit:]]{4}") 
+    ~ as.character(format(as.Date(SPECIMEN__COLLECTION__DTTM), "%m/%d/%Y")),
+    TRUE ~ "QA CHECK FAIL, CHECK FOR MISSING OR INCORRECTLY FORMATTED COLLECTION DATE"
+  )) %>%
+  
+  # mutate SEQUENCE_REVIEWED, populate as blank
+  mutate(SEQUENCE_REVIEWED = "") %>%
+  
+  # mutate Case.Note, populate with provided message
+  mutate(Case.Note = "External data question package updated by COVID19 Sequencing Roster.")
+}
+```
+
+## With lineage information
+
+This code chunk runs the WDRS_Entire_New_Lineage_Transform dataframe through the above function and then generates the variables that differ by submitter. 
+
+```{r}
+# Roster records with lineage information (i.e.: SEQUENCE_STATUS = COMPLETE)
+WDRS_Entire_New_Lineage_Transform <- ELR_common_roster_vars(WDRS_Entire_New_Lineage) %>%
+  
+  # mutate EXTRACTED__LINEAGE, extract the lineage from TEST__RESULT using regex pattern matching
+    mutate(EXTRACTED__LINEAGE = case_when(
+      str_extract(TEST__RESULT, "Unassigned$") %in% lineages$lineage_extracted ~ str_extract(TEST__RESULT, "Unassigned$"),
+      str_extract(TEST__RESULT, "(?<=SARS-CoV-2 ).*(?= lineage)") %in% lineages$lineage_extracted ~ str_extract(TEST__RESULT, "(?<=SARS-CoV-2 ).*(?= lineage)"), 
+      str_extract(TEST__RESULT, "(?<=Other; ).*") %in% lineages$lineage_extracted ~ str_extract(TEST__RESULT, "(?<=Other; ).*"),
+      TEST__RESULT %in% lineages$lineage_extracted ~ TEST__RESULT,
+      TRUE ~ "QA CHECK FAIL, CHECK LINEAGE SYNTAX FOR POSSIBLE INCLUSION OF 'FAILED' OR 'LOW QUALITY' RECORDS OR INVALID LINEAGE"
+  )) %>%
+  
+    # mutate SEQUENCE_STATUS
+    ## COMPLETE vs LOW QUALITY status designated by the presence of a variant - expect all to be COMPLETE because records processed in this chunk must contain valid, new lineages
+  mutate(SEQUENCE_STATUS = case_when(
+    str_detect(TEST__RESULT, "Unassigned$") ~ "LOW QUALITY",
+    str_detect(TEST__RESULT, "(?<=SARS-CoV-2 ).*(?= lineage)") ~ "COMPLETE",
+    str_detect(TEST__RESULT, "(?<=Other; ).*") ~ "COMPLETE",
+    TEST__RESULT %in% lineages$lineage_extracted ~ "COMPLETE",
+    TRUE ~ "QA CHECK FAIL, CHECK LINEAGE SYNTAX FOR POSSIBLE INCLUSION OF 'FAILED' OR 'LOW QUALITY' RECORDS"
+  )) %>%
+  
+  # mutate SEQUENCE_VARIANT_OPEN_TEXT variable, populate with lineage
+  mutate(SEQUENCE_VARIANT_OPEN_TEXT = case_when(
+    EXTRACTED__LINEAGE %in% lineages$lineage_extracted ~ EXTRACTED__LINEAGE,
+    TRUE ~ "QA CHECK FAIL, EXTRACTED LINEAGE NOT FOUND IN LINEAGES DATA OBJECT"
+  )) %>%
+  
+  # mutate SEQUENCE_NOTES 
+  ## when PANGO_LINEAGE is not NA, populate a message with PANGO_LINEAGE and date of processing
+  mutate(SEQUENCE_NOTES = case_when(
+    EXTRACTED__LINEAGE == "Unassigned" ~ "",
+    !is.na(EXTRACTED__LINEAGE) ~ paste0("Lineage identified as ", EXTRACTED__LINEAGE, " on ", today(), ". Lineage assignments may change over time."),
+    TRUE ~ "QA CHECK FAIL, CHECK LINEAGE SYNTAX FOR POSSIBLE INCLUSION OF 'FAILED' OR 'LOW QUALITY' RECORDS"
+  )) 
+```
+
+## Without lineage information
+
+This code chunk runs the WDRS_Entire_New_No_Lineage_Transform dataframe through the above function and then generates the variables that differ by submitter. 
+
+```{r}
+# Roster records without lineage information (i.e.: SEQUENCE_STATUS != COMPLETE)
+WDRS_Entire_New_No_Lineage_Transform <- ELR_common_roster_vars(WDRS_Entire_New_No_Lineage) %>% 
+
+  # mutate EXTRACTED__LINEAGE, use TEST__RESULT__NOTE to identify lack of sequence information - expect all to be NA because records processed in this chunk lack valid lineages as previously determined through regex pattern matching in TEST__RESULT variable
+  mutate(EXTRACTED__LINEAGE = case_when(
+    is.na(TEST__RESULT__NOTE) ~ "", # no extracted lineage is indicated
+    !(TEST__RESULT__NOTE %in% lineages$lineage_extracted) ~ "", # error message or invalid extracted lineage is indicated
+    str_extract(TEST__RESULT, "(?<=SARS-CoV-2 ).*(?= lineage)") == "" ~ "", # standard text included, but no extracted lineage is indicated
+    str_extract(TEST__RESULT, "(?<=Other; ).*") == "" ~ "", # standard text included, but no extracted lineage is indicated
+    TRUE ~ "QA CHECK FAIL, CHECK LINEAGE SYNTAX FOR POSSIBLE INCLUSION OF 'COMPLETE' RECORDS OR INVALID LINEAGE"
+  )) %>%
+  
+  # mutate SEQUENCE_STATUS
+  mutate(SEQUENCE_STATUS = case_when(
+    EXTRACTED__LINEAGE == "" & is.na(SEQUENCE_ACCESSION) ~ "FAILED", # no lineage information, no sequence accession number
+    EXTRACTED__LINEAGE == "" & !is.na(SEQUENCE_ACCESSION) ~ "LOW QUALITY", # no lineage information, sequence accession number
+    TRUE ~ "QA CHECK FAIL, CHECK LINEAGE SYNTAX FOR POSSIBLE INCLUSION OF 'COMPLETE' RECORDS OR INVALID TEST_RESULT / SEQUENCE ACCESSION VALUES"
+  )) %>%
+  
+    # mutate SEQUENCE_VARIANT_OPEN_TEXT, should be empty
+  mutate(SEQUENCE_VARIANT_OPEN_TEXT = case_when(
+    (EXTRACTED__LINEAGE == "") ~ "",
+    TRUE ~ "QA CHECK FAIL, CHECK LINEAGE SYNTAX FOR POSSIBLE INCLUSION OF 'COMPLETE' RECORDS"
+  )) %>%
+  
+  # mutate SEQUENCE_NOTES 
+  ## when PANGO_LINEAGE is not NA, populate into a message with PANGO_LINEAGE and date of processing -- see previous chunk
+  mutate(SEQUENCE_NOTES = case_when(
+    (EXTRACTED__LINEAGE == "") ~ "",
+    TRUE ~ "QA CHECK FAIL, CHECK LINEAGE SYNTAX FOR POSSIBLE INCLUSION OF 'COMPLETE' RECORDS"
+  ))
+```
+
+## Bind roster
+
+Now that we have processed all new records, we can bind the dataframes and transform the outcome into the roster format. 
+
+```{r}
+# Bind WDRS_Entire_New_Lineage_Transform and WDRS_Entire_New_No_Lineage_Transform together to create a roster containing both 'COMPLETE' AND 'FAILED'/'LOW QUALITY' specimens
+WDRS_Entire_New_Bind <- rbind(WDRS_Entire_New_Lineage_Transform, WDRS_Entire_New_No_Lineage_Transform) %>%
+  # mutate all columns to character format
+  mutate(across(everything(), as.character)) 
+
+# Temp solution to fix duplicate rows issue
+WDRS_Entire_New_Bind_helix <- WDRS_Entire_New_Bind %>% filter(SUBMITTER == 'Helix Diagnositics')
+WDRS_Entire_New_Bind <- WDRS_Entire_New_Bind %>% anti_join(WDRS_Entire_New_Bind_helix)
+
+# order the Helix rows so that seq. study id comes first, the NA, then any other PATIENT__CENTRIC__OBSERVATION:
+WDRS_Entire_New_Bind_helix <- WDRS_Entire_New_Bind_helix %>% 
+  arrange(CASE_ID, 
+          factor(PATIENT__CENTRIC__OBSERVATION, levels = c('Sequencing study identifier', NA), exclude = NULL))
+                                                                                           
+WDRS_Entire_New_Bind <- rbind(WDRS_Entire_New_Bind, WDRS_Entire_New_Bind_helix) %>% 
+  # Select columns from WDRS_Entire_NeW_Bind_Valid into roster format
+  select(CASE_ID, 
+         SEQUENCE_SGTF, 
+         SEQUENCE_SPECIMEN, 
+         SEQUENCE_REASON, 
+         SEQUENCE_DATE,
+         SEQUENCE_LAB, 
+         SEQUENCE_STATUS,
+         SEQUENCE_REPOSITORY, 
+         SEQUENCE_ACCESSION, 
+         SEQUENCE_VARIANT_OPEN_TEXT,
+         SEQUENCE_CLINICAL_ACCESSION, 
+         SEQUENCE_SPECIMEN_COLLECTION_DATE,
+         SEQUENCE_NOTES, 
+         SEQUENCE_REVIEWED, 
+         Case.Note
+  ) %>% 
+  distinct()
+
+
+# Temp solution to fix the blank vs NA SCA anti join issue
+WDRS_Entire_New_Bind <- WDRS_Entire_New_Bind %>% mutate_all(~if_else(.=="", NA_character_, as.character(.)))
+```
+
+## Remove processed records
+
+As stated above, it is possible for records that have already been processed to be included in the above dataset due to their persistence in the WDRS ENTIRE table. Now that the entries are in roster format, we can remove records that are included in the elr_processed_records data object. 
+
+```{r}
+# Convert char dates to Date variables to avoid formatting issues
+# WDRS_Entire_New_Bind_Date <- WDRS_Entire_New_Bind %>%
+#   mutate(SEQUENCE_SPECIMEN_COLLECTION_DATE = as.Date(lubridate::mdy(SEQUENCE_SPECIMEN_COLLECTION_DATE)))
+# 
+# elr_processed_records_date <- elr_processed_records %>%
+#   mutate(SEQUENCE_SPECIMEN_COLLECTION_DATE = as.Date(lubridate::ymd(SEQUENCE_SPECIMEN_COLLECTION_DATE)))
+
+# Remove records that have already been processed
+Roster_Initial <- anti_join(WDRS_Entire_New_Bind, elr_processed_records, 
+                            # use primary identifying variables to perform anti-join
+                            by = c("CASE_ID", 
+                                   "SEQUENCE_LAB", 
+                                   "SEQUENCE_ACCESSION", 
+                                   "SEQUENCE_CLINICAL_ACCESSION", 
+                                   "SEQUENCE_SPECIMEN_COLLECTION_DATE"))
+
+# Stop script if no new records to roster
+if(nrow(Roster_Initial) == 0) {
+  stop(paste0("There are no new ELR records to roster on ", today()))
+}
+```
+
+## Check for invalid values
+
+Check for invalid values that occurred during variable creation. It is rare that this happens, and the script will stop if any invalid values are detected. The error messages populated in relevant cells identify potential sources of the problem. 
+
+```{r}
+# Scan for QA CHECK FAIL among new records - errors are generated during variable creation
+if(nrow(Roster_Initial) > 0) {
+  
+  QA_CHECK <- function(df) {
+    QA_FAIL <- c()
+      for (i in 1:nrow(df)) {
+        QA_FAIL[i] <- 
+        sum(str_detect(df[i,], "QA CHECK FAIL") == TRUE, na.rm = TRUE) == 0
+      }
+    QA_FAIL
+  }
+  
+  INVALID <- Roster_Initial 
+  INVALID$QA_CHECK <- QA_CHECK(Roster_Initial)
+  INVALID <- INVALID %>% filter(QA_CHECK == FALSE)
+  
+  if(nrow(INVALID) > 0) {
+    View(INVALID)
+    stop(paste0("There were ", nrow(INVALID), " records that failed QA checks upon variable creation and cannot be processed due to invalid values."))
+  }
+}
+
+# Create list of new records that have been processed in this script
+  elr_processed_records_new <- Roster_Initial %>% # This data object includes today's records minus those already included in the processed list
+    select(CASE_ID:Case.Note)
+```
+  
+## Quality filters
+
+Finally, we apply a series of logic checks to identify records that meet criteria to be uploaded (write_roster_here) or those that require manual review (For_Review/to_process). These logic checks are performed by the custom functions found in quality_filters.R. 
+
+```{r}
+# Add COLLECTION_DATE_WDRS column needed for quality filters
+Roster_Initial$COLLECTION_DATE_WDRS <- Roster_Initial$SEQUENCE_SPECIMEN_COLLECTION_DATE
+
+# Run formatted data through the roster_filters function (from quality_filters.R) to perform various QA checks
+elr_quality <- roster_filters(
+                    Roster_Initial, 
+                    lab_vars, 
+                    WDRS_Flat$SEQUENCE_ACCESSION_NUMBER, 
+                    WDRS_Flat$SEQUENCE_CLINICAL_ACCESSION_NUMBER, 
+                    lineages$lineage_extracted)  
+
+# Extract any rows that failed quality checks to send to For_Review
+  ## Note: non-PHL records with LOW QUALITY and FAILED status are not sent to manual review
+elr_for_review <- filter(elr_quality, sum>0)
+  # Remove LOW QUALITY and FAILED records - 5/3/23 FA - we shouldn't remove failed records
+  # filter(SEQUENCE_STATUS != "LOW QUALITY" & 
+  #        SEQUENCE_STATUS != "FAILED")
+
+```
+
+## Final roster
+
+Records that pass the quality filters are compiled into the final roster!
+
+```{r}
+# Remove any rows that failed quality checks to create final roster
+Roster_Final <- filter(elr_quality, sum==0) %>% 
+  select(CASE_ID:Case.Note) 
+```
+
+***
+
+```{r}
+stop("Stop script automatically before writing any files. Review roster output and any invalid data or QA check errors.")
+```
+
+# Save outputs for Seq 2.0 comparison
+```{r}
+elr_for_review$output_location <- "for_review"
+Roster_Final$output_location <- "WDRS"
+
+all <- bind_rows(elr_for_review,
+                 Roster_Final)
+
+write_csv(all,
+          paste0("2.0_dev_env/seq_1.0_outputs/",Sys.Date(),"_elr_outputs.csv"))
+
+```
+
+
+# Output files  
+
+Write all outputs to their respective destinations:
+
+* Roster_Final to write_roster_here
+* elr_for_review to For_Review/to_process
+* Update the elr_processed_records object
+
+```{r}
+# Output new processed records by updating elr_processed_records object in Completed_Submissions/ELR
+  # Note: the elr_processed_records is not currently output or utilized beyond this script - it serves as a running list of records that have been flagged for review or sent to roster by this script. In the event that an error is not corrected in a timely manner, checking daily outputs against this list ensures that multiple copies of the same records are not repeatedly sent to For_Review with each run and serves as an extra dedup step for the roster output
+if(length(elr_processed_records_new) > 0) {
+  elr_processed_records_final <- elr_processed_records_new %>%
+    mutate(DATE_PROCESSED = today()) %>% # add timestamp
+    mutate(SEQUENCE_CLINICAL_ACCESSION = as.character(SEQUENCE_CLINICAL_ACCESSION)) # make sure SEQUENCE_CLINICAL_ACCESSION column is in character format so Excel does not automatically remove leading zeros
+    
+  # Output updated list of processed ELR records (append new records to original)
+  write_csv(elr_processed_records_final, 
+            "Completed_Submissions/ELR/elr_processed_records.txt", 
+            na = "", 
+            append = TRUE)
+}
+  
+# Output records that failed quality filter checks to For_Review
+if (nrow(elr_for_review) > 0) {
+  write_csv(elr_for_review, 
+            paste0("For_Review/to_process/ELR_For_Review_", 
+                   today(), 
+                   ".csv"), 
+            na = "")
+}
+
+# Output Roster_Final to write_roster_here
+if (nrow(Roster_Final) > 0) {
+  write_csv(Roster_Final, 
+            paste0("write_roster_here/ELR_Roster_Output_", 
+                   today(), 
+                   ".csv"), 
+            na = "")
+}
+```
+
+# Email receipt {.tabset}
+
+Compile an email message to summarize findings upon the completion of this script run.
+
+## Create message
+
+```{r}
+# initialize a message that the script has ran
+message <- paste0("The ELR Roster Script has run on ", today(), ".")
+
+# if there were records process append it to the message with the number of records processed
+if (nrow(Roster_Final) > 0) {
+  message <- paste0(message, "\n" , "A total of ", nrow(elr_processed_records_new), " new record(s) were identified and processed.", 
+                    "\n\n", nrow(Roster_Final), " records were sent to write_roster_here:",
+                    "\n", sum(Roster_Final$SEQUENCE_LAB == "Aegis"), " Aegis record(s)",
+                    "\n", sum(Roster_Final$SEQUENCE_LAB == "Helix"), " Helix record(s)",
+                    "\n", sum(Roster_Final$SEQUENCE_LAB == "Labcorp"), " LabCorp record(s)",
+                    "\n", sum(Roster_Final$SEQUENCE_LAB == "Quest"), " Quest record(s)",
+                    "\n", sum(Roster_Final$SEQUENCE_LAB == "UW Virology"), " UW Virology record(s)")
+} else if (nrow(Roster_Final) == 0) {
+  message <- paste0(message, "\n\n" , "There were no new record(s) processed.")
+}
+
+# if there were records sent to manual review, append notification to the message
+if (nrow(elr_for_review) > 0) {
+  message <- paste0(message,"\n\n", nrow(elr_for_review), " ELR record(s) failed QA checks and require manual review. Please check these records in the For_Review to_process folder and update the submissions or script logic as needed.")
+}
+
+# preview message
+writeLines(message)
+```
+
+## Send email
+
+```{r}
+# Assign email components to vectors
+email_from <- ""
+email_to <- ""
+email_subject <- paste0("SEQUENCING - ELR Run Summary Automated Email", month(today()), "/", day(today()))
+email_body <- paste0("Submission(s) have been processed ", today(), ". ", "See below for a summary.\n\n", message)
+
+# Send it
+sendmailR::sendmail(from = email_from,
+                    to = email_to,
+                    subject = email_subject,
+                    msg = email_body,
+                    headers = list("Reply-To" = email_from),
+                    control = list(smtpServer = "") 
+                    )
+```

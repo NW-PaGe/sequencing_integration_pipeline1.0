@@ -1,0 +1,1125 @@
+---
+title: "PHL Script"
+author: "Emily Nebergall and Allie Warren"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r}
+knitr::opts_chunk$set(eval = FALSE)
+```
+
+
+# Overview
+
+The PHL COVID-19 dashboard posts results of COVID-19 RT-PCR tests and sequencing. Some of the specimens in the PHL sequencing dashboard were tested and sequenced at the PHL, others were tested at other labs and the specimen was shipped to PHL for sequencing. Specimens that are tested and sequenced can be matched to WDRS using the SpecimenID in the sequencing dashboard. Matching data for specimens from other laboratories are located on the REDCap or Surveillance dashboard. The REDCap specimens are assigned a WA number when they arrive at the lab for sequencing, but this WA number is not usually in WDRS. These specimens also have an AccessionNumber, which contains the clinical identifier tied to the specimen at its originating lab, but this ID can sometimes link to other records in WDRS, therefore RedCap records are sent to fuzzy matching for record linkage. The Surveillance specimens can often be matched to WDRS by the AccessionId column in the Surveillance dashboard, which contains the clinical identifier tied to the specimen at its originating lab.
+
+This script is run after downloading the data using the sel_Dashboard_All.Rmd script, and reads in found files downloaded from the PHL COVID-19 dashboard: the PHL sequencing dashboard file, the accompanying REDCAp viewer file, the Surveillance viewer file, and the Epi (All Specimens) dashboard, which contains additional name and DOB info. It matches specimens to WDRS CASE_ID's first using the WA number in the SpecimenID column of the PHL dashboard as the sequence clinical accession. It then uses the SpecimenID to find the AccessionId from the Surveillance file for sequenced specimens, and attempts to match the sequence data to a WDRS CASE_ID using the AccessionId as the sequence clinical accession. The SpecimenID and AccessionId are matched to [FILLER\_\_ORDER\_\_NUM] in the ELR Entire table of WDRS.
+
+If a specimen cannot be matched using a sequence clinical accession number, then it is split out from the rest of the data and printed in a file to be matched to WDRS using demographic data in a separate FUZZY_MATCHING script, or, if it lacks demographic information, it is sent to the keep_na list.
+
+Quality filters are applied at multiple stages of the script. Columns for sequence reason, sequence status, sequence accession are checked to make sure they contain only values that we expect to see. The script also checks that the Collected Date column is in the expected format and that the specimen collected date is not off by more than 14 days from the collected date in WDRS, and that other fields follow the expected format. These checks are contained in the roster_filters function within the quality_filters script. Some data that is filtered out in these various checks are sent to For_Review, so that errors can be addressed and the data can be rostered.
+
+Rows that contain a sequence accession number already found in WDRS are removed from the data as early as possible to reduce the workload of the rest of the script. Records are also checked to see if they have already been processed by the script. Data from PHL is cumulative, meaning that new records need to be separated out from records that have already been processed so that duplicates are not written to output folders. A running list of all of the sequence accessions (or Seq IDs as they are sometimes referred) that have been processed by the script is kept, and used to identify records that are new. A sequence accession is assigned for all PHL records (even if the sequencing fails), even though only sequence accessions associated with complete sequencing are uploaded to WDRS, and can therefore be used to track records.
+
+# Flowchart
+
+This is a detailed summary of the logic in this script. Note that you can click on the image and zoom in. 
+
+![](../assets/phl_1-0.drawio.svg){#fig-phlworkflow}
+
+# Setup {.tabset}
+```{r source}
+library(tidyverse)
+library(stringr)
+library(dplyr)
+library(lubridate)
+
+renv::load(file.path(Sys.getenv("USERPROFILE"),"Projects/Sequencing/"))
+
+if (wday(today()) %in% c(2, 3, 4)){
+  try(
+    rmarkdown::render(file.path(Sys.getenv("USERPROFILE"),
+                                "Projects/Sequencing/Roster_scripts",
+                                "sel_Dashboard_All.Rmd"),
+                    output_file=file.path(Sys.getenv("USERPROFILE"),
+                                "Projects/Sequencing/Roster_scripts",
+                                "sel_Dashboard_All.html")),
+    stop("Selenium script failed")
+  )
+}
+```
+## Load all libraries
+
+```{r load all libraries}
+library(tidyverse)
+library(fuzzyjoin)
+library(here)
+library(lubridate)
+library(readxl)
+library(DBI)
+library(odbc)
+library(dtplyr)
+library(fs)
+```
+
+## Load Data Objects and Files
+
+```{r load objects}
+# read in r_creds.RDS
+r_creds <-readRDS(file.path(Sys.getenv("USERPROFILE"), "Projects/Sequencing/Data_Objects", "r_creds.RDS"))
+
+# read in sequence reasons and lab names
+lab_vars <- readRDS("/Data_Objects/lab_variables.rds")
+
+# load list of all valid lineages
+lineages <- read_csv("Data_Objects/Lineages/Lineages.csv")
+
+# Read in quality_filters
+source(file.path(Sys.getenv("USERPROFILE"), "Projects/Sequencing/Roster_scripts/quality_filters.R"))
+
+# Extract a list of valid lineages from the lineages_list object (this should be updated daily via an automated script)
+  # Append "" and NA, as records with a LOW QUALITY or FAILED sequence status will not contain lineage information
+lineages_list <- c(
+  lineages[[1]], 
+  "Unassigned"
+)
+
+# Get PHL input sequence reasons that do not have a corresponding reason in the list of output reasons
+# Records with one of these reasons will be filtered out of the final roster and, potentially, sent for review
+# PT is an expected output here, as records with that reason are not added to the roster
+unmatched_seq_reasons <- lab_vars$phl_seq_reasons[setdiff(seq(1:length(lab_vars$phl_seq_reasons)), seq(1:length(lab_vars$output_seq_reasons_phl)))]
+
+print(unmatched_seq_reasons)
+
+# maximum number of rows used to identify the type of each column when reading data in
+# number can be larger than the number of rows in the data - it is currently set to be larger than any of the data sets
+# if too small, read_xlsx may incorrectly infer the column type, causing it to not read in all the data
+type_n_rows <- 100000
+
+
+# list of PHL records that have already been processed
+phl_processed_records <- read_csv("/Completed_Submissions/PHL_Records/phl_processed_records.csv")
+
+# list used to store records currently being processed
+new_records <- c()
+```
+
+# Load Input Data {.tabset}
+
+## PHL Data
+
+The primary PHL dashboard that contains most of the relevant columns used to create the PHL roster
+
+```{r import phl data}
+
+# get filepath for files containing PHL_20 in the PHL Submissions folder
+phl_filename <- dir_ls("Submissions/PHL",
+                       type = 'file'
+                       ) %>%
+  str_subset("PHL/PHL_20")
+
+# stop script if no PHL file
+if(length(phl_filename) == 0){
+   stop("No PHL file in Submissions/PHL folder")
+}
+
+# throw warning if there is more than one PHL file, then take the most recent file
+# and continue
+if (length(phl_filename) > 1){
+  print("More than one PHL file, selecting just the most recent file")
+  
+  # get the file with the most recent mtime:
+  phl_filename <- phl_filename[file.mtime(phl_filename) == max(file.mtime(phl_filename))]
+}
+
+# define the list of columns of interest from the PHL dashboard
+phl_columns <- c("Seq ID", "SpecimenId", "Sequencing Result", "Reason", "Collected Date", "Lineage") 
+
+# read in PHL file, only including selected files
+phl <- read_xlsx(phl_filename, guess_max = type_n_rows,
+                 na = c("", "NA", "N/A")) %>%
+  select(all_of(phl_columns))
+```
+
+## REDCAP Data
+
+Data from the RedCap dashboard
+
+```{r import redcap data}
+
+# get filepath for files containing REDCAP in the PHL Submissions folder
+redcap_filename <- dir_ls("Submissions/PHL") %>%
+  str_subset("REDCAP")
+
+# stop script if no REDCAP file
+if(length(redcap_filename) == 0){
+   stop("No REDCAP file in Submissions/PHL folder")
+}
+
+# throw warning if there is more than one REDCAP file, then take the most recent file
+# and continue
+if (length(redcap_filename) > 1){
+  print("More than one REDCAP file, selecting just the most recent file")
+  
+  # get the file with the most recent mtime:
+  redcap_filename <- redcap_filename[file.mtime(redcap_filename) == max(file.mtime(redcap_filename))]
+}
+
+
+# read in REDCAP file
+redcap <- read_xlsx(redcap_filename, guess_max = type_n_rows) %>%
+  filter(!is.na(SpecimenId)) 
+```
+
+
+## Surveillance Data
+
+Sentinel Surveillance Samples
+
+```{r import surveillance data}
+
+# get filepath for files containing Surveillance in the PHL Submissions folder
+surveillance_filename <- dir_ls("Submissions/PHL") %>%
+  str_subset("Surveillance")
+
+# stop script if no Surveillance file
+if(length(surveillance_filename) == 0){
+   stop("No Surveillance file in Submissions/PHL folder")
+}
+
+# throw warning if there is more than one Surveillance file, then take the most recent file
+# and continue
+if (length(surveillance_filename) > 1){
+  print("More than one Surveillance file, selecting just the most recent file")
+  
+  # get the file with the most recent mtime:
+  surveillance_filename <- surveillance_filename[file.mtime(surveillance_filename) == max(file.mtime(surveillance_filename))]
+}
+
+# read in Surveillance file
+surveillance <- read_xlsx(surveillance_filename, guess_max = type_n_rows) %>%
+  filter(!is.na(SpecimenId)) 
+
+```
+
+## Epi Data
+
+The Epi (All Specimens) dashboard that contains name and DOB for more records
+
+```{r import epi data}
+
+# get filepath for files containing Epi in the PHL Submissions folder
+epi_filename <- dir_ls("Submissions/PHL", 
+                       type = 'file'
+                       ) %>%
+  str_subset("Epi")
+
+# stop script if no Epi file
+if(length(epi_filename) == 0){
+   stop("No Epi file in Submissions/PHL folder")
+}
+
+# throw warning if there is more than one Epi file, then take the most recent file
+# and continue
+if (length(epi_filename) > 1){
+  print("More than one Epi file, selecting just the most recent file")
+  # get the file with the most recent mtime:
+  epi_filename <- epi_filename[file.mtime(epi_filename) == max(file.mtime(epi_filename))]
+}
+
+
+
+# read in epi file, only selecting relevant columns
+epi <- read_xlsx(epi_filename, guess_max = type_n_rows,
+                 na = c("", "NA", "N/A")) %>%
+  select(`Specimen ID`, `First Name`, `Last Name`, `Birth Date`)
+```
+
+# Initial quality checks {.tabset}
+
+## Work Stoppers
+
+These errors will prompt the script to stop running
+
+```{r check for empty columns}
+
+# Check for empty columns within the PHL input, and stop script if a column is empty
+# Empty column may indicate that the input file was not properly downloaded or
+# an error occurred when reading in the file
+
+stop_script <- function(x) {
+  if (any(!is.na(phl[ ,x])) == FALSE) {
+    stop(paste0(x, " column in the phl file is empty"))
+  }
+}
+
+
+lapply(phl_columns, stop_script)
+
+```
+
+## Warning Generators
+
+Some errors warrant a warning but are not work stoppers. These should generate an alert that something has changed with the PHL data and we should contact PHL or molecular epi to ask for new mappings or an explanation of the meaning of the new conditions observed in the data.
+
+Check for unexpected values or major changes to the data that invalidate it for processing via this script. PHL Reason "Outbreak Investigation" rows are mapped to "OUTBREAK" later in this script. PT (which stands for "proficiency test") rows are later dropped from the data.
+
+```{r quality checks by column}
+
+# expected conditions
+
+mapped_status <- c("COMPLETED {1822}", "FAILED {1823}", NA)
+
+# conditions observed in data downloaded from dashboard
+
+phl_reasons <- str_trim(toupper(unique(phl$Reason)))
+
+phl_status <- str_trim(toupper(unique(phl$`Sequencing Result`)))
+
+
+# check that phl conditions match mapped conditions
+new <- c()
+reason_messages <- c()
+status_messages <- c()
+
+
+# Report new sequence reasons
+if(any(!(phl_reasons %in% lab_vars$phl_seq_reasons) == TRUE)) {
+  new <- setdiff(phl_reasons, lab_vars$phl_seq_reasons)
+  
+  if (length(new) > 0) {
+    for (i in 1:length(new)) {
+      reason_messages[i] <-
+        paste0(
+          new[i],
+          " is an unmapped sequence reason found in the Reason column of the PHL COVID-19 dashboard today"
+        )
+    }
+  }
+}
+
+
+# Report new sequence status not found in expected list
+if(any(!(phl_status %in% mapped_status) == TRUE)) {
+  new <- setdiff(phl_status, mapped_status)
+  
+  if (length(new) > 0) {
+    for (i in 1:length(new)) {
+      status_messages[i] <-
+        paste0(
+          new[i],
+          " is an unmapped sequence status found in the Sequencing Result column of the PHL COVID-19 dashboard today"
+        )
+    }
+  }
+}
+
+# check that the format of the Collected Date column is the expected format
+
+date_messages <- c()
+
+if(any(str_detect(phl$`Collected Date`, "(?<=2020|2021)-[[:digit:]]{1,12}-[[:digit:]]{1,31}")) != TRUE) {
+  date_messages <- "The Collected Date column has one or more dates that do not follow the expected format"
+}
+
+
+
+warnings <- c(reason_messages, status_messages, date_messages)
+
+warnings
+
+```
+
+# WDRS Queries {.tabset}
+
+### Open connection to WDRS
+
+**IMPORTANT** the variables used to connect to WDRS are held within conn_list.RDS, you will need to make your own private .RDS. 
+
+We do not include server connections in code uploaded to GitHub. 
+
+**So: DO NOT alter the code used to open the connection to WDRS in any way that creates a security risk. Continue to treat this connection as a secret and store its variables in a .RDS object (or other external object that is excluded from Git commits) rather than calling them directly here.**
+
+
+
+```{r wdrs connection}
+# connect
+connection <- DBI::dbConnect(odbc::odbc(), 
+                             Driver = r_creds$conn_list[1], 
+                             Server = r_creds$conn_list[2], 
+                             Database = r_creds$conn_list[3], 
+                             Trusted_connection = r_creds$conn_list[4], 
+                             ApplicationIntent = r_creds$conn_list[5])
+```
+
+## WDRS FLATTENED
+
+This queries the flattened table and provides a list of unique sequence accessions and sequence clinical accessions that we use to avoid adding duplicate data to the final roster.
+
+### Flattened Sequence Accessions
+
+```{r wdrs_sa_flat}
+
+# Query WDRS flattened table
+# result is saved to cache - this is useful for testing the code, but
+# when running not in test code cached data will first be deleted
+#wdrs_sa_flat <- xfun::cache_rds({
+  # wdrs_sa_flat <- dbGetQuery(
+  #   connection,
+  #   "SELECT DISTINCT CDC_N_COV_2019_SEQUENCE_ACCESSION_NUMBER,
+  #    CDC_N_COV_2019_SEQUENCE_CLINICAL_ACCESSION_NUMBER
+  #    FROM [dbo].[DD_GCD_COVID_19_FLATTENED]
+  #    "
+  # )
+
+wdrs_sa_flat <- dbGetQuery(connection,
+                        "
+    SELECT SEQUENCE_ACCESSION_NUMBER, SEQUENCE_CLINICAL_ACCESSION_NUMBER
+    FROM DD_GCD_COVID19_SEQUENCING
+    WHERE SEQUENCE_SPECIMEN IS NOT NULL
+    AND CASE_STATUS IN (0, 3)
+    ORDER BY SEQUENCE_ROSTER_PREPARE_DATE DESC;
+                       ")
+#},
+#file = "wdrs_sa_flat")
+
+# for fields that have multiple comma separated SEQUENCE_ACCESSIONs split them by ","
+# wdrs_sa_flat_split <- unlist(str_split(wdrs_sa_flat[[1]], ","))
+  
+# omit any NA's
+wdrs_sa_flat_clean <-
+    wdrs_sa_flat$SEQUENCE_ACCESSION_NUMBER[!is.na(wdrs_sa_flat$SEQUENCE_ACCESSION_NUMBER)] %>%
+    #for fields that have "hCoV-19/" appended to the beginning of the SEQUENCE_ACCESSION remove it by str_replace() with ""
+    str_replace("hCoV-19/", "") %>%
+    # trim off the white space resulting from str_split, this also gets rid of " " values
+    str_trim("both")
+  
+# remove any values that are ""
+wdrs_sa_flat_values <- wdrs_sa_flat_clean[wdrs_sa_flat_clean != ""]
+
+
+```
+
+### Flattened Sequence Clinical Accessions
+
+```{r wdrs_sca_flat_values}
+
+# for fields that have multiple comma separated SEQUENCE_CLINICAL_ACCESSIONs split them by ","
+# wdrs_sca_flat_split <- unlist(str_split(wdrs_sa_flat[[2]], ","))
+
+# omit any NA's
+wdrs_sca_flat_clean <- wdrs_sa_flat$SEQUENCE_CLINICAL_ACCESSION_NUMBER[!is.na(wdrs_sa_flat$SEQUENCE_CLINICAL_ACCESSION_NUMBER)] %>%
+#for fields that have "hCoV-19/" appended to the beginning of the SEQUENCE_CLINICAL_ACCESSION remove it by str_replace() with ""
+  str_replace("hCoV-19/", "") %>%
+# trim off the white space resulting from str_split, this also gets rid of " " values  
+  str_trim("both")
+
+# remove any values that are ""
+wdrs_sca_flat_values <- wdrs_sca_flat_clean[wdrs_sca_flat_clean != ""]
+
+```
+
+## WDRS ENTIRE
+
+Pull COVID-19 records from the WDRS ENTIRE and LAB tables.
+The sequence clinical accession numbers and specimen collection date
+are used to match new sequencing data to WDRS.
+
+```{r wdrs_seq}
+# Query WDRS ELR Entire Table
+# result is saved to cache - this is useful for testing the code, but
+# when running not in test code cached data will first be deleted
+#wdrs_seq <- xfun::cache_rds({
+  wdrs_seq <- dbGetQuery(
+    connection,
+    "
+  SELECT Distinct CASE_ID,
+    [FILLER__ORDER__NUM] as SpecimenId,
+    [SPECIMEN__ID__ACCESSION__NUM__MANUAL] as SPECIMEN_ID,
+    [SPECIMEN__COLLECTION__DTTM] as COLLECTION_DATE_WDRS
+    FROM [dbo].[DD_ELR_DD_ENTIRE]
+  WHERE CODE = 'SARS'
+  AND STATUS != '6'
+  "
+  )
+  
+  wdrs_seq <-
+  wdrs_seq %>% unite(
+    SpecimenId,
+    c(SpecimenId, SPECIMEN_ID),
+    sep = ",",
+    remove = FALSE,
+    na.rm = TRUE
+  )
+#},
+#file = "wdrs_seq")
+
+```
+
+## WDRS LAB
+
+Additional cases to match may be found in the COVID19 lab table. This is especially true for redcap cases.
+
+```{r wdrs_lab_cases}
+
+# Query WDRS lab table
+# result is saved to cache - this is useful for testing the code, but
+# when running not in test code cached data will first be deleted
+
+#wdrs_lab_cases <-
+  #xfun::cache_rds({
+    wdrs_lab_cases <-  dbGetQuery(
+      connection,
+      "SELECT Distinct CASE_ID, [FILLER__ORDER__NUM] as FILLER_ORDER_NUM,
+                             [SPECIMEN__ID__ACCESSION__NUM__MANUAL] as SPECIMEN_ID,
+                             [SPECIMEN__COLLECTION__DTTM] as COLLECTION_DATE_WDRS
+                             FROM [dbo].[DD_GCD_COVID19_LAB]"
+    )
+    
+    
+    wdrs_lab_cases <-
+      wdrs_lab_cases %>% unite(
+        SpecimenId,
+        c(FILLER_ORDER_NUM, SPECIMEN_ID),
+        sep = ",",
+        remove = FALSE,
+        na.rm = TRUE
+      )
+  #},
+  #file = "wdrs_lab_cases")
+
+```
+
+## Combine WDRS Records
+
+Combine all COVID19 records from WDRS
+
+```{r unique_wdrs}
+
+# combine WDRS entire and lab tables
+wdrs_all_cases <-
+  full_join(wdrs_lab_cases, wdrs_seq) %>% select(CASE_ID, SpecimenId, COLLECTION_DATE_WDRS)
+
+# Remove  samples from wdrs where the case id and specimen id are duplicated, keeping only the first instance
+unique_wdrs <-
+   wdrs_all_cases[!duplicated(wdrs_all_cases[,c("CASE_ID", "SpecimenId")]), ]
+
+```
+
+# Filters and Transformations {.tabset}
+
+A new data frame phl_clean is generated from phl raw data.
+
+The sequence result and Seq ID columns are transformed to the WDRS roster format. The data is filtered to remove rows that are missing a sequence result (these are incomplete), or that have a Seq ID that has already been entered in the flattened table as a sequence accession. The data is filtered to remove rows with a Sequencing Reason of PT.
+
+```{r initial transformations and filters}
+# Clean up/simplify Sequencing Result and Seq ID columns
+# Remove samples with the sequencing reason PT
+phl_clean <- phl %>%
+  mutate(
+    # Format Sequencing Result
+    `Sequencing Result` = case_when(
+      toupper(`Sequencing Result`) == "COMPLETED {1822}" ~ "COMPLETE",
+      toupper(`Sequencing Result`) == "FAILED {1823}" ~ "FAILED",
+      !(toupper(`Sequencing Result`) %in% c("COMPLETED {1822}", "FAILED {1823}")) &
+        !is.na(phl$`Sequencing Result`) ~ phl$`Sequencing Result`
+    )
+  ) %>%
+  # adjust format of Seq ID (Sequence Accession)
+  mutate(`Seq ID` = ifelse(
+    str_detect(`Seq ID`, "hCoV-19/"),
+    str_replace(`Seq ID`, "hCoV-19/", ""),
+    `Seq ID`
+  )) %>%
+  # remove records with a sequencing reason of PT
+  filter(!Reason == "PT") %>%
+  # only process results that have been sequenced
+  filter(`Sequencing Result` %in% c("COMPLETE", "FAILED"))
+
+
+# Remove samples that are already in WDRS
+phl_new <- phl_clean[!(phl_clean$`Seq ID` %in% wdrs_sa_flat_values), ]
+
+
+```
+
+# Joins {.tabset}
+
+## PHL and REDCap Join
+
+PHL and Redcap data is joined by SpecimenId and ProjectOption is brought into SEQUENCE_REASON in all cases where ProjectOption == "SENTINEL SURVEILLANCE". In cases where ProjectOption is other than SENTINEL SURVEILLANCE, the Reason column from the phl sequencing dashboard is retained as SEQUENCE_REASON. All redcap data with demographics will be sent to fuzzy matching.
+
+```{r join phl and redcap}
+
+# Join PHL and REDCAP data
+dashboard_all <- left_join(phl_new, redcap, by = "SpecimenId") %>% 
+  mutate(SEQUENCE_REASON = case_when(
+      toupper(ProjectOption) == "SENTINEL SURVEILLANCE" ~ "SENTINEL SURVEILLANCE",
+      !(toupper(ProjectOption) == "SENTINEL SURVEILLANCE") ~ toupper(Reason),
+      TRUE ~ toupper(Reason)
+    )
+  )
+
+```
+
+## PHL and Surveillance Join
+
+Use specimen id to join the sentinel surveillance to the data from the primary PHL dashboard
+
+```{r join phl and surveillance}
+
+# Join Surveillance data with the combined PHL and REDCAP data
+dashboard_all <- left_join(dashboard_all, surveillance, by = "SpecimenId")
+
+```
+
+## PHL and Epi Join
+
+Use specimen id to join the Epi (All Specimens) dashboard to PHL dashboard and fill in
+name and data of birth 
+```{r}
+# Join Epi dashboard to PHL, REDCAP, and Surveillance data
+dashboard_all <- left_join(dashboard_all, epi, by = c('SpecimenId' = 'Specimen ID'))
+
+# If name and dob isn't already present in the data,
+# fill in with data from the Epi (All Specimens) dashboard
+dashboard_all <- dashboard_all %>% 
+  mutate(FirstName = ifelse(!is.na(FirstName), FirstName, `First Name`),
+         LastName = ifelse(!is.na(LastName), LastName, `Last Name`),
+         BirthDate = ifelse(!is.na(BirthDate), BirthDate, `Birth Date`)) %>%
+  select(-`First Name`, -`Last Name`, -`Birth Date`)
+                            
+                           
+```
+
+## Join sequence data to WDRS
+
+Use specimen id (sequence clinical accession) to join the PHL specimens to WDRS records
+
+```{r join dashboard and wdrs}
+# Join dashboard data with WDRS by Specimen ID (sequence clinical accession), still keeping samples not found in WDRS
+join_dash_wdrs <-
+  left_join(dashboard_all,
+            unique_wdrs,
+            by = "SpecimenId",
+            na_matches = "never") 
+```
+
+## Leftovers
+
+Try to match records not matched with SpecimenId to WDRS using Accession ID from Surveillance.
+Records without a match are kept in the table and will be passed on to fuzzy matching or
+keep_na, as relevant.
+
+```{r leftovers}
+
+# Select samples where the Specimen ID was not in WDRS
+leftovers <- filter(join_dash_wdrs, is.na(CASE_ID)) %>%
+  select(!CASE_ID) #removes so column can be added back on new join
+
+# Identify samples where the Accession ID is in WDRS, using Surveillance dashboard data
+# Only use the COLLECTION_DATE_WDRS column from unique_wdrs
+leftovers_matching_via_surveillance <- left_join(leftovers %>% select(-COLLECTION_DATE_WDRS), unique_wdrs, 
+                                           by = c("AccessionId" = "SpecimenId"), na_matches = "never") %>% 
+  filter(!is.na(CASE_ID), !is.na(AccessionId))
+
+# Remove records that matched on accession id, but include records with no match
+join_dash_wdrs <- filter(join_dash_wdrs, !AccessionId %in% leftovers_matching_via_surveillance$AccessionId)
+  
+# Recombine all inputs, those with and without matches and select relevant columns
+phl_and_other_matches <-
+  rbind(join_dash_wdrs, leftovers_matching_via_surveillance) %>% select(
+    "SEQUENCE_REASON",
+    "Seq ID",
+    "SpecimenId",
+    "Sequencing Result",
+    "AccessionNumber",
+    "AccessionId",
+    "CASE_ID",
+    "Collected Date",
+    "Lineage",
+    "COLLECTION_DATE_WDRS",
+    "FirstName",
+    "LastName",
+    "BirthDate"
+  ) 
+```
+
+# Transform Data {.tabset}
+
+## Roster Columns
+
+```{r phl_and_other_matches_clean SEQUENCE ACCESSION and Lineage}
+
+# rename Seq ID as Sequence_ACCESSION and add variant column
+phl_and_other_matches_clean <- phl_and_other_matches %>%
+  rename(SEQUENCE_ACCESSION = "Seq ID") %>%
+  # new free text column for lineage
+  mutate(SEQUENCE_VARIANT_OPEN_TEXT = Lineage)
+  
+
+```
+
+## Sequence Clinical Accession Formats
+
+```{r phl_and_other_matches_clean SEQUENCE_CLINICAL_ACCESSION}
+
+# Create column for the sequence clinical accession, getting the value from the
+# relevant column for the phl or surveillance data
+phl_and_other_matches_clean <-
+  phl_and_other_matches_clean %>% mutate(
+    SEQUENCE_CLINICAL_ACCESSION = case_when(
+      !is.na(phl_and_other_matches_clean$AccessionId) ~ phl_and_other_matches_clean$AccessionId,
+      TRUE ~ phl_and_other_matches_clean$SpecimenId
+    ))
+    
+
+```
+
+
+## Generate Format for Roster
+
+```{r phl_roster format}
+# Format matched data to fit format for roster
+phl_roster <- phl_and_other_matches_clean %>%
+  # keep track of sequence accession, important for filtering out already processed records
+  mutate(ID = SEQUENCE_ACCESSION) %>%
+  # format collection date
+  mutate(SEQUENCE_SPECIMEN_COLLECTION_DATE = as.character(format(
+    as.Date(phl_and_other_matches_clean$`Collected Date`), '%m/%d/%Y' # adjust date to m/d/Y format
+  ))) %>%
+  # format wdrs collection date
+   mutate(COLLECTION_DATE_WDRS = as.character(format(
+    as.Date(phl_and_other_matches_clean$COLLECTION_DATE_WDRS), '%m/%d/%Y'  # adjust date to m/d/Y format
+  ))) %>%
+  # add empty sgtf column
+  mutate(SEQUENCE_SGTF = NA_character_) %>%
+  # add sequence speciment column
+  mutate(SEQUENCE_SPECIMEN = "YES") %>%
+  # map input sequence reasons to simplified set of sequence reasons
+  mutate(SEQUENCE_REASON = lab_vars$output_seq_reasons_phl[match(SEQUENCE_REASON, lab_vars$phl_seq_reasons)]) %>%
+  # if the new sequence reason is NA 
+  # (meaning it wasn't in the input list or didn't have a mapping to the output list)
+  # return it to the original reason, otherwise keep the new reason
+  # records with sequence reasons not in the accepted output seq reason list will be filtered out
+  mutate(SEQUENCE_REASON = if_else(is.na(SEQUENCE_REASON), phl_and_other_matches_clean$SEQUENCE_REASON, SEQUENCE_REASON)) %>%
+  # add empty sequence date column
+  mutate(SEQUENCE_DATE = NA_character_) %>%
+  # set lab to PHL
+  mutate(SEQUENCE_LAB = "PHL") %>%
+  # sequence status column
+  # mutate(SEQUENCE_STATUS = phl_and_other_matches_clean$`Sequencing Result`) %>% 
+  # Change all None to Unassigned
+  mutate(SEQUENCE_VARIANT_OPEN_TEXT = if_else(Lineage == "None", "Unassigned", Lineage)) %>%
+  # Change all Unassigned lineages to have LOW QUALITY status
+  mutate(SEQUENCE_STATUS = case_when(
+    SEQUENCE_VARIANT_OPEN_TEXT == "Unassigned" ~ "LOW QUALITY",
+    TRUE ~ phl_and_other_matches_clean$`Sequencing Result`
+    )) %>%
+  # If the sequence is FAILED status, leave SEQUENCE_REPOSITORY as null, else set sequence repo to GISAID
+  mutate(SEQUENCE_REPOSITORY = case_when(
+    SEQUENCE_STATUS == "FAILED" ~ NA_character_, 
+    TRUE ~ "GISAID"
+    )) %>%
+  mutate(SEQUENCE_ACCESSION = SEQUENCE_ACCESSION) %>%
+  # add empty sequence reviewed column
+  mutate(SEQUENCE_REVIEWED = NA_character_) %>%
+  # add standard case note
+  mutate(Case.Note = "External data question package updated by COVID19 Sequencing Roster.") %>%
+ 
+  
+
+  # use lineage column to create sequence notes column
+  mutate(SEQUENCE_NOTES = case_when(
+    !is.na(Lineage) & Lineage != "Unassigned" ~ paste0(
+      "Lineage identified as ",
+      phl_and_other_matches_clean$Lineage,
+      " on ",
+      today(),
+      ". Lineage assignments may change over time."
+    ),
+    is.na(Lineage) ~ NA_character_ # Add sequence notes column containing the lineage information
+  )) %>%
+  select(
+    CASE_ID,
+    SEQUENCE_SGTF,
+    SEQUENCE_SPECIMEN,
+    SEQUENCE_REASON,
+    SEQUENCE_DATE,
+    SEQUENCE_LAB,
+    SEQUENCE_STATUS,
+    SEQUENCE_REPOSITORY,
+    SEQUENCE_ACCESSION,
+    SEQUENCE_VARIANT_OPEN_TEXT,
+    SEQUENCE_CLINICAL_ACCESSION,
+    SEQUENCE_SPECIMEN_COLLECTION_DATE,
+    SEQUENCE_NOTES,
+    SEQUENCE_REVIEWED,
+    ID,
+    Case.Note,
+    COLLECTION_DATE_WDRS,
+    # include demographic columns for fuzzy matching
+    FIRST_NAME = FirstName,
+    LAST_NAME = LastName,
+    DOB = BirthDate
+  )
+
+
+```
+
+# Roster Quality Checks {.tabset}
+
+## Processed Records
+
+Filter out records that have already been processed by the script in past runs
+
+```{r remove processed records}
+# Remove records that have already been processed
+phl_roster <- filter(phl_roster, !ID %in% phl_processed_records$SEQUENCE_ACCESSION)
+
+
+# Temp addition to change PHL Historic data (2020/2021) to sequence reason "OTHER"
+phl_roster <- phl_roster %>% mutate(SEQUENCE_REASON = case_when(
+  str_detect(SEQUENCE_SPECIMEN_COLLECTION_DATE, "2020$|2021$") ~ "OTHER",
+             TRUE ~ SEQUENCE_REASON))
+
+```
+
+## SCA Failed in WDRS 
+
+Filter out records that have a status of FAILED and the sequence clinical accession is already in wdrs
+
+```{r remove duplicate SCA failed records}
+# Remove records that are failed and the SCA is in WDRS
+phl_roster <- filter(phl_roster, !((SEQUENCE_CLINICAL_ACCESSION %in% wdrs_sca_flat_values) & (SEQUENCE_STATUS == 'FAILED')))
+
+```
+
+## Roster Filters
+
+Filter the phl roster and split the data into acceptable rows and rows needing review or exclusion. Print "bad" rows to files for review.
+
+```{r quality filter checks}
+# run formatted data through the roster_filters function (from  quality_filters.R) to check for various errors
+# will print how many records have each error type
+phl_quality <- roster_filters(phl_roster, lab_vars, wdrs_sa_flat_values, wdrs_sca_flat_values, lineages_list)
+
+         
+```
+
+
+# Fuzzy matching
+
+Specimens that did not match to a record in WDRS need to be matched on demographics in a separate fuzzy matching process
+
+```{r records for fuzzy matching}
+
+# Send records to fuzzy matching that did not match to a record in WDRS or which have duplicate SCA but different CASE ID
+# All records sent to fuzzy matching should have demographic info
+fuzzy_matching_input <- filter(phl_quality, !is.na(QA_CASE_ID) | !is.na(QA_SCA_INT_DUPE),
+                         !is.na(FIRST_NAME),
+                         FIRST_NAME != "",
+                         !is.na(LAST_NAME),
+                         LAST_NAME != "",
+                         !is.na(DOB),
+                         DOB != "")
+
+# Format data for submission to fuzzing matching
+fuzzy_matching_input <- fuzzy_matching_input %>%
+  mutate(MIDDLE_NAME = NA,
+         ALTERNATIVE_ID = NA) %>%
+  select(SEQUENCE_REASON,
+         GISAID_ID = SEQUENCE_ACCESSION,
+         PANGO_LINEAGE = SEQUENCE_VARIANT_OPEN_TEXT,
+         FIRST_NAME,
+         LAST_NAME ,
+         MIDDLE_NAME,
+         SUBMITTING_LAB = SEQUENCE_LAB,
+         DOB,
+         SPECIMEN_COLLECTION_DATE = SEQUENCE_SPECIMEN_COLLECTION_DATE,
+         CASE_ID,
+         SEQUENCE_STATUS,
+         ALTERNATIVE_ID,
+         LAB_ACCESSION_ID = SEQUENCE_CLINICAL_ACCESSION,
+         ID)
+                         
+
+# remove records sent to fuzzy matching from the records sent to the roster or for review
+phl_quality <- filter(phl_quality, !ID %in% fuzzy_matching_input$ID) %>% 
+  # remove demographic info
+  select(-FIRST_NAME, -LAST_NAME, -DOB)
+
+
+
+if(nrow(fuzzy_matching_input) > 0){
+  # keep track of records written
+  new_records <- c(new_records, fuzzy_matching_input$ID)
+  
+  fuzzy_matching_input <- fuzzy_matching_input %>% select(-ID)
+  # write records to fuzzy matching input folder
+  fuzzy_matching_filepath <- file.path("Submissions/Fuzzy_Match", paste0("PHL_FUZZY_MATCHING", today(), ".csv"))
+  write_csv(fuzzy_matching_input, fuzzy_matching_filepath)
+}
+
+```
+
+# Keep_na {.tabset}
+
+## Filter Records for Keep NA
+
+These rows were missing important data and need to be sent to the keep_na file so that we can attempt to match them later.
+
+```{r keep_na}
+
+# add to keep na records that are missing case or sequence accession or sequence clinical accession, but where the status is not pending and the sequence clinical accession is not in wdrs
+keep_na <- filter(phl_quality, (!is.na(QA_CASE_ID) |
+                                  !is.na(QA_SCA_NA) |
+                                  !is.na(QA_SEQ_STAT)) &
+                    SEQUENCE_STATUS != "PENDING" &
+                    is.na(QA_SCA_WDRS_DUPE))
+
+# remove records sent to keep_na from the records sent elsewhere
+phl_quality <- filter(phl_quality, !ID %in% keep_na$ID)
+
+
+# Read in current keep na list
+keep_na_running <- read_csv("keep_na/keep_na.csv",
+                   col_types = cols(.default = "c"),
+                   na = c("", "NA", "N/A")) 
+
+# Filter out records already in keep na
+# and select the relevant columns
+keep_na_final <- filter(keep_na, !SEQUENCE_CLINICAL_ACCESSION %in% keep_na_running$SEQUENCE_CLINICAL_ACCESSION) %>%
+  select(CASE_ID:Case.Note) %>%
+  mutate(DATE_PROCESSED = as.character(today()))
+
+if(nrow(keep_na_final > 0)) {
+  # keep track of records written
+  new_records <- c(new_records, keep_na_final$ID)
+  keep_na_final <- keep_na_final %>% select(-ID)
+  
+    keep_na_final %>%
+      write_csv("keep_na/keep_na.csv", na = "", append = TRUE)
+  }  
+
+```
+
+## Check keep_na File
+
+Ensures that records are appended to the keep_na file. If the number of records that should have appended to the keep_na file does not match then it outputs the keep_na_final as a separate file so data is not lost
+
+```{r keep_na final}
+
+# if keep_na_final > 0 
+if(nrow(keep_na_final) > 0) {
+# bring in the updated keep_na 
+keep_na_running_update <- read_csv("keep_na/keep_na.csv",
+                   col_types = cols(.default = "c"),
+                   na = c("", "NA", "N/A")) 
+
+}  
+
+# if the difference in the nrow between the keep_na originally brought in and the keep_na updated with keep_na_final does not equal the nrow of keep_na_final
+
+if(nrow(keep_na_final) > 0) {
+  if ((!((nrow(
+    keep_na_running_update
+  )) - (nrow(keep_na_running))) == nrow(keep_na_final))) {
+    # output keep_na_final as a separate file into a holding folder (to ensure this is added to keep_na later on)
+    keep_na_final %>%
+      write_csv(file.path("keep_na/Add_Holding",
+                paste0("PHL_",format(now(), "%Y-%m-%d-%H%M%S"), ".csv")), na = "")
+    
+  }
+}
+
+```
+
+
+# PHL Final Roster
+
+Apply all of the filters and print the rows that make it through these quality checks to the write_roster_here folder.
+
+```{r create final roster and write to file}
+
+# filter out records that fail any quality check
+phl_roster_final <- filter(phl_quality, sum==0) %>% select(CASE_ID:Case.Note)
+
+if(nrow(phl_roster_final > 0)) {
+  # keep track of records written
+  new_records <- c(new_records, phl_roster_final$ID)
+  phl_roster_final <- phl_roster_final %>% select(-ID)
+  
+  roster_filepath <- file.path("write_roster_here", paste0("phl_NewSeq_", format(now(), "%Y-%m-%d-%H%M%S"), ".csv"))
+  write_csv(phl_roster_final, roster_filepath, na = "")
+    
+}
+
+```
+
+
+# For review records
+
+Select records that failed various filters and write to the For_Review folder for manual review
+
+```{r write to for review folders}
+
+phl_for_review <- filter(phl_quality, sum > 0)
+
+if(nrow(phl_for_review)) {
+  new_records <- c(new_records, phl_for_review$ID)
+   
+  phl_for_review <- phl_for_review %>%
+    select(-ID, -sum)
+  
+  for_review_filepath <- file.path("For_Review/to_process", paste0("PHL_review_", today(), ".csv"))
+    # write to csv
+  write_csv(phl_for_review, for_review_filepath, na = "")
+}
+
+```
+
+# Processed Record List
+
+Add to list of records that have been processed by the script
+
+```{r add to list of records processed}
+
+if(length(new_records) > 0) {
+  # add records processed during this run to the list
+  new_records <- as.data.frame(new_records) %>% magrittr::set_colnames("SEQUENCE_ACCESSION")
+  new_records$date_processed <- today()
+  
+  write_csv(new_records, "Completed_Submissions/PHL_Records/phl_processed_records.csv", na = "", append = TRUE)
+  
+}
+
+```
+
+# Save outputs for Seq 2.0 comparison
+```{r}
+keep_na_final$output_location <- "keep_na"
+phl_for_review$output_location <- "for_review"
+fuzzy_matching_input$output_location <- "fuzzy"
+phl_roster_final$output_location <- "WDRS"
+
+all <- bind_rows(keep_na_final,
+          phl_for_review,
+          fuzzy_matching_input,
+          phl_roster_final)
+
+write_csv(all,
+          paste0("2.0_dev_env/seq_1.0_outputs/",Sys.Date(),"_phl_outputs.csv"))
+
+```
+
+
+# File cleanup
+
+Move files from Submissions folder to Completed_Submissions and rename as complete
+
+```{r cleanup}
+
+# PHL primary dashboard
+new_file_path <-
+  file.path("Completed_Submissions/PHL",
+  paste0("complete_", today(), ".xlsx"))
+file_move(phl_filename,
+          new_file_path)
+
+# RedCap
+new_file_path2 <-
+  file.path("Completed_Submissions/REDCap_Source_Viewer",
+  paste0("complete_", today(), ".xlsx"))
+file_move(redcap_filename,
+          new_file_path2)
+
+# Sentinel Surveillance
+new_file_path3 <-
+  file.path("Completed_Submissions/Surveillance_Source_Viewer",
+  paste0("complete_", today(), ".xlsx"))
+file_move(surveillance_filename,
+          new_file_path3)
+
+# Epi (All Specimens)
+new_file_path4 <-
+  file.path("Completed_Submissions/PHL",
+  paste0("epi_complete_", today(), ".xlsx"))
+file_move(epi_filename,
+          new_file_path4)
+
+```
+
+# Completed Email {.tabset}
+
+## Write Email
+```{r email}
+# initialize empty message
+PHL_message <- ""
+
+# Write separate messages if PHL records were added to write roster or not
+if(nrow(phl_roster_final) > 0) {
+  valid_files_message <-  paste0("There were a total of ", nrow(phl_roster_final), " record(s) from PHL that are ready to be rostered. A table of these records was added to the write_roster_here folder.")
+} else {
+  valid_files_message <- paste0("There were no new valid records from PHL that are ready to be rostered. No new table was added to the write_roster_here folder.")
+}
+
+
+PHL_message <- paste0(PHL_message, valid_files_message)
+
+# initialize empty sting for files written to For_Review
+invalid_files <- ""
+
+# if there were records requiring review, append it to the message
+if (nrow(phl_for_review) > 0) {
+  invalid_files <- paste0(invalid_files,"\n\n" , "There were a total of ", nrow(phl_for_review), " record(s) processed that contained an error. A table of these records was added to the For_Review/to_process folder.")
+}
+
+
+# write different messages depending on whether files were written to the For_Review folders or not
+if(nchar(invalid_files) > 0) {
+  PHL_message <- paste0(PHL_message, "\n\nA subset of records that were processed require manual review: ", invalid_files)
+} else {
+  PHL_message <- paste0(PHL_message, "\n\nNo PHL records were added to the For_Review folders for manual review.")
+}
+
+
+# if there were records that required fuzzy matching, append it to the message
+if (nrow(fuzzy_matching_input) > 0) {
+  fuzzy_match_filepath <- file.path("Submissions/Fuzzy_Match", paste0("PHL_FUZZY_MATCHING", today(), ".csv"))
+  PHL_message <- paste0(PHL_message, "\n\n", "There are ", nrow(fuzzy_matching_input), " records that require fuzzy matching. These records do not match to an event in WDRS by an accession ID but do contain demographic information that can be used to match. These records can be found at: ", "\n", fuzzy_match_filepath)
+} else {
+  PHL_message <- paste0(PHL_message, "\n\n", "There were no records from PHL for fuzzy matching.")
+}
+
+# if there were records added to keep na, append it to the message
+if (nrow(keep_na_final) > 0) {
+  PHL_message <- paste0(PHL_message, "\n\n", "There are ", nrow(keep_na_final), " records that were added to the keep na file.")
+}
+
+
+# Finalize message
+PHL_message <- paste0(PHL_message, "\n\n", "Note: This is an automated message. Please enable your outlook to include extra line breaks to view this message in its proper format.", "\n\n", "This message is in development, and will be updated. If you see any errors reach out to DIQA. Thanks!")
+```
+
+## Send Email
+
+```{r send email}
+# assign email components to vectors
+email_from <- ""
+email_to <- ""
+email_subject <- paste0("SEQUENCING - PHL Dashboard Run Summary Automated Email", month(today()), "/", day(today()))
+email_body <- paste0("The PHL Submission(s) have been processed for ", today(), ". ", "See below for a summary.\n\n", PHL_message)
+
+# send it only if running in production mode, where data is read from and written to the net drive
+
+sendmailR::sendmail(from = email_from,
+                    to = email_to,
+                    subject = email_subject,
+                    msg = email_body,
+                    headers= list("Reply-To" = email_from),
+                    control = list(smtpServer = "")
+                    )
+
+```

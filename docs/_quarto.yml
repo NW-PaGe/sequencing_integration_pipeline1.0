@@ -1,0 +1,52 @@
+project:
+  type: manuscript
+
+manuscript:
+  article: index.qmd
+  code-links: [repo, devcontainer, binder]
+
+format:
+  html:
+    comments:
+      hypothesis: true
+    # repo-url: https://github.com/DOH-EPI-Coders/sequencing1.0_sanitized
+    # repo-actions: [edit, issue]   
+    citations-hover: true
+    crossrefs-hover: true
+    toc: true
+    toc-location: left
+    title-block-style: manuscript
+    format-links: [pdf, docx]
+    notebook-links: true
+  docx: default
+  jats: default
+  pdf: 
+    output-file: "diqa-sequencing-pipeline"
+    output-ext:  "pdf"
+    margin-width: 10px
+    gutter-width: 1.5rem
+    fig-pos: "H" # this makes sure that the figures output where they're supposed to in pdf 
+    toc: true
+    number-sections: true
+    number-depth: 2
+    include-in-header:
+       - "assets/styles.tex"
+  # pdf: 
+  #   output-file: "idk"
+  # agu-pdf:
+  #   output-file: "agu"
+  # jasa-pdf:
+  #   output-file: "jasa"
+
+  # (other formats)
+  # pdf: default
+
+execute:
+  freeze: true
+
+citation:
+  type: article-journal
+  issued: 2024-03-01
+
+
+

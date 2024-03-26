@@ -1,0 +1,57 @@
+# Default is needed to distinguish values.
+# Leave a blank line (NO SPACES) as the last line in this file or things will break
+# Quotes aren't necessary, but can be used.
+default: 
+  conn_list_wdrs:
+    Driver: "SQL Server Native Client 11.0"
+    Server: 
+    Database: 
+    Trusted_connection: 
+    ApplicationIntent: 
+    
+  paths:
+    network_drive: <path/to/drive>
+    
+  wa_cdc:
+    username: <USERNAME>
+    password: <PASSWORD>
+    
+  sft:
+    username: 
+    password:
+
+  mft:
+    username: 
+    password:  
+    
+  gisaid:
+    username: 
+    password: 
+    
+  gisaid_general:
+    username: 
+    password: 
+    
+  redcap_phl_token: 
+  
+  redcap_wawbe_sandbox_token: 
+  
+  redcap_sgtf_token: 
+  
+test:
+  conn_list_lims:
+    Driver: "SQL Server Native Client 11.0"
+    Server: 
+    Database: 
+    Trusted_connection: 
+    ApplicationIntent: 
+    
+  conn_list_test:
+    Driver: "SQL Server Native Client 11.0"
+    Server: 
+    Database: 
+    Trusted_connection: 
+    ApplicationIntent: 
+
+MPV:
+  redcap_mpv_token: 

@@ -1,0 +1,105 @@
+#Rproject
+*.Rproj
+
+# Pycharm
+*.idea
+
+# hl R object with sensitive information
+hl.R
+
+# pickle (python files) with sensative info
+*.p
+
+# executables.  Necissary for genbank pull
+*.exe
+
+# python cache files
+*.pyc*
+
+# csv files
+*.csv
+
+# excel files
+*.xlsx
+*.xls
+
+# logs
+*.log
+
+# html
+*.html
+
+# text files
+*.txt
+
+# RDS Objects
+*.RDS
+!voc.RDS
+!lab_variables.RDS
+
+# unwanted folders
+Auto_seq/Fulgent_FTP/*
+Auto_seq/find_new_labs/*
+Auto_seq/genbank/*
+Submissions/*
+write_roster_here/*
+Completed_Submissions/*
+keep_na/*
+TestFolder/*
+write_roster_here/*
+Fuzzy_Match/*
+cache/*
+GISAID Data/*
+Investigations/*
+For_Review/*
+Test_Data/*
+
+
+
+# History files
+.Rhistory
+.Rapp.history
+
+# Session Data files
+.RData
+
+# User-specific files
+.Ruserdata
+
+# Example code in package build process
+*-Ex.R
+
+# Output files from R CMD build
+/*.tar.gz
+
+# Output files from R CMD check
+/*.Rcheck/
+
+# RStudio files
+.Rproj.user/
+
+# produced vignettes
+vignettes/*.html
+vignettes/*.pdf
+
+# OAuth2 token, see https://github.com/hadley/httr/releases/tag/v0.3
+.httr-oauth
+
+# knitr and R markdown default cache directories
+*_cache/
+/cache/
+
+# Temporary files created by R markdown
+*.utf8.md
+*.knit.md
+
+# R Environment Variables
+.Renviron
+
+# Bootstrap Source Code
+bootstrap.css
+bootstrap.min.css
+/.quarto/
+
+# Credentials
+creds.yml

@@ -34,11 +34,12 @@ authors:
       - Data Integration
       - Quality Assurance
       - Software
-    corresponding: true
   - name: Emily Nebergall
     affiliations:
       - ref: doh
-    corresponding: true
+  - name: Cameron Ashton
+    affiliations:
+      - ref: doh
 date: 3-4-2024
 date-modified: today
 notebook-links: true

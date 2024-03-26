@@ -1,0 +1,101 @@
+---
+title: "wa_cdc_pull"
+author: "DSSU/DIQA"
+date: "4/30/2021"
+output: html_document
+---
+
+
+# Load R libraries.
+```{r}
+library(dplyr)
+library(stringr)
+library(rvest)
+library(vroom)
+library(fs)
+library(lubridate)
+library(readr)
+library(httr)
+library(here)
+```
+
+# Read in required data_objects and define objects.
+```{r}
+# read in r_creds.RDS
+r_creds <-readRDS(file.path(Sys.getenv("USERPROFILE"), "Projects/Sequencing/Data_Objects", "r_creds.RDS"))
+
+# assign data objects to individual objects
+username <- r_creds$wa_cdc_user
+password <- r_creds$wa_cdc_pw
+```
+
+# Retrieve the 'Washington_cumulative.csv' file from CDC's site.
+```{r}
+# name of file to pick up
+# same name used to write file in later step
+file_name <- "Washington_cumulative.csv"
+
+# path to SFTP file
+file_pickup <- paste0("/ncezid-non-pii/amd/sc2/state-exchange/WA1/deliver/", file_name)
+ 
+# url string
+url <- paste0("sftp://cselsdatahub.cdc.gov", file_pickup)
+
+# login to the SFTP server
+the_url <- GET(url,
+                     authenticate(user = username,
+                                  password = password))
+
+# get the content of the file parsed as a csv
+wa_file <- content(the_url, as = "parsed", type = "text/csv")
+
+# pick up the create date of the existing file in the net drive
+orig_date <- dir_info("", regexp = "Washington_cumulative.csv") %>% 
+  select(modification_time) %>% 
+  "[["(1) %>% 
+  as_date(.)
+
+# location to write to
+net_drive <- paste0("", file_name)
+
+# name to give file when moved to archive
+move_this <- paste0(
+  "",
+  orig_date,
+  "_archived_",
+  format(now(), "%Y-%m-%d_%H%M"),
+  "_",
+  file_name
+)
+
+# move existing file to archive with new name
+file_move(net_drive, move_this)
+
+# write new file to net drive in csv format
+vroom_write(wa_file, net_drive, delim = ",")
+```
+
+# Send an email when a new Washington_cumulative file has been dropped into the CDC_Cumulative folder.
+```{r}
+# call directory of the Lineages folder
+cdc_cumulative_dir <- dir_info("")
+
+# check to make sure that the output file exists in lineages_dir
+if(as.Date(cdc_cumulative_dir$modification_time[str_detect(cdc_cumulative_dir$path, "Washington_cumulative.csv$")]) == today()) {
+  
+  # send an email stating there are values that do not follow the expected pattern
+  email_from <- ""
+  email_to <- ""
+  email_subj <- "Sequencing - CDC WA Cumulative output Automated Email"
+  email_body <- "There is a new Washington_cumulative file that has been dropped in the CDC_Cumulative folder."
+
+  # send it
+  sendmailR::sendmail(from = email_from,
+                    to = email_to,
+                    subject = email_subj,
+                    msg = email_body,
+                    headers= list("Reply-To" = email_from),
+                    control = list(smtpServer = ""))
+  
+}
+```

@@ -1,0 +1,647 @@
+
+---
+title: "Reviewing old rosters"
+author: "Sarah"
+date: "10/5/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+
+
+# Libraries
+```{r}
+library(lubridate)
+library(tidyverse)
+library(readxl)
+library(openxlsx)
+library(fs)
+library(here)
+
+```
+
+# Read in files
+Starting with 6/29 because this is the earliest date on the repository.
+Emily is investigating to see about the previous versions of the code.
+```{r}
+# this is for 6/29 - 9/30
+compile_files <- dir_ls(here("write_roster_here\\Archive\\"),
+                         recurse = TRUE,type = "any",  regexp = "2021-([0][0,6]-[2-3][0,9]|[0][7-9]-[0-9][0-9]).*csv")
+
+# # this is for 6/1-6/28 
+# compile_files <- dir_ls(here("write_roster_here\\Archive\\"),
+#                          recurse = TRUE,type = "any",  regexp = "2021-([0][0,6]-[0-1][0-9]|[0][0,6]-[2][0-8])/.*csv")
+
+if(length(compile_files > 0)){
+
+ roster_files <- dput(as.vector(compile_files))
+ names(roster_files) <- roster_files
+
+
+  Compile_Rosters <- roster_files %>%
+    map_dfr(~read_csv(., col_types = cols(
+      CASE_ID = col_character(),
+      SEQUENCE_SGTF = col_character(),
+      SEQUENCE_SPECIMEN = col_character(),
+      SEQUENCE_REASON = col_character(),
+      SEQUENCE_DATE = col_character(),
+      SEQUENCE_LAB = col_character(),
+      SEQUENCE_STATUS = col_character(),
+      SEQUENCE_REPOSITORY = col_character(),
+      SEQUENCE_ACCESSION = col_character(),
+      SEQUENCE_VARIANT = col_character(),
+      SEQUENCE_CLINICAL_ACCESSION = col_character(),
+      SEQUENCE_SPECIMEN_COLLECTION_DATE = col_character(),
+      SEQUENCE_NOTES = col_character(),
+      SEQUENCE_REVIEWED = col_character(),
+      Case.Note = col_character()
+    )), .id = "index")
+
+}
+
+
+Compiled_Roster <- bind_rows(Compile_Rosters) %>% mutate(SEQUENCE_SPECIMEN_COLLECTION_DATE =
+                                                           str_trim(SEQUENCE_SPECIMEN_COLLECTION_DATE, side = "both"))
+
+```
+
+
+
+# Connect to WDRS
+```{r}
+conn_list <- readRDS(here("Data_Objects/conn_list.RDS"))
+
+
+connection <- DBI::dbConnect(odbc::odbc(), 
+                             Driver = conn_list[[1]], 
+                             Server = conn_list[[2]], 
+                             Database = conn_list[[3]], 
+                             Trusted_connection = conn_list[[4]], 
+                             ApplicationIntent = conn_list[[5]])
+```
+
+# Create vector of SEQUENCE ACCESSION values from WDRS
+```{r}
+wdrs_sa_flat <- dbGetQuery(connection, "
+                    SELECT DISTINCT CDC_N_COV_2019_SEQUENCE_ACCESSION_NUMBER,
+                    CDC_N_COV_2019_SEQUENCE_CLINICAL_ACCESSION_NUMBER
+                    FROM [dbo].[DD_GCD_COVID_19_FLATTENED]
+                    ")
+
+# for fields that have multiple comma separated SEQUENCE_ACCESSION's split them by ","
+wdrs_sa_flat_split <- unlist(str_split(wdrs_sa_flat[[1]], ","))
+
+# omit any NA's
+wdrs_sa_flat_clean <- wdrs_sa_flat_split[!is.na(wdrs_sa_flat_split)] %>%
+  #for fields that have "hCoV-19/" appended to the beginning of the SEQUENCE_ACCESSION remove it by str_replace() with ""
+  str_replace("hCoV-19/", "") %>%
+  # trim off the white space resulting from str_split, this also gets rid of " " values
+  str_trim("both")
+
+# remove any values that are ""
+wdrs_sa_flat_values <- wdrs_sa_flat_clean[wdrs_sa_flat_clean != ""]
+```
+
+
+# Create vector of SEQUENCE CLINICAL ACCESSION values from WDRS
+```{r}
+
+# for fields that have multiple comma separated SEQUENCE_ACCESSION's split them by ","
+wdrs_sca_flat_split <- unlist(str_split(wdrs_sa_flat[[2]], ","))
+
+# omit any NA's
+wdrs_sca_flat_clean <- wdrs_sca_flat_split[!is.na(wdrs_sca_flat_split)] %>%
+#for fields that have "hCoV-19/" appended to the beginning of the SEQUENCE_ACCESSION remove it by str_replace() with ""
+  str_replace("hCoV-19/", "") %>%
+# trim off the white space resulting from str_split, this also gets rid of " " values  
+  str_trim("both")
+
+# remove any values that are ""
+wdrs_sca_flat_values <- wdrs_sca_flat_clean[wdrs_sca_flat_clean != ""]
+```
+
+# seeing if there are records that aren't in wdrs
+```{r}
+check_seqacc_inwdrs <- Compiled_Roster %>% filter(!(Compiled_Roster$SEQUENCE_ACCESSION %in% wdrs_sa_flat_values)) %>% filter(!is.na(SEQUENCE_ACCESSION))  
+check_seqclinacc_inwdrs <- Compiled_Roster %>% filter(!(Compiled_Roster$SEQUENCE_CLINICAL_ACCESSION %in% wdrs_sca_flat_values))  %>% filter(!is.na(SEQUENCE_CLINICAL_ACCESSION))  
+```
+
+# Create vectors of valid sequence reasons and sequence laboratories
+These can be found in the project tracker workbook (link in github wiki)
+When new labs or reasons are added, update this code chunk
+Save RDS objects or better to type in for now?
+
+```{r}
+# Create object with valid sequence_reasons, sequence_labs
+
+# If "" is listed as a valid sequence_reason, NA needs to be added to this list, because the blank cells will be converted to NA when the csv is read in
+seq_reason <- c("SENTINEL SURVEILLANCE", "SUSPECTED REINFECTION", "SUSPECTED VACCINE BREAKTHROUGH", "OUTBREAK", "OTHER", NA, "")
+
+seq_lab <- c("Aegis",
+                "Altius",
+                "Atlas Genomics",
+                "CDC",
+                "Fulgent Genetics",
+                "Gravity Diagnostics",
+                "Helix",
+                "Infinity Biologix",
+                "Labcorp",
+                "NW Genomics",
+                "OHSU",
+                "PHL",
+                "Providence Swedish",
+                "Quest",
+                "USAMRIID",
+                "UW Virology",
+                "The Jackson Laboratory",
+                "Naval Health Research Center",
+                "Flow Diagnostics",
+                "Madigan Army Medical Center",
+                "U.S. Airforce School of Aerospace Medicine",
+                "KP WA Research Inst")
+# 
+
+# create a vector of CDC partner labs
+CDC_labs <- c("Aegis", "Helix", "Labcorp", "Quest", "Fulgent Genetics", "Infinity Biologix")
+
+```
+
+
+# Read in RDS objects to get vector of VOCs
+
+```{r}
+# bring in vector of variants of concern
+voc <- readRDS(here("Data_Objects/VOC/voc.RDS"))
+
+```
+
+# Function that checks if SEQUENCE_NOTES have a lineage
+```{r}
+detect_lineage_fun <- function(x) {
+  str_detect(x, "[[:alpha:]]{1,2}[.][[:digit:]]{1,2}")
+}
+```
+
+# Create final roster
+```{r}
+  
+# Last filter on records to be rostered
+Compiled_Roster_Clean <-
+  Compiled_Roster[ # CASE_ID is not NA
+                              (!is.na(Compiled_Roster$CASE_ID)) &
+                              # SEQUENCE_CLINICAL_ACCESSION is not NA  - no longer included because fuzzy matched samples don't have SCA
+                             # (!is.na(Compiled_Roster$SEQUENCE_CLINICAL_ACCESSION)) &
+                                  ## must meet one of these conditions to be rostered
+                              # (SEQUENCE_STATUS is COMPLETE & SEQUENCE_ACCESSION is not NA) or
+                              # (SEQUENCE_STATUS is FAILED & SEQUENCE_ACCESSION is NA) or
+                              # (SEQUENCE_STATUS is NOT DONE & SEQUENCE_ACCESSION is NA) or
+                              # (SEQUENCE_STATUS is LOW QUALITY & SEQUENCE_ACCESSION is NA) or
+                              # (SEQUENCE_STATUS is HIGH CT & SEQUENCE_ACCESSION is NA)
+                              ((Compiled_Roster$SEQUENCE_STATUS == "COMPLETE") & (!is.na(Compiled_Roster$SEQUENCE_ACCESSION)) |
+                              (Compiled_Roster$SEQUENCE_STATUS == "FAILED") & (is.na(Compiled_Roster$SEQUENCE_ACCESSION)) |
+                              (Compiled_Roster$SEQUENCE_STATUS == "NOT DONE") & (is.na(Compiled_Roster$SEQUENCE_ACCESSION)) |
+                              (Compiled_Roster$SEQUENCE_STATUS == "LOW QUALITY") & (is.na(Compiled_Roster$SEQUENCE_ACCESSION)) |
+                              (Compiled_Roster$SEQUENCE_STATUS == "HIGH CT") & (is.na(Compiled_Roster$SEQUENCE_ACCESSION))
+                              ) &
+                             # missing SA but not missing a variant
+                             !(is.na(Compiled_Roster$SEQUENCE_ACCESSION) & !is.na(Compiled_Roster$SEQUENCE_VARIANT)) &
+                             # missing Sequence Accession but not detecting 'NONE' OR 'NA' in notes, meaning the lineage might be there. -> change this to reflect "" in NOTES
+                             !(is.na(Compiled_Roster$SEQUENCE_ACCESSION) &
+                                     !(Compiled_Roster$SEQUENCE_NOTES %in% Compiled_Roster$SEQUENCE_NOTES[str_detect(Compiled_Roster$SEQUENCE_NOTES, c("None", "NA"))])) &
+                             # no duplicates within this roster
+                             (!(Compiled_Roster$SEQUENCE_CLINICAL_ACCESSION %in% 
+                                 Compiled_Roster$SEQUENCE_CLINICAL_ACCESSION[duplicated(Compiled_Roster$SEQUENCE_CLINICAL_ACCESSION)])) &
+                             # no case_id with non-numeric values
+                            (!(Compiled_Roster$CASE_ID %in% Compiled_Roster$CASE_ID[str_detect(Compiled_Roster$CASE_ID, "[:alpha:]")])) &
+                             # no wdrs duplicates
+                             !(Compiled_Roster$SEQUENCE_ACCESSION %in% wdrs_sa_flat_values) &
+                             # SEQUENCE_CLINICAL_ACCESSION does not exist within the WDRS_FLATTENED table
+                             (!(Compiled_Roster$SEQUENCE_CLINICAL_ACCESSION %in% wdrs_sca_flat_values)) &
+                              # SEQUENCE_STATUS is COMPLETE and SEQUENCE_NOTES is [BLANK] (ie missing PANGO_LINEAGE)
+                              # keeps samples that are "LOW QUALITY" or "FAILED" or "COMPLETE" with notes
+                              (!((Compiled_Roster$SEQUENCE_STATUS == "COMPLETE") & is.na(Compiled_Roster$SEQUENCE_NOTES))),]
+                             
+                             
+# nothing output here, but included it just in case
+```
+
+
+```{r}
+# applies a series of logic checks to filter down records where the SEQUENCE_STATUS is COMPLETE but is missing lineage information in SEQUENCE_NOTES (i.e PANGO_LINEAGE was blank) - REQUIRES MANUAL REVIEW
+manual_review_lineage <- Compiled_Roster[
+  # CASE_ID is not NA
+  (!is.na(Compiled_Roster$CASE_ID)) &
+  # SEQUENCE_CLINICAL_ACCESSION is not NA
+  (!is.na(Compiled_Roster$SEQUENCE_CLINICAL_ACCESSION)) &
+  ## must meet one of these conditions to be rostered
+  # (SEQUENCE_STATUS is COMPLETE & SEQUENCE_ACCESSION is not NA) or
+  # (SEQUENCE_STATUS is FAILED & SEQUENCE_ACCESSION is NA) or
+  # (SEQUENCE_STATUS is NOT DONE & SEQUENCE_ACCESSION is NA) or
+  # (SEQUENCE_STATUS is LOW QUALITY & SEQUENCE_ACCESSION is NA) or
+  # (SEQUENCE_STATUS is HIGH CT & SEQUENCE_ACCESSION is NA)
+  ((Compiled_Roster$SEQUENCE_STATUS == "COMPLETE") & (!is.na(Compiled_Roster$SEQUENCE_ACCESSION)) |
+    (Compiled_Roster$SEQUENCE_STATUS == "FAILED") & (is.na(Compiled_Roster$SEQUENCE_ACCESSION)) |
+    (Compiled_Roster$SEQUENCE_STATUS == "NOT DONE") & (is.na(Compiled_Roster$SEQUENCE_ACCESSION)) |
+    (Compiled_Roster$SEQUENCE_STATUS == "LOW QUALITY") & (is.na(Compiled_Roster$SEQUENCE_ACCESSION)) |
+    (Compiled_Roster$SEQUENCE_STATUS == "HIGH CT") & (is.na(Compiled_Roster$SEQUENCE_ACCESSION))
+  ) &
+  # SEQUENCE_ACCESSION does not exist within the WDRS_FLATTENED table
+  (!(Compiled_Roster$SEQUENCE_ACCESSION %in% wdrs_sa_flat_values)) &
+  # SEQUENCE_CLINICAL_ACCESSION does not exist within the WDRS_FLATTENED table
+  (!(Compiled_Roster$SEQUENCE_CLINICAL_ACCESSION %in% wdrs_sca_flat_values)) &
+  # SEQUENCE_CLINICAL_ACCESSION is not duplicated in the roster
+  (!(Compiled_Roster$SEQUENCE_CLINICAL_ACCESSION %in% Compiled_Roster$SEQUENCE_CLINICAL_ACCESSION[duplicated(Compiled_Roster$SEQUENCE_CLINICAL_ACCESSION)])) &
+  # SEQUENCE_STATUS is COMPLETE and SEQUENCE_NOTES is [BLANK] (ie missing PANGO_LINEAGE)
+  ((Compiled_Roster$SEQUENCE_STATUS == "COMPLETE") & is.na(Compiled_Roster$SEQUENCE_NOTES ))
+  , ]
+
+# all of these (8) are COMPLETE and missing SEQUENCE_NOTES 
+
+if(nrow(manual_review_lineage) > 0) {
+  manual_review_lineage %>%
+  select(-index) %>%  # remove column with file name
+    write_csv(paste0(here("For_Review/Missing_Lineage"), "/",
+                     "Compiled_Roster_Missing_Lineage_",
+                     format(now(), "%Y-%m-%d-%H%M%S"), ".csv"), na = "")
+}
+
+# applies a series of logic checks to filter down records where the SEQUENCE_CLINICAL_ACCESSION exists within WDRS_FLATTENED with either a different SEQUENCE_ACCESSION or no SEQUENCE_ACCESSION - REQUIRES MANUAL REVIEW
+manual_review_seq_acc <- Compiled_Roster[
+  # CASE_ID is not NA
+  (!is.na(Compiled_Roster$CASE_ID)) &
+  # SEQUENCE_CLINICAL_ACCESSION is not NA  
+  (!is.na(Compiled_Roster$SEQUENCE_CLINICAL_ACCESSION)) & 
+  ## must meet one of these conditions to be rostered
+  # (SEQUENCE_STATUS is COMPLETE & SEQUENCE_ACCESSION is not NA) or
+  # (SEQUENCE_STATUS is FAILED & SEQUENCE_ACCESSION is NA) or
+  # (SEQUENCE_STATUS is NOT DONE & SEQUENCE_ACCESSION is NA) or
+  # (SEQUENCE_STATUS is LOW QUALITY & SEQUENCE_ACCESSION is NA) or
+  # (SEQUENCE_STATUS is HIGH CT & SEQUENCE_ACCESSION is NA)
+  ((Compiled_Roster$SEQUENCE_STATUS == "COMPLETE") & (!is.na(Compiled_Roster$SEQUENCE_ACCESSION)) |
+    (Compiled_Roster$SEQUENCE_STATUS == "FAILED") & (is.na(Compiled_Roster$SEQUENCE_ACCESSION)) |
+    (Compiled_Roster$SEQUENCE_STATUS == "NOT DONE") & (is.na(Compiled_Roster$SEQUENCE_ACCESSION)) |
+    (Compiled_Roster$SEQUENCE_STATUS == "LOW QUALITY") & (is.na(Compiled_Roster$SEQUENCE_ACCESSION)) |
+    (Compiled_Roster$SEQUENCE_STATUS == "HIGH CT") & (is.na(Compiled_Roster$SEQUENCE_ACCESSION))
+  ) &
+  # SEQUENCE_ACCESSION does not exist within the WDRS_FLATTENED table  
+  (!(Compiled_Roster$SEQUENCE_ACCESSION %in% wdrs_sa_flat_values)) & 
+  # SEQUENCE_CLINICAL_ACCESSION does exist within the WDRS_FLATTENED table  
+  (Compiled_Roster$SEQUENCE_CLINICAL_ACCESSION %in% wdrs_sca_flat_values) &
+  # # SEQUENCE_CLINICAL_ACCESSION is duplicated in the roster  
+  (!(Compiled_Roster$SEQUENCE_CLINICAL_ACCESSION %in% Compiled_Roster$SEQUENCE_CLINICAL_ACCESSION[duplicated(Compiled_Roster$SEQUENCE_CLINICAL_ACCESSION)])) &
+  # SEQUENCE_ACCESSION is not NA
+  (!is.na(Compiled_Roster$SEQUENCE_ACCESSION))
+  , ]
+# no records here
+
+# if(nrow(manual_review_seq_acc) > 0) {
+
+#   manual_review_seq_acc %>%
+#   select(-index) %>%  # remove column with file name 
+#     write_csv(paste0(here("For_Review/Missing_Seq_Acc"), "/", 
+#                      "Compiled_Roster_Missing_Seq_Acc_", 
+#                      format(now(), "%Y-%m-%d-%H%M%S"), ".csv"), na = "")
+# }
+
+# applies a series of logic checks to filter down records where the SEQUENCE_CLINICAL_ACCESSION is duplicated (matches to two separate entries in the WDRS_ENTIRE table) - REQUIRES MANUAL REVIEW
+manual_review_dupes <- Compiled_Roster[
+  # CASE_ID is not NA
+  (!is.na(Compiled_Roster$CASE_ID)) &
+  # SEQUENCE_CLINICAL_ACCESSION is not NA  
+  (!is.na(Compiled_Roster$SEQUENCE_CLINICAL_ACCESSION)) &
+  ## must meet one of these conditions to be rostered
+  # (SEQUENCE_STATUS is COMPLETE & SEQUENCE_ACCESSION is not NA) or
+  # (SEQUENCE_STATUS is FAILED & SEQUENCE_ACCESSION is NA) or
+  # (SEQUENCE_STATUS is NOT DONE & SEQUENCE_ACCESSION is NA) or
+  # (SEQUENCE_STATUS is LOW QUALITY & SEQUENCE_ACCESSION is NA) or
+  # (SEQUENCE_STATUS is HIGH CT & SEQUENCE_ACCESSION is NA)
+  ((Compiled_Roster$SEQUENCE_STATUS == "COMPLETE") & (!is.na(Compiled_Roster$SEQUENCE_ACCESSION)) |
+    (Compiled_Roster$SEQUENCE_STATUS == "FAILED") & (is.na(Compiled_Roster$SEQUENCE_ACCESSION)) |
+    (Compiled_Roster$SEQUENCE_STATUS == "NOT DONE") & (is.na(Compiled_Roster$SEQUENCE_ACCESSION)) |
+    (Compiled_Roster$SEQUENCE_STATUS == "LOW QUALITY") & (is.na(Compiled_Roster$SEQUENCE_ACCESSION)) |
+    (Compiled_Roster$SEQUENCE_STATUS == "HIGH CT") & (is.na(Compiled_Roster$SEQUENCE_ACCESSION))
+  ) &
+  # SEQUENCE_ACCESSION does not exist within the WDRS_FLATTENED table    
+  (!(Compiled_Roster$SEQUENCE_ACCESSION %in% wdrs_sa_flat_values)) &
+  # SEQUENCE_CLINICAL_ACCESSION does not exist within the WDRS_FLATTENED table  
+  (!(Compiled_Roster$SEQUENCE_CLINICAL_ACCESSION %in% wdrs_sca_flat_values)) &
+  # SEQUENCE_CLINICAL_ACCESSION is duplicated in the roster  
+  ((Compiled_Roster$SEQUENCE_CLINICAL_ACCESSION %in% Compiled_Roster$SEQUENCE_CLINICAL_ACCESSION[duplicated(Compiled_Roster$SEQUENCE_CLINICAL_ACCESSION)]))
+  , ]
+# 2 records here - go to duplicates folder
+
+if(nrow(manual_review_dupes) > 0) {
+
+  manual_review_dupes %>%
+  select(-index) %>%  # remove column with file name
+    write_csv(paste0(here("For_Review/Duplicates"), "/",
+                     "Compiled_Roster_Duplicates_",
+                     format(now(), "%Y-%m-%d-%H%M%S"), ".csv"), na = "")
+}
+
+
+
+# We don't want to lose any samples that have been sent to be rostered.
+# If any observations aren't in the final roster or one of the specific review files, they'll be captured here for further review.
+
+key_cols = c(
+"SEQUENCE_CLINICAL_ACCESSION", 
+"SEQUENCE_ACCESSION",
+"CASE_ID",
+"SEQUENCE_SGTF",
+"SEQUENCE_SPECIMEN",
+"SEQUENCE_REASON",
+"SEQUENCE_DATE",
+"SEQUENCE_LAB",
+"SEQUENCE_STATUS",
+"SEQUENCE_REPOSITORY",
+"SEQUENCE_VARIANT",
+"SEQUENCE_SPECIMEN_COLLECTION_DATE",
+"SEQUENCE_NOTES",
+"SEQUENCE_REVIEWED",
+"Case.Note")
+
+# Checking the remaining records that aren't in a manual review table
+# This will capture records that aren't in a manual review file and not in WDRS
+# removing SA with NA because those will need to be checked against SCA
+Compiled_Roster_other_review <- Compiled_Roster %>% 
+  anti_join(Compiled_Roster_Clean, by=key_cols) %>% 
+  anti_join(manual_review_lineage, by=key_cols) %>% 
+  anti_join(manual_review_seq_acc, by=key_cols) %>% 
+  anti_join(manual_review_dupes, by=key_cols) %>%
+  distinct() %>% 
+  filter(!(SEQUENCE_ACCESSION %in% wdrs_sa_flat_values)) %>% 
+  filter(!is.na(SEQUENCE_ACCESSION))  
+
+
+
+
+# Checking remaining records
+# capture records that aren't in a manual review and not in WDRS
+# there are a lot of records where SA is NA so need to check against SCA
+compiled_roster_withna<- Compiled_Roster %>% 
+    anti_join(Compiled_Roster_Clean, by=key_cols) %>% 
+    anti_join(manual_review_lineage, by=key_cols) %>% 
+    anti_join(manual_review_seq_acc, by=key_cols) %>% 
+    anti_join(manual_review_dupes, by=key_cols) %>%
+    distinct() %>% 
+    filter(!(SEQUENCE_ACCESSION %in% wdrs_sa_flat_values)) %>% 
+  filter(is.na(SEQUENCE_ACCESSION)) %>% 
+  filter(!(SEQUENCE_CLINICAL_ACCESSION %in% wdrs_sca_flat_values))
+
+
+
+```
+
+
+```{r}
+compiled_roster_withna_warnings <- 
+compiled_roster_withna %>% mutate(
+  # Is CASE_ID present?
+    warn1 = if_else(is.na(CASE_ID), 
+                      ("Warning: CASE_ID is missing"),
+                      NULL),
+  # Is SEQUENCE_SGTF blank?
+    warn2 = if_else(!is.na(SEQUENCE_SGTF), 
+                      ("Warning:SEQUENCE_SGTF not blank"),
+                      NULL),
+  # Is SEQUENCE_SPECIMEN set to YES?
+    warn3 = if_else((SEQUENCE_SPECIMEN != "YES"), 
+                      ("Warning:SEQUENCE_SPECIMEN not set to YES"),
+                      NULL),
+  # Is SEQUENCE_REASON present and all upper case? 
+  # Is SEQUENCE_REASON a valid reason?
+  # S-DROPOUT and TRAVEL ASSOCIATED are valid reasons for PHL
+  warn4 = if_else(!SEQUENCE_REASON %in% seq_reason | 
+                    (SEQUENCE_REASON %in% c("S-DROPOUT", "TRAVEL ASSOCIATED") & SEQUENCE_LAB != "PHL"),
+                      ("Warning: SEQUENCE_REASON not standardized and/or need to review list of reasons"),
+                       NULL),
+  # Is SEQUENCE_DATE blank?
+    warn5 = if_else(!is.na(SEQUENCE_DATE), 
+                      ("Warning: SEQUENCE_DATE not blank"),
+                      NULL),
+  # Is SEQUENCE_LAB present?
+  # list of labs doesn't contain a "" or NA, so this will also catch rows missing sequence_lab
+    warn6 = if_else(!SEQUENCE_LAB %in% seq_lab,
+                      ("Warning: SEQUENCE_LAB not standardized and/or need to review list of labs"),
+                      NULL),
+  # Is SEQUENCE_STATUS present?
+    warn7 = if_else(is.na(SEQUENCE_STATUS), 
+                      ("Warning: SEQUENCE_STATUS is missing"),
+                      NULL),
+  # Is SEQUENCE_REPOSITORY set to "GISAID"?
+    warn8 = if_else((SEQUENCE_REPOSITORY != "GISAID"), 
+                      ("Warning:SEQUENCE_REPOSITORY not set to GISAID"),
+                      NULL),
+  # Does SEQUENCE_ACCESSION have "USA/" Does SEQUENCE_ACCESSION not have "hCoV"?
+    warn9 = if_else(!str_detect(SEQUENCE_ACCESSION, "USA/") |
+                      str_detect(SEQUENCE_ACCESSION, "hCoV"),
+                    ("Warning: SEQUENCE_ACCESSION doesn't include 'USA/' or it includes 'hCoV'"),
+                    NULL),
+ 
+  # Are all dates formatted correctly?
+    warn10 = case_when(any(na.omit(str_detect(SEQUENCE_SPECIMEN_COLLECTION_DATE, "^[[:digit:]]{5}$"))) ~
+                         ("Warning: SEQUENCE_SPECIMEN_COLLECTION_DATE is in a 5-digit format"),
+                     SEQUENCE_SPECIMEN_COLLECTION_DATE != as.character(format(parse_date_time(SEQUENCE_SPECIMEN_COLLECTION_DATE, c("mdy", "ymd")), "%m/%d/%Y")) ~
+                     ("Warning: SEQUENCE_SPECIMEN_COLLECTION_DATE is not in the correct format"),
+                     NULL),
+  # Is SEQUENCE_REVIEWED blank?
+    warn11 = if_else(!is.na(SEQUENCE_REVIEWED), 
+                      ("Warning:SEQUENCE_REVIEWED not blank"),
+                      NULL),  
+  # Is Case.Note "External data question package updated by COVID19 Seque…."?
+    warn12 = if_else(!str_detect(Case.Note, "External data question package updated by COVID19 Sequencing Roster"),
+                     ("Warning: Case.Note contains unexpected value"),
+                     NULL),
+  # Is SEQUENCE_VARIANT valid voc?
+    warn13 = if_else(!is.na(SEQUENCE_VARIANT) & !SEQUENCE_VARIANT %in% voc,
+                     ("Warning: SEQUENCE_VARIANT not recognized as VOC"),
+                     NULL),
+  # If SEQUENCE_STATUS is complete, is sequence_variant complete and/or have a lineage in the sequence_notes
+  # The logic for this warning looks a little different than the others
+  # If the SEQUENCE_STATUS is COMPLETE and the SEQUENCE_VARIANT is present, the warning is NA
+  # If the SEQUENCE_STATUS is COMPLETE and a lineage is present in SEQUENCE_NOTES, the warning is NA
+  # If the SEQUENCE_STATUS is COMPLETE and a lineage is not present in SEQUENCE_NOTES, the warning is added
+  # If the SEQUENCE_STATUS is COMPLETE and the SEQUENCE_VARIANT is missing, the warning is added
+  # will be NA still if the SEQUENCE_STATUS isn't COMPLETE
+    warn14 = case_when( (SEQUENCE_STATUS == "COMPLETE" & !is.na(SEQUENCE_VARIANT)) ~  
+                          (NA_character_),
+                        (SEQUENCE_STATUS == "COMPLETE" &  detect_lineage_fun(SEQUENCE_NOTES)) ~ 
+                         (NA_character_),
+                        (SEQUENCE_STATUS == "COMPLETE" &  detect_lineage_fun(SEQUENCE_NOTES)) ~ 
+                          ("Warning: SEQUENCE_STATUS is COMPLETE but no lineage in SEQUENCE_VARIANT or SEQUENCE_NOTES"),
+                        (SEQUENCE_STATUS == "COMPLETE" & is.na(SEQUENCE_VARIANT)) ~  
+                          ("Warning: SEQUENCE_STATUS is COMPLETE but no lineage in SEQUENCE_VARIANT or SEQUENCE_NOTES"),
+                     NULL),
+  # SEQUENCE_CLINCAL_ACCESSION should be present for all samples, EXCEPT for fuzzy matched observations
+    warn15 = if_else(!str_detect(tolower(index), "fuzzy") & is.na(SEQUENCE_CLINICAL_ACCESSION),
+                     ("Warning: SEQUENCE_CLINICAL_ACCESSION is missing and observation not from fuzzy matching file"),
+                     NULL),
+  # Flag observations that have Failed Status and a SEQUENCE_ACCESSION is present
+   warn16 = if_else(SEQUENCE_STATUS == "FAILED" & !is.na(SEQUENCE_ACCESSION),
+                    "Warning: SEQUENCE_ACCESSION is present and SEQUENCE_STATUS is failed",
+                    NULL)
+  ) %>%  
+  unite("Warnings", warn1:warn16, remove = FALSE, sep = " / ", na.rm = TRUE) 
+
+
+# Warnings due to incorrect lab format, incorrect date format, and SEQUENCE_NOTES say "none"
+# correct the formats and change the notes with "none" to blank
+compiled_roster_withna <- compiled_roster_withna %>% mutate(SEQUENCE_LAB = if_else(SEQUENCE_LAB == "AEGIS", "Aegis", SEQUENCE_LAB),
+                                  SEQUENCE_SPECIMEN_COLLECTION_DATE = as.character(format(parse_date_time(SEQUENCE_SPECIMEN_COLLECTION_DATE, c("mdy", "ymd")), "%m/%d/%Y")),
+                                  SEQUENCE_NOTES = if_else(str_detect(tolower(SEQUENCE_NOTES), "none"), "", SEQUENCE_NOTES),
+                                  SEQUENCE_REASON = if_else(SEQUENCE_LAB == "Aegis", "SENTINEL SURVEILLANCE", SEQUENCE_REASON))
+
+
+
+```
+
+```{r}
+Compiled_Roster_other_review_warnings <-
+Compiled_Roster_other_review %>% mutate(
+  # Is CASE_ID present?
+    warn1 = if_else(is.na(CASE_ID), 
+                      ("Warning: CASE_ID is missing"),
+                      NULL),
+  # Is SEQUENCE_SGTF blank?
+    warn2 = if_else(!is.na(SEQUENCE_SGTF), 
+                      ("Warning:SEQUENCE_SGTF not blank"),
+                      NULL),
+  # Is SEQUENCE_SPECIMEN set to YES?
+    warn3 = if_else((SEQUENCE_SPECIMEN != "YES"), 
+                      ("Warning:SEQUENCE_SPECIMEN not set to YES"),
+                      NULL),
+  # Is SEQUENCE_REASON present and all upper case? 
+  # Is SEQUENCE_REASON a valid reason?
+  # S-DROPOUT and TRAVEL ASSOCIATED are valid reasons for PHL
+  warn4 = if_else(!SEQUENCE_REASON %in% seq_reason | 
+                    (SEQUENCE_REASON %in% c("S-DROPOUT", "TRAVEL ASSOCIATED") & SEQUENCE_LAB != "PHL"),
+                      ("Warning: SEQUENCE_REASON not standardized and/or need to review list of reasons"),
+                       NULL),
+  # Is SEQUENCE_DATE blank?
+    warn5 = if_else(!is.na(SEQUENCE_DATE), 
+                      ("Warning: SEQUENCE_DATE not blank"),
+                      NULL),
+  # Is SEQUENCE_LAB present?
+  # list of labs doesn't contain a "" or NA, so this will also catch rows missing sequence_lab
+    warn6 = if_else(!SEQUENCE_LAB %in% seq_lab,
+                      ("Warning: SEQUENCE_LAB not standardized and/or need to review list of labs"),
+                      NULL),
+  # Is SEQUENCE_STATUS present?
+    warn7 = if_else(is.na(SEQUENCE_STATUS), 
+                      ("Warning: SEQUENCE_STATUS is missing"),
+                      NULL),
+  # Is SEQUENCE_REPOSITORY set to "GISAID"?
+    warn8 = if_else((SEQUENCE_REPOSITORY != "GISAID"), 
+                      ("Warning:SEQUENCE_REPOSITORY not set to GISAID"),
+                      NULL),
+  # Does SEQUENCE_ACCESSION have "USA/" Does SEQUENCE_ACCESSION not have "hCoV"?
+    warn9 = if_else(!str_detect(SEQUENCE_ACCESSION, "USA/") |
+                      str_detect(SEQUENCE_ACCESSION, "hCoV"),
+                    ("Warning: SEQUENCE_ACCESSION doesn't include 'USA/' or it includes 'hCoV'"),
+                    NULL),
+ 
+  # Are all dates formatted correctly?
+    warn10 = case_when(any(na.omit(str_detect(SEQUENCE_SPECIMEN_COLLECTION_DATE, "^[[:digit:]]{5}$"))) ~
+                         ("Warning: SEQUENCE_SPECIMEN_COLLECTION_DATE is in a 5-digit format"),
+                     SEQUENCE_SPECIMEN_COLLECTION_DATE != as.character(format(parse_date_time(SEQUENCE_SPECIMEN_COLLECTION_DATE, c("mdy", "ymd")), "%m/%d/%Y")) ~
+                     ("Warning: SEQUENCE_SPECIMEN_COLLECTION_DATE is not in the correct format"),
+                     NULL),
+  # Is SEQUENCE_REVIEWED blank?
+    warn11 = if_else(!is.na(SEQUENCE_REVIEWED), 
+                      ("Warning:SEQUENCE_REVIEWED not blank"),
+                      NULL),  
+  # Is Case.Note "External data question package updated by COVID19 Seque…."?
+    warn12 = if_else(!str_detect(Case.Note, "External data question package updated by COVID19 Sequencing Roster"),
+                     ("Warning: Case.Note contains unexpected value"),
+                     NULL),
+  # Is SEQUENCE_VARIANT valid voc?
+    warn13 = if_else(!is.na(SEQUENCE_VARIANT) & !SEQUENCE_VARIANT %in% voc,
+                     ("Warning: SEQUENCE_VARIANT not recognized as VOC"),
+                     NULL),
+  # If SEQUENCE_STATUS is complete, is sequence_variant complete and/or have a lineage in the sequence_notes
+  # The logic for this warning looks a little different than the others
+  # If the SEQUENCE_STATUS is COMPLETE and the SEQUENCE_VARIANT is present, the warning is NA
+  # If the SEQUENCE_STATUS is COMPLETE and a lineage is present in SEQUENCE_NOTES, the warning is NA
+  # If the SEQUENCE_STATUS is COMPLETE and a lineage is not present in SEQUENCE_NOTES, the warning is added
+  # If the SEQUENCE_STATUS is COMPLETE and the SEQUENCE_VARIANT is missing, the warning is added
+  # will be NA still if the SEQUENCE_STATUS isn't COMPLETE
+    warn14 = case_when( (SEQUENCE_STATUS == "COMPLETE" & !is.na(SEQUENCE_VARIANT)) ~  
+                          (NA_character_),
+                        (SEQUENCE_STATUS == "COMPLETE" &  detect_lineage_fun(SEQUENCE_NOTES)) ~ 
+                         (NA_character_),
+                        (SEQUENCE_STATUS == "COMPLETE" &  detect_lineage_fun(SEQUENCE_NOTES)) ~ 
+                          ("Warning: SEQUENCE_STATUS is COMPLETE but no lineage in SEQUENCE_VARIANT or SEQUENCE_NOTES"),
+                        (SEQUENCE_STATUS == "COMPLETE" & is.na(SEQUENCE_VARIANT)) ~  
+                          ("Warning: SEQUENCE_STATUS is COMPLETE but no lineage in SEQUENCE_VARIANT or SEQUENCE_NOTES"),
+                     NULL),
+  # SEQUENCE_CLINCAL_ACCESSION should be present for all samples, EXCEPT for fuzzy matched observations
+    warn15 = if_else(!str_detect(tolower(index), "fuzzy") & is.na(SEQUENCE_CLINICAL_ACCESSION),
+                     ("Warning: SEQUENCE_CLINICAL_ACCESSION is missing and observation not from fuzzy matching file"),
+                     NULL),
+  # Flag observations that have Failed Status and a SEQUENCE_ACCESSION is present
+   warn16 = if_else(SEQUENCE_STATUS == "FAILED" & !is.na(SEQUENCE_ACCESSION),
+                    "Warning: SEQUENCE_ACCESSION is present and SEQUENCE_STATUS is failed",
+                    NULL)
+  ) %>%  
+  unite("Warnings", warn1:warn16, remove = FALSE, sep = " / ", na.rm = TRUE) 
+
+# Warnings from incorrect date format, lab name format, and having "none" in SEQUENCE_NOTES
+# correct the formats and change the notes with "none" to blank
+Compiled_Roster_other_review <-
+Compiled_Roster_other_review %>% mutate(SEQUENCE_LAB = if_else(SEQUENCE_LAB == "AEGIS", "Aegis", SEQUENCE_LAB),
+                                  SEQUENCE_SPECIMEN_COLLECTION_DATE = as.character(format(parse_date_time(SEQUENCE_SPECIMEN_COLLECTION_DATE, c("mdy", "ymd")), "%m/%d/%Y")),
+                                  SEQUENCE_REASON = if_else(SEQUENCE_LAB == "Aegis", "SENTINEL SURVEILLANCE", SEQUENCE_REASON))
+
+# These files can be rostered
+# Split off the records from fuzzy matching - the logic in the script for missing SCA is dependent on knowing the record is from a fuzzy matching file
+
+other_review_fuzzy <- Compiled_Roster_other_review %>% filter(str_detect(tolower(index), "fuzzy"))
+
+# the record in the compiled_roster_withna is also from a fuzzy matched record
+# putting all of these records in the same dataframe (they're from fuzzy matching and were filtered out due to missing a SEQUENCE_ACCESSION)
+# will still go through the roster_compile script 
+other_review_fuzzy <- other_review_fuzzy %>% bind_rows(compiled_roster_withna)
+
+if (nrow(other_review_fuzzy) > 0) {
+  other_review_fuzzy %>%
+  select(-index) %>%  # remove column with file name
+  write_csv(
+            paste0( here("write_roster_here\\"),
+              "filtered_observations_from_older_fuzzy_matching_files",
+              format(now(), "%Y-%m-%d-%H%M%S"), ".csv"),
+            na = "")
+
+}
+
+# Read in keep_na
+keep_na<- read_csv(here("keep_na", "keep_na.csv"),
+                        col_types = cols(.default = "c"),
+                        na = c("", "NA", "N/A", "None", "NONE"))
+
+
+# This record is missing sequence clinical accession and should be in the keep_na
+other_review_aegis <- Compiled_Roster_other_review %>% filter(str_detect(tolower(index), "newseq"))
+
+# Checking that the record isn't already in the keep_na file and adding DATE_PROCESSED
+other_review_aegis <- other_review_aegis[
+    # SEQUENCE_ACCESSION does not already exist within the WDRS_FLATTENED table and
+    (!(other_review_aegis$SEQUENCE_CLINICAL_ACCESSION %in% wdrs_sca_flat_values)) &
+        # SEQUENCE_CLINICAL_ACCESSION does not already exist within the keep_na  
+        (!(other_review_aegis$SEQUENCE_CLINICAL_ACCESSION %in% keep_na$SEQUENCE_CLINICAL_ACCESSION)) 
+    , ] %>%
+    # add a var which contains the date that that record was processed
+    mutate(DATE_PROCESSED = as.character(today()))
+
+if(nrow(other_review_aegis) > 0) {
+  other_review_aegis %>%
+    select(-index) %>% 
+    write_csv(paste0(here("keep_na"), "/", "keep_na.csv"), na = "", append = TRUE)
+} 
+
+```
+

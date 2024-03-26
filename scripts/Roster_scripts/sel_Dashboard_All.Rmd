@@ -1,0 +1,769 @@
+---
+title: "starlims_pull"
+author: "Special Projects/DSSU/DIQA"
+date: "`r lubridate::now()`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+  eval = T,
+  echo = T,
+  message = F,
+  warning = F,
+  cache.path = "cache/",
+  fig.pos = "htp",
+  out.extra = "",
+  dpi = 300
+)
+
+```
+
+# Overview
+
+This script downloads the various PHL data sets by scraping data from the various PHL StarLims dashboards. There are four dashboards that are downloaded: Specimens assigned for sequencing, which contains most of the data for all PHL sequencing records, RED Cap Source, which contains additional fields for RedCap records, Surveillance Source, which contains additional fields for Sentinel Surveillance records, and Epi (All Specimens), which contains additional name and DOB information for PHL records. The script downloads all of the cumulative data, which is then cleaned/filtered/processed by the Dashboard_ALL.Rmd script.
+
+# Setup {.tabset}
+
+## Load Libraries
+
+```{r load libraries}
+library(fs)
+library(tidyverse)
+library(lubridate)
+library(here)
+library(fs)
+library(purrr)
+library(rvest)
+library(xml2)
+library(reticulate)
+library(readxl)
+```  
+
+## Chrome Driver
+
+Data is scraped using the python selenium package (accessed in R via reticulate).
+ChromeDriver is used to navigate the web page, but will need to be updated periodically to keep up-to-date with the chrome version.
+
+```{r set chrome driver options}
+sel <- import("selenium")
+
+# get Chrome options class
+options <- sel$webdriver$ChromeOptions()
+
+# can run in headless mode, meaning there is no user interface, if set headless to TRUE
+# It may help the data load quicker - which has been a problem with the PHL dashboards
+options$headless <- FALSE
+
+# format the directory file path using backslashes to set the default download directory
+directory_name <- str_replace_all("", "/", "\\\\")
+
+# in Python this would be a dict rather than a list
+# set where the files should be downloaded with first line
+# enable safe browsing with the second
+prefs <-
+  list(
+    "download.default_directory" = paste0(directory_name,"\\Submissions\\PHL\\"),
+    "safebrowsing.enabled" = TRUE
+  )
+
+# add the list to the Chrome options that are enabled when the driver is activated
+options$add_experimental_option("prefs", prefs)
+
+by <- sel$webdriver$common$by$By
+# wait <- sel$webdriver$support$ui$WebdriverWait
+ec <- sel$webdriver$support$expected_conditions
+keys <- sel$webdriver$common$keys$Keys()
+ac <- sel$webdriver$common$action_chains$ActionChains
+
+
+```
+
+# PHL Dashboard {.tabset}
+
+The primary COVID19 StarLims Dashboard for PHL data (specimens assigned for sequencing)
+
+## Open PHL Dashboard
+
+```{r get PHL dashboard}
+
+driver <- sel$webdriver$Chrome(chrome_options = options)
+
+# source of the PHL data
+driver$get("")
+
+# maximize the window so Selenium can find all the buttons
+driver$maximize_window()
+Sys.sleep(2)
+```  
+
+## Wait for PHL Dashboard to Load
+
+```{r check if PHL page has loaded}
+
+phl_num_items <- 0
+start_time <- Sys.time()
+time_passed <- 0
+# check to see if the data has loaded on the PHL dashboard,
+# wait until the data loads, or if it takes more than 2 minutes
+# skip over downloading this data and try again later
+while(phl_num_items == 0 & time_passed < 120) {
+  # get html element that lists the number of items that have loaded on the page
+  cur_page_text <- driver$page_source %>%
+    rvest::read_html() %>%
+    rvest::html_elements(xpath = "/html/body/div[3]/div/div[2]/div/div[1]/div[3]/div/span")
+  
+  # if the total items listed is 0 then the data hasn't been loaded yet
+  phl_num_items <- str_extract(as.character(cur_page_text[1]), "Total Items: \\d*") %>% str_replace("Total Items: ", "") %>% as.numeric()
+  # calculate the amount of time, in seconds, that have passed since trying to load the PHL dashboard
+  time_passed <- difftime(Sys.time(), start_time, units = 'secs')
+}
+
+if(phl_num_items == 0) {
+  print("page did not load")
+}
+
+```
+
+## Display all PHL Data
+
+```{r increase PHL data displayed}
+# get nodeset
+the_nodes <-
+  driver$page_source %>% # selenium function gets the html source of the current page
+  rvest::read_html() %>% # read the html nodeset
+  rvest::html_elements(xpath = "//option") # use the xpath option to find all sets with //div tag
+
+# we find which nodes contain the metadata_YYY-MM-DD_HH-MM.tsv.gz naming convention
+# since the nodeset contains multiple div tags within div tags, we select the last
+# node within this set
+select_1500 <-
+  str_which(the_nodes,
+            "99999")[length(str_which(the_nodes,
+                                             "99999"))]
+
+select_path <- the_nodes[select_1500] %>%
+  xml2::xml_path()
+
+# select the button to switch to viewing up to 9999 records
+driver$find_element_by_xpath(select_path)$click()
+
+# add wait to allow for delays with the webpage
+Sys.sleep(5)
+
+```
+## Download PHL Data
+
+```{r download PHL data}
+# move to the top of the page
+up <-  driver$find_element_by_css_selector("body")
+up$send_keys(keys$HOME)
+
+# get nodeset
+the_nodes <-
+  driver$page_source %>% # selenium function gets the html source of the current page
+  rvest::read_html() %>% # read the html nodeset
+  rvest::html_elements(xpath = "//button") # 
+
+# find which div tag contains the button to convert data to an excel download
+Convert_to_Excel <-
+  str_which(the_nodes,
+            "Convert to Excel")[length(str_which(the_nodes,
+                                             "Convert to Excel"))]
+
+# get the full xml path to the convert to excel button
+download_excel <- the_nodes[Convert_to_Excel] %>%
+  xml2::xml_path()
+
+# add wait to allow for delays with the webpage
+Sys.sleep(10)
+
+# click on convert to excel button
+driver$find_element_by_xpath(download_excel)$click()
+
+# get file path of downloaded file
+dl_file <- paste0(directory_name, "\\Submissions\\PHL\\Download.xlsx")
+# new file path for the file
+new_filename <- paste0(directory_name, "\\Submissions\\PHL\\PHL_", today(), ".xlsx")
+
+# while the new file doesn't exist, wait for the downloaded file to show up
+# in the designated folder and then rename it with the new name
+while(!file.exists(new_filename)) {
+  if (!file.exists(dl_file)) {
+    Sys.sleep(1)
+  } else {
+    file.rename(dl_file,
+                new_filename)
+  }
+}
+
+```
+## Check PHL File
+
+```{r check that PHL file downloaded correctly}
+
+# read in new phl file
+new_phl_file <- read_xlsx(new_filename)
+# if file is empty, print alert, and delete file
+if(nrow(new_phl_file) == 0) {
+  print('PHL file did not download data, retry later')
+  file_delete(new_filename)
+}
+
+```
+
+# RedCap Dashboard {.tabset}
+
+The REDCap Source Viewer
+
+## Open RedCap Dashboard
+
+```{r get REDCAP dashboard}
+
+# new chrome page
+driver2 <- sel$webdriver$Chrome(chrome_options = options)
+
+# get redcap dashboard
+driver2$get("")
+Sys.sleep(2)
+
+# expand window to access all parts of page
+driver2$maximize_window()
+Sys.sleep(2)
+```
+
+
+## Wait for RedCap Dashboard to Load
+
+```{r check if REDCAP page has loaded}
+
+redcap_num_items <- 0
+start_time <- Sys.time()
+time_passed <- 0
+# check to see if the data has loaded on the REDCAP dashboard,
+# wait until the data loads, or if it takes more than 2 minutes,
+# skip over downloading this data and try again later
+while(redcap_num_items == 0 & time_passed < 120) {
+  # get element listing number of items loaded
+  cur_page_text <- driver2$page_source %>%
+    rvest::read_html() %>%
+    rvest::html_elements(xpath = "/html/body/div[3]/div/div[2]/div/div[1]/div[3]/div/span")
+  
+  # extract number of records loaded on the page
+  redcap_num_items <- str_extract(as.character(cur_page_text[1]), "Total Items: \\d*") %>% str_replace("Total Items: ", "") %>% as.numeric()
+  # calculate the amount of time that has passed since trying to load the page
+  time_passed <- difftime(Sys.time(), start_time, units = 'secs')
+}
+
+if(redcap_num_items == 0) {
+  print("redcap page did not load")
+}
+
+```
+
+down = driver.find_element_by_tag_name("html")
+down.send_keys(Keys.END)
+time.sleep(2)
+
+## Display all RedCap Data
+
+```{r expand REDCAP data displayed}
+# expand dashboard so it displays all data
+
+the_nodes <-
+  driver2$page_source %>% # selenium function gets the html source of the current page
+  rvest::read_html() %>% # read the html nodeset
+  rvest::html_elements(xpath = "//option") # use the xpath option to find all sets with //div tag
+# we find which nodes contain the metadata_YYY-MM-DD_HH-MM.tsv.gz naming convention
+# since the nodeset contains multiple div tags within div tags, we select the last
+# node within this set
+select_1500 <-
+  str_which(the_nodes,
+            "99999")[length(str_which(the_nodes,
+                                             "99999"))]
+
+select_path <- the_nodes[select_1500] %>%
+  xml2::xml_path()
+
+# switch to viewing up to 9999 records
+driver2$find_element_by_xpath(select_path)$click()
+
+# add wait to allow for delays with the webpage
+Sys.sleep(5)
+
+```
+## Download RedCap Data
+
+```{r download redcap data}
+# move to the top of the page
+up <-  driver2$find_element_by_css_selector("body")
+up$send_keys(keys$HOME)
+
+# get nodeset
+the_nodes <-
+  driver2$page_source %>% # selenium function gets the html source of the current page
+  rvest::read_html() %>% # read the html nodeset
+  rvest::html_elements(xpath = "//button") # 
+
+# find button to download the data
+Convert_to_Excel <-
+  str_which(the_nodes,
+            "Convert to Excel")[length(str_which(the_nodes,
+                                             "Convert to Excel"))]
+
+# get full xml path to the button to download the data
+download_excel <- the_nodes[Convert_to_Excel] %>%
+  xml2::xml_path()
+
+# add wait to allow for delays with the webpage
+Sys.sleep(10)
+
+# click on button to download the redcap data
+driver2$find_element_by_xpath(download_excel)$click()
+
+redcap_filename <- paste0(directory_name, "\\Submissions\\PHL\\REDCAP_", today(), ".xlsx")
+
+# while the new file redcap doesn't exist, wait for the downloaded file to show
+# up in the folder and then rename it with the new name
+while (!file.exists(redcap_filename)) {
+  if (!file.exists(dl_file)) {
+    Sys.sleep(1)
+  } else {
+    file.rename(dl_file,
+                redcap_filename)
+  }
+}
+
+# add wait to allow for delays with the webpage
+Sys.sleep(5)
+```
+
+## Check RedCap File
+
+```{r check that redcap file downloaded correctly}
+
+# read in new redcap file
+new_redcap_file <- read_xlsx(redcap_filename)
+# if file is empty, print alert and delete the empty file
+if(nrow(new_redcap_file) == 0) {
+  print('REDCAP file did not download data, retry later')
+  file_delete(redcap_filename)
+}
+
+```
+
+# Surveillance Dashboard {.tabset}
+
+The Surveillance Source Viewer
+
+## Open Surveillance Dashboard
+
+```{r get surveillance dashboard}
+
+# open new chrome page
+driver3 <- sel$webdriver$Chrome(chrome_options = options)
+
+# open surveillance dashboard
+driver3$get("")
+Sys.sleep(2)
+
+# maximize window to view all parts of the page
+driver3$maximize_window()
+Sys.sleep(2)
+```
+
+
+
+## Wait for Surveillance Dashboard to Load
+
+```{r check if surveillance page has loaded}
+
+surveillance_num_items <- 0
+start_time <- Sys.time()
+time_passed <- 0
+# check to see if the data has loaded on the surveillance dashboard,
+# wait until the data loads, or if it takes more than 2 minutes,
+# skip over downloading this data and try again later
+while(surveillance_num_items == 0 & time_passed < 120) {
+  # find html element listing number of items loaded
+  cur_page_text <- driver3$page_source %>%
+    rvest::read_html() %>%
+    rvest::html_elements(xpath = "/html/body/div[3]/div/div[2]/div/div[1]/div[3]/div/span")
+  
+  
+  # extract number of items loaded
+  surveillance_num_items <- str_extract(as.character(cur_page_text[1]), "Total Items: \\d*") %>% str_replace("Total Items: ", "") %>% as.numeric()
+  # get time passed since opening the dashboard
+  time_passed <- difftime(Sys.time(), start_time, units = 'secs')
+}
+
+# if page still list number of items as 0, then data failed to download
+if(surveillance_num_items == 0) {
+  print("surveillance page did not load")
+}
+
+```
+
+## Display all Surveillance Data
+
+```{r expand items on surveillance dashboard}
+the_nodes <-
+  driver3$page_source %>% # selenium function gets the html source of the current page
+  rvest::read_html() %>% # read the html nodeset
+  rvest::html_elements(xpath = "//option") # use the xpath option to find all sets with //div tag
+# we find which nodes contain the metadata_YYY-MM-DD_HH-MM.tsv.gz naming convention
+# since the nodeset contains multiple div tags within div tags, we select the last
+# node within this set
+select_1500 <-
+  str_which(the_nodes,
+            "99999")[length(str_which(the_nodes,
+                                             "99999"))]
+# cahnge selection so that it shows all data
+select_path <- the_nodes[select_1500] %>%
+  xml2::xml_path()
+
+driver3$find_element_by_xpath(select_path)$click()
+
+Sys.sleep(2)
+
+```
+## Download Surveillance Data
+
+```{r download surveillance dashboard data}
+# mvoe to the top of the page
+up <-  driver3$find_element_by_css_selector("body")
+up$send_keys(keys$HOME)
+
+# get nodeset
+the_nodes <-
+  driver3$page_source %>% # selenium function gets the html source of the current page
+  rvest::read_html() %>% # read the html nodeset
+  rvest::html_elements(xpath = "//button") # 
+
+# find convert to excel button
+Convert_to_Excel <-
+  str_which(the_nodes,
+            "Convert to Excel")[length(str_which(the_nodes,
+                                             "Convert to Excel"))]
+# get full xml path to the convert to excel nutton
+download_excel <- the_nodes[Convert_to_Excel] %>%
+  xml2::xml_path()
+
+# add wait to allow for delays with the webpage
+Sys.sleep(10)
+
+# click on button to donwload the data
+driver3$find_element_by_xpath(download_excel)$click()
+
+# new name for the surveillance data file
+surveillance_filename <- paste0(directory_name, "\\Submissions\\PHL\\Surveillance_", today(), ".xlsx")
+
+# while the new surveillance file doesn't exist, wait for the downloaded file to show
+# up in the folder and then rename it with the new name
+while (!file.exists(surveillance_filename)) {
+  if (!file.exists(dl_file)) {
+    Sys.sleep(1)
+  } else {
+    file.rename(dl_file,
+                surveillance_filename)
+  }
+}
+  
+Sys.sleep(5)
+
+```
+## Check Surveillance File
+
+```{r check that surveillance file downloaded correctly}
+# read in new surveillance file
+new_surveillance_file <- read_xlsx(surveillance_filename)
+# if file is empty, print alert, and delete the file
+if(nrow(new_surveillance_file) == 0) {
+  print('Surveillance file did not download data, retry later')
+  file_delete(surveillance_filename)
+}
+
+```
+
+
+# Epi (All Specimens) Dashboard {.tabset}
+
+## Open Epi Dashboard
+
+```{r get Epi dashboard}
+
+# new chrome page
+driver4 <- sel$webdriver$Chrome(chrome_options = options)
+
+# get redcap dashboard
+driver4$get("")
+Sys.sleep(2)
+
+# expand window to access all parts of page
+driver4$maximize_window()
+Sys.sleep(2)
+```
+
+
+## Wait for Epi Dashboard to Load
+
+```{r check if Epi page has loaded}
+
+## Wait for Epi Dashboard to Load
+
+epi_num_items <- 0
+start_time <- Sys.time()
+time_passed <- 0
+# check to see if the data has loaded on the Epi (All Specimend) dashboard,
+# wait until the data loads, or if it takes more than 2 minutes,
+# skip over downloading this data and try again later
+while(epi_num_items == 0 & time_passed < 120) {
+  # get element listing number of items loaded
+  cur_page_text <- driver4$page_source %>%
+    rvest::read_html() %>%
+    rvest::html_elements(xpath = "/html/body/div[3]/div/div[2]/div/div[2]/div[2]/div/span/text()[2]")
+  
+  # extract number of records loaded on the page
+  epi_num_items <- str_extract(as.character(cur_page_text[1]), "\\d* items") %>% str_replace(" items", "") %>% as.numeric()
+  
+  # if page isn't loaded set number of items to 0
+  epi_num_items <- ifelse(length(cur_page_text) == 0, 0, epi_num_items)
+  # calculate the amount of time that has passed since trying to load the page
+  time_passed <- difftime(Sys.time(), start_time, units = 'secs')
+  
+}
+
+if(epi_num_items == 0) {
+  print("Epi (All Specimens) page did not load")
+}
+
+```
+
+## Display 50 days of Epi Data
+
+```{r select more Epi records}
+# move to the top of the page
+up <-  driver4$find_element_by_css_selector("body")
+up$send_keys(keys$HOME)
+
+# get nodeset
+the_nodes <-
+  driver4$page_source %>% # selenium function gets the html source of the current page
+  rvest::read_html() %>% # read the html nodeset
+  rvest::html_elements(xpath = "//button") # 
+
+# add wait to allow for delays with the webpage
+Sys.sleep(2)
+
+# find button to change number of days of data to download
+change_button <-
+  str_which(the_nodes,
+            "Change")[length(str_which(the_nodes,
+                                             "Change"))]
+
+# get full xml path to the button to download the data
+change_path <- the_nodes[change_button] %>%
+  xml2::xml_path()
+
+
+# click on button to download the redcap data
+driver4$find_element_by_xpath(change_path)$click()
+
+# add wait to allow for delays with the webpage
+Sys.sleep(5)
+
+# click on 50 days
+# currently only downloading the last 50 days of data because there are a lot of records
+# and selecting too many days caused thee dashboard crash
+# if this is missing relevant records you can select more days
+driver4$find_element_by_xpath("/html/body/div[1]/div/div/div[2]/div/div[1]/div/div/div/div[1]")$click()
+
+# add wait to allow for delays with the webpage
+Sys.sleep(5)
+
+# click on save to select this number of days
+driver4$find_element_by_xpath("/html/body/div[1]/div/div/div[2]/div/div[2]/button[1]")$click()
+
+
+```
+
+## Wait Again for Epi Dashboard to Load
+
+```{r check if Epi updated page has loaded}
+
+## Wait for Epi Dashboard to Load
+
+epi_num_items <- 0
+start_time <- Sys.time()
+time_passed <- 0
+# check to see if the data has loaded again on the Epi (All Specimens) dashboard,
+# wait until the data loads, or if it takes more than 3 minutes,
+# skip over downloading this data and try again later
+while(epi_num_items == 0 & time_passed < 180) {
+  # get element listing number of items loaded
+  cur_page_text <- driver4$page_source %>%
+    rvest::read_html() %>%
+    rvest::html_elements(xpath = "/html/body/div[3]/div/div[2]/div/div[2]/div[2]/div/span/text()[2]")
+  
+  # extract number of records loaded on the page
+  epi_num_items <- str_extract(as.character(cur_page_text[1]), "\\d* items") %>% str_replace(" items", "") %>% as.numeric()
+  
+  # if page isn't loaded set number of items to 0
+  epi_num_items <- ifelse(length(cur_page_text) == 0, 0, epi_num_items)
+  
+  # calculate the amount of time that has passed since trying to load the page
+  time_passed <- difftime(Sys.time(), start_time, units = 'secs')
+  
+}
+
+if(epi_num_items == 0) {
+  print("Epi (All Specimens) page did not load the additional data")
+}
+
+```
+
+## Display all Epi Data
+
+```{r expand Epi data displayed}
+# expand dashboard so it displays all data
+
+the_nodes <-
+  driver4$page_source %>% # selenium function gets the html source of the current page
+  rvest::read_html() %>% # read the html nodeset
+  rvest::html_elements(xpath = "//option") # use the xpath option to find all sets with //div tag
+# we find which nodes contain the metadata_YYY-MM-DD_HH-MM.tsv.gz naming convention
+# since the nodeset contains multiple div tags within div tags, we select the last
+# node within this set
+select_1500 <-
+  str_which(the_nodes,
+            "99999")[length(str_which(the_nodes,
+                                             "99999"))]
+
+select_path <- the_nodes[select_1500] %>%
+  xml2::xml_path()
+
+# switch to viewing up to 9999 records
+driver4$find_element_by_xpath(select_path)$click()
+
+# add wait to allow for delays with the webpage
+Sys.sleep(15)
+
+```
+
+## Download Epi Data
+
+```{r download Epi data}
+# move to the top of the page
+up <-  driver4$find_element_by_css_selector("body")
+up$send_keys(keys$HOME)
+
+# get nodeset
+the_nodes <-
+  driver4$page_source %>% # selenium function gets the html source of the current page
+  rvest::read_html() %>% # read the html nodeset
+  rvest::html_elements(xpath = "//button") # 
+
+# find button to download the data
+Convert_to_Excel <-
+  str_which(the_nodes,
+            "Convert to Excel")[length(str_which(the_nodes,
+                                             "Convert to Excel"))]
+
+# get full xml path to the button to download the data
+download_excel <- the_nodes[Convert_to_Excel] %>%
+  xml2::xml_path()
+
+
+clickable <- driver4$find_element_by_xpath(download_excel)$is_enabled()
+start_time <- Sys.time()
+time_passed <- 0
+
+# wait to up to 2 minutes to see if download button is clickable
+while(!clickable & time_passed < 120) {
+  # check if download button is clickable
+  clickable <- driver4$find_element_by_xpath(download_excel)$is_enabled()
+  # calculate the amount of time that has passed since trying to click the button
+  time_passed <- difftime(Sys.time(), start_time, units = 'secs')
+  
+}
+
+# add wait to allow for delays with the webpage
+Sys.sleep(30)
+
+# click on button to download the redcap data
+driver4$find_element_by_xpath(download_excel)$click()
+
+# add wait to allow for delays with the webpage
+Sys.sleep(20)
+
+epi_filename <- paste0(directory_name, "\\Submissions\\PHL\\Epi_", today(), ".xlsx")
+
+# while the new file redcap doesn't exist, wait for the downloaded file to show
+# up in the folder and then rename it with the new name
+while (!file.exists(epi_filename)) {
+  if (!file.exists(dl_file)) {
+    Sys.sleep(1)
+  } else {
+    file.rename(dl_file,
+                epi_filename)
+  }
+}
+
+# add wait to allow for delays with the webpage
+Sys.sleep(5)
+```
+
+## Check Epi File
+
+```{r check that epi file downloaded correctly}
+
+# read in new epi file
+new_epi_file <- read_xlsx(epi_filename)
+# if file is empty, print alert and delete the empty file
+if(nrow(new_epi_file) == 0) {
+  print('Epi file did not download data, retry later')
+  file_delete(epi_filename)
+}
+
+```
+
+
+# Close Pages
+
+```{r close pages}
+# If file was downloaded or the page never loaded quit drivers
+
+if (file.exists(new_filename) | phl_num_items==0) {
+  driver$quit()
+}
+  
+if (file.exists(redcap_filename) | redcap_num_items==0) {
+  driver2$quit()
+}
+
+if (file.exists(surveillance_filename) | surveillance_num_items==0) {
+  driver3$quit()
+}
+
+if (file.exists(epi_filename)| epi_num_items==0) {
+  driver4$quit()
+}
+
+```
+
+# send email
+```{r}
+
+email_from <- ""
+email_to <- ""
+email_subj <- "Sequencing - PHL Dashboard Download Automated Email"
+email_body <- "sel_Dashboard_All.Rmd completed, please check log."
+
+# send it
+sendmailR::sendmail(from = email_from,
+                    to = email_to,
+                    subject = email_subj,
+                    msg = email_body,
+                    headers= list("Reply-To" = email_from),
+                    control = list(smtpServer = ""))
+```

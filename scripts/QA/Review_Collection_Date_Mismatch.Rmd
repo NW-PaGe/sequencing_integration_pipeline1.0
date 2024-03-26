@@ -1,0 +1,581 @@
+---
+title: "Fuzzy Collection Date Protocol"
+author: "Frank Aragona"
+date: "12/29/2021"
+output:
+  rmdformats::readthedown:
+    highlight: espresso
+    code_folding: hide
+params: 
+  test_mode: FALSE
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Introduction
+
+This is sequencing data from a submitter that was fuzzy matched on name and DOB but could not be matched to the specimen collection date for an event in WDRS. We currently have a 14 day window in which a collection date can match to a test in WDRS. In other words, this data has sequencing information from a date that could not be match to a specimen date for an individual in WDRS. **This ignores data that was FAILED/LOW QUALITY** 
+
+This protocol is broken down into 2 main parts, each with guidance on what to do with the data:
+
+1.  Matched - Sequencing data that could be matched to WDRS with no errors other than the collection date
+2.  Unmatched - Sequencing data that could NOT be matched and may have multiple errors
+
+There is a xlsx file in `For_Review/Fuzzy_matches/Combined` that has all the combined data and a sheet for matched and unmatched to make processing the data easier.
+
+For transparency, you can click on the `Code` buttons to show all my code and how data was derived
+
+```{r,warning=FALSE,message=FALSE}
+library(DBI)
+library(odbc)
+library(lubridate)
+library(tidyverse)
+library(readxl)
+library(here)
+library(fs)
+library(sendmailR)
+library(fuzzyjoin)
+library(kableExtra)
+# library(miniUI)
+```
+
+
+```{r,warning=FALSE,message=FALSE}
+# Read in r_creds.rds
+r_creds <-readRDS(file.path(Sys.getenv("USERPROFILE"), "Projects/Sequencing/Data_Objects", "r_creds.RDS"))
+
+# Set up connection to WDRS
+connection <- DBI::dbConnect(odbc::odbc(), 
+                             Driver = r_creds$conn_list[1], 
+                             Server = r_creds$conn_list[2], 
+                             Database = r_creds$conn_list[3], 
+                             Trusted_connection = r_creds$conn_list[4], 
+                             ApplicationIntent = r_creds$conn_list[5])
+```
+
+
+```{r,warning=FALSE,message=FALSE}
+#Compile all the csv with date mismatch in For_Review folder
+
+filenames <- list.files(paste0(""),pattern="*csv",full.names=TRUE)
+
+combine_fuzzy_date <- data.frame()
+
+for (i in 1:length(filenames)){
+  temp_data <- read.csv(filenames[i], colClasses = c("SEQUENCE_CLINICAL_ACCESSION"="character"))
+  temp_data<-temp_data %>%
+  mutate(File_PATH=filenames[i])
+  combine_fuzzy_date <- bind_rows(combine_fuzzy_date, temp_data)
+}
+
+```
+
+
+```{r}
+# Move files into archive folder with today's date
+
+if(length(filenames > 0)){
+
+  # Create folder in Archive
+  dir_create(paste0(file.path(""), today()))
+   
+  # Move files to archive
+  file_move(filenames, paste0(file.path(""), today()))
+}
+
+```
+
+```{r,warning=FALSE,message=FALSE}
+#Clean the final csv
+all_combined<- distinct(combine_fuzzy_date,across(!SEQUENCE_NOTES)) %>%
+  as_tibble()
+```
+
+
+```{r}
+# Separate out QA_MULTIPLE_MATCH - manual review for now
+duplicates <- all_combined %>% filter(!(is.na(QA_MULTIPLE_MATCH)))
+
+# Separate out QA_COLLECT_DATE
+date_mismatch <- all_combined %>% filter(QA_COLLECT_DATE==1 & is.na(QA_MULTIPLE_MATCH))
+
+# Some records are missing a flag, rare but happens - manual review for now
+other <- all_combined %>% filter(is.na(QA_MULTIPLE_MATCH) & is.na(QA_COLLECT_DATE))
+
+```
+
+
+```{r}
+# Send Multiple Matches and "other" records to manual review
+if (nrow(duplicates>0)) {
+   print("Duplicate Records sent to manual review")
+  
+   write.csv(duplicates, file.path(paste0("",today(),".csv")), na="",row.names = FALSE)
+
+   } else{
+   print("No duplicate records for review today")
+   }
+
+
+# There shouldn't be any records without a flag anymore but just in case
+if (nrow(other>0)) {
+   print("Other Records sent to manual review")
+  
+   write.csv(other, file.path(paste0("",today(),".csv")), na="",row.names = FALSE)
+
+   } else{
+   print("No other records for review today")
+   }
+
+```
+
+
+```{r,warning=FALSE,message=FALSE}
+#Connect to WDRS flattened table
+wdrs_Flat <- dbGetQuery(connection, "
+                    SELECT DISTINCT CASE_ID, CDC_N_COV_2019_SEQUENCE_ACCESSION_NUMBER,
+                    CDC_N_COV_2019_SEQUENCE_CLINICAL_ACCESSION_NUMBER, CDC_N_COV_2019_SEQUENCE_SPECIMEN_COLLECTION_DATE
+                    FROM [dbo].[DD_GCD_COVID_19_FLATTENED]
+                    ")
+```
+
+
+```{r,warning=FALSE,message=FALSE}
+#Clean the flat table
+wdrs_Flat_Clean <-wdrs_Flat %>% 
+  rename("SEQUENCE_ACCESSION"="CDC_N_COV_2019_SEQUENCE_ACCESSION_NUMBER") %>% 
+  rename("SEQUENCE_CLINICAL_ACCESSION"="CDC_N_COV_2019_SEQUENCE_CLINICAL_ACCESSION_NUMBER") %>% 
+  rename("SEQUENCE_SPECIMEN_COLLECTION_DATE"="CDC_N_COV_2019_SEQUENCE_SPECIMEN_COLLECTION_DATE") %>%
+  separate_rows(SEQUENCE_ACCESSION,SEQUENCE_CLINICAL_ACCESSION, sep = ',') %>% 
+  mutate(SEQUENCE_ACCESSION=str_trim(SEQUENCE_ACCESSION,side= "both")) %>%
+  mutate(SEQUENCE_CLINICAL_ACCESSION=str_trim(SEQUENCE_CLINICAL_ACCESSION,side= "both"))
+```
+
+```{r,warning=FALSE,message=FALSE}
+#Connect to the WDRS entire table
+wdrs_ent <- dbGetQuery(
+  connection,
+  "
+  SELECT Distinct CASE_ID,
+    [FILLER__ORDER__NUM] as SEQUENCE_CLINICAL_ACCESSION,
+    SPECIMEN__COLLECTION__DTTM as COLLECTION_DATE
+  FROM [dbo].[DD_ELR_DD_ENTIRE]
+  WHERE CODE = 'SARS'
+  "
+)
+```
+
+
+```{r,warning=FALSE,message=FALSE}
+#Connect to GISAID in order to double check if the sequence exists in GISAID (it should)
+wa_gisaid <- read_rds("")
+
+names(wa_gisaid)<-str_replace_all(names(wa_gisaid), c(" " = "." , "," = "" ))
+
+wa_gisaid2 <- wa_gisaid %>%
+  mutate(SEQUENCE_ACCESSION=Virus.name)
+```
+
+
+```{r,warning=FALSE,message=FALSE}
+#NoMatch is all data with no sequencing event in WDRS for that specific sequence accession number
+NoMatchToWDRS<-anti_join(date_mismatch, wdrs_Flat_Clean, by="SEQUENCE_ACCESSION") %>%
+  mutate(CASE_ID = as.character(CASE_ID))
+
+#Match is data that does have a sequencing event for that sequence accession in wdrs
+MatchToWDRS <- inner_join(date_mismatch,wdrs_Flat_Clean,by=c("SEQUENCE_ACCESSION","SEQUENCE_SPECIMEN_COLLECTION_DATE"))
+```
+
+# Match to GISAID
+Try to pull the SEQUENCE_SPECIMEN_COLLECTION_DATE if it's NULL in the fuzzy output.
+
+```{r}
+gisaid_match <- left_join(date_mismatch,wa_gisaid2,by="SEQUENCE_ACCESSION")
+```
+
+
+# Matched to exisiting Sequence Event
+
+This is data that could either be:
+
+1.    Matched to a sequencing event already in WDRS except the collection date is outside the 14 day window.
+2.    Need to be taken out because it is FAILED/LOW QUALITY
+
+_How to Fix:_
+
+*   Delete these rows in the csv as they already have the sequencing event or they are FAILED/Low Quality
+
+Please see the file in `For_Review/Fuzzy_matches/Combined` under the `Matched` tab for this data. 
+
+```{r,echo=F,eval=T}
+to_delete <- bind_rows(MatchToWDRS,
+                         date_mismatch[which(date_mismatch$SEQUENCE_STATUS =="FAILED" | date_mismatch$SEQUENCE_STATUS == "LOW QUALITY" ),])
+
+if(nrow(to_delete)==0){
+  print("There is currently no data that could be matched to a sequencing event already in WDRS")
+}else{
+  print("Please see the 'QAfuzzy_date_mismatch' csv for the matched data")
+}
+```
+
+
+```{r,echo=T,eval=F}
+#This chunk is only to show the code in the RMD output
+
+#Match is data that does have a sequencing event for that sequence accession in wdrs
+MatchToWDRS <- inner_join(date_mismatch,wdrs_Flat_Clean,by=c("SEQUENCE_ACCESSION","SEQUENCE_SPECIMEN_COLLECTION_DATE"))
+ 
+to_delete <- bind_rows(MatchToWDRS,
+                        date_mismatch[which(date_mismatch$SEQUENCE_STATUS =="FAILED" | date_mismatch$SEQUENCE_STATUS == "LOW QUALITY" ),])%>%
+  select(CASE_ID,2:19)
+# MatchToWDRS %>%
+#   kbl(caption = "List of CASE_ID that have a sequencing event in WDRS and can be rostered")%>%
+#   kable_styling()
+```
+
+
+# Unmatched - No exisiting Sequencing Event
+
+This is data that could not be matched to a sequencing event in WDRS. There are 3 different ways to categorize this data, each with different ways to fix them.
+
+1.    Data that can be matched to a positive event within 30 days AND match to a SCA for that event
+2.    Data that can be matched to a positive event within 30 days with NO match to a SCA for that event
+3.    Data that could not be matched to either a positive event within 30 days or a SCA
+
+```{r,warning=FALSE,message=FALSE}
+#NoMatch is all data with no sequencing event in WDRS for that specific sequence accession number
+NoMatchToWDRS<-anti_join(date_mismatch, wdrs_Flat_Clean, by="SEQUENCE_ACCESSION") %>%
+  mutate(CASE_ID = as.character(CASE_ID))
+#join the unmatched to GISAID to see if there's a sequence
+FoundSeq <-
+  left_join(NoMatchToWDRS, wa_gisaid2, by = "SEQUENCE_ACCESSION") %>%
+  mutate(CASE_ID=as.character(CASE_ID))%>%
+  mutate(COLLECTION_DATE_WDRS = as.Date(mdy(COLLECTION_DATE_WDRS),format = "%Y-%m-%d"))%>%
+  mutate(SEQUENCE_SPECIMEN_COLLECTION_DATE = as.Date(mdy(SEQUENCE_SPECIMEN_COLLECTION_DATE),format = "%Y-%m-%d"))%>%
+  select(-Collection.date)
+
+#prep data for date fuzzy match
+wdrs_ent$match_date_minus3 <- as.Date(wdrs_ent$COLLECTION_DATE - 30)
+wdrs_ent$match_date_plus3 <- as.Date(wdrs_ent$COLLECTION_DATE + 30)
+wdrs_ent$SCA <- wdrs_ent$SEQUENCE_CLINICAL_ACCESSION
+
+# First match the ones in entire to make the process faster
+entire_table<- inner_join(wdrs_ent,FoundSeq,by = "CASE_ID")%>%
+  select(CASE_ID,SCA,match_date_minus3,match_date_plus3,COLLECTION_DATE)%>%
+  distinct()
+```
+
+## 1.   Match to Positive Event <= 30 days and a SCA
+
+_Details:_
+
+Here I'm taking the data that was unmatched to WDRS flat (but matched to GISAID) and trying to find a positive test for that CASE_ID, SCA, and date in the entire table. **In other words**, are there any positive tests for that person/SCA/date that match the sequencing data?
+
+The sequencing data can be attached to these events regardless of specimen collection date (unless we see other issues?)
+
+_How to Fix:_
+
+*   There are some records here that could match to multiple events based on collection date/SCA. If that is the case **Assign the seq info to the event that has the closest collection date to match it and the correct SCA**
+*   For the rest, **Assign the seq info to the correct event date (the single event) with the correct SCA**
+
+```{r,warning=FALSE}
+#Take the unmatched to WDRS flat (but matched to GISAID) and try to find a positive test for that CASE_ID, SCA, and date in the flattened table
+fuzzy_date_SCA<-fuzzy_inner_join(FoundSeq, entire_table,
+                                 by = c("CASE_ID" = "CASE_ID",
+                                        "SEQUENCE_CLINICAL_ACCESSION" = "SCA",
+                                        'SEQUENCE_SPECIMEN_COLLECTION_DATE' = "match_date_minus3",
+                                        'SEQUENCE_SPECIMEN_COLLECTION_DATE' = "match_date_plus3"),
+                                 match_fun = list(`==`, `==`, `>`, `<`))%>%
+  # select(CASE_ID=CASE_ID.x,NAME_WDRS,SEQUENCE_CLINICAL_ACCESSION,
+  #        SEQUENCE_SPECIMEN_COLLECTION_DATE,Date_Ent_Table=COLLECTION_DATE,SCA_Ent_Table=SCA,
+  #        SEQUENCE_ACCESSION,SEQUENCE_VARIANT_OPEN_TEXT)%>%
+  select(CASE_ID = CASE_ID.x,2:23,Date_Ent_Table=COLLECTION_DATE,SCA_Ent_Table=SCA) %>%
+  distinct()
+
+  
+```
+
+```{r,warning=FALSE}
+if(nrow(fuzzy_date_SCA)!=0){
+# These match on date, AND SCA. 
+library(gt)
+fuzzy_table <- fuzzy_date_SCA %>%
+  gt(rowname_col ="NAME_WDRS")
+
+ft2 <- fuzzy_table %>% 
+  tab_spanner(
+    label = "Sequence Info",
+    columns = c(NAME_WDRS,SEQUENCE_CLINICAL_ACCESSION,
+                   SEQUENCE_SPECIMEN_COLLECTION_DATE,SEQUENCE_ACCESSION,SEQUENCE_VARIANT_OPEN_TEXT)
+  ) %>%
+  tab_spanner(
+    label = "Matched Event in Entire Table",
+    columns = c(COLLECTION_DATE_WDRS,SCA_Ent_Table)
+  )
+
+ft3 <- ft2 %>%
+  tab_style(
+    style = list(
+      cell_fill(color = "lightblue"),
+      cell_text(weight = "bold")
+    ),
+    locations = cells_body(
+      columns = c(Date_Ent_Table,SCA_Ent_Table,SEQUENCE_CLINICAL_ACCESSION,
+                  SEQUENCE_SPECIMEN_COLLECTION_DATE)
+    )) 
+# %>%
+#   cols_width(
+#     c(Date_Ent_Table) ~ px(2000),
+#   )
+
+
+ft4<- ft3 %>%
+  tab_style(style = list(cell_text(font = "Oswald",
+                                   align = "left")),
+            locations = list(cells_body(
+              columns = c(everything())
+            ))) %>%
+  cols_label(
+    SEQUENCE_CLINICAL_ACCESSION = "SEQUENCE\n CLINICAL_ACCESSION",
+    SEQUENCE_SPECIMEN_COLLECTION_DATE = "SEQUENCE_SPECIMEN\n COLLECTION_DATE",
+    SEQUENCE_ACCESSION = "SEQUENCE\n ACCESSION",
+    SEQUENCE_VARIANT_OPEN_TEXT = "SEQUENCE\n VARIANT",
+    Date_Ent_Table = "Collection Date",
+    SCA_Ent_Table = "SEQUENCE\n CLINICAL_ACCESSION"
+  )
+
+
+ft5<- ft4 %>%
+  tab_header(
+    title = md("List of CASE_ID that match SCA and have <= 30 day collection date match"),
+  subtitle = "Compares Sequencing info from submitters to matched event in WDRS_Entire") %>%
+  tab_options(
+    heading.background.color = "#c6dbef",
+    column_labels.background.color = "#edf8fb",
+    table.width = "60%"
+    
+  )
+
+ft5 
+} else{
+  print("No data could be matched to a SCA/positive event within 30 days")
+}
+```
+
+## 2.   Match to Positive Event <= 30 days but not a SCA
+
+_Details:_
+
+These cases have a positive test that matches the date of the sequencing information, but the SCA does not match (or doesn't exist for those tests)
+
+**However!!** They have may have other tests in WDRS that match on SCA but don't match on the date. Therefore, I believe the SCA is not correct in WDRS and should actually be assigned to the test that has the correct sequencing date. In other words:
+
+1.  The sequencing info here matches on date
+2.  The SCA is attached to the wrong test (it should be attached to the test with the correct sequencing date)
+
+_How to Fix:_ 
+
+*   **For these records, attach the sequencing information to the positive event with the correct date**
+*   Or if you think it would be best to reassign the SCA to the correct positive test, then do that
+
+```{r,warning=FALSE}
+#These could be matched on date but not on SCA
+fuzzy_noSCA_<-fuzzy_inner_join(FoundSeq, entire_table,
+                               by = c("CASE_ID" = "CASE_ID",
+                                      'SEQUENCE_SPECIMEN_COLLECTION_DATE' = "match_date_minus3",
+                                      'SEQUENCE_SPECIMEN_COLLECTION_DATE' = "match_date_plus3"),
+                               match_fun = list(`==`, `>`, `<`))%>%
+  # select(CASE_ID=CASE_ID.x,NAME_WDRS,SEQUENCE_CLINICAL_ACCESSION,
+  #        SEQUENCE_SPECIMEN_COLLECTION_DATE,Date_Ent_Table=COLLECTION_DATE,SCA_Ent_Table=SCA,
+  #        SEQUENCE_ACCESSION,SEQUENCE_VARIANT_OPEN_TEXT)%>%
+  select(CASE_ID = CASE_ID.x,2:23,Date_Ent_Table=COLLECTION_DATE,SCA_Ent_Table=SCA) %>%
+  distinct()
+
+#exclude the ones that we already matched by SCA and date
+fuzzy_noSCA <- anti_join(fuzzy_noSCA_,fuzzy_date_SCA,by = c("CASE_ID","NAME_WDRS"))
+
+# if(nrow(fuzzy_noSCA)!=0){
+# fuzzy_noSCA %>%
+#   kbl(caption = "List of CASE_ID that have a positive test match but a SCA attached to the wrong test")%>%
+#   kable_styling()
+# }else{
+#   print("No Records found - Move on!")
+# }
+
+
+```
+
+```{r,warning=FALSE}
+if(nrow(fuzzy_noSCA)!=0){
+library(gt)
+fuzzy_table2 <- fuzzy_noSCA %>%
+  gt(rowname_col ="NAME_WDRS")
+
+ft2 <- fuzzy_table2 %>% 
+  tab_spanner(
+    label = "Sequence Info",
+    columns = c(NAME_WDRS,SEQUENCE_CLINICAL_ACCESSION,
+                   SEQUENCE_SPECIMEN_COLLECTION_DATE,SEQUENCE_ACCESSION,SEQUENCE_VARIANT_OPEN_TEXT)
+  ) %>%
+  tab_spanner(
+    label = "Entire Table",
+    columns = c(Date_Ent_Table,SCA_Ent_Table)
+  )
+
+ft3 <- ft2 %>%
+  tab_style(
+    style = list(
+      cell_fill(color = "lightblue"),
+      cell_text(weight = "bold")
+    ),
+    locations = cells_body(
+      columns = c(Date_Ent_Table,SCA_Ent_Table,SEQUENCE_CLINICAL_ACCESSION,
+                  SEQUENCE_SPECIMEN_COLLECTION_DATE)
+    ))
+
+ft4<- ft3 %>%
+  tab_style(style = list(cell_text(font = "Oswald",
+                                   align = "left")),
+            locations = list(cells_body(
+              columns = c(everything())
+            ))) %>%
+  cols_label(
+    SEQUENCE_CLINICAL_ACCESSION = "SEQUENCE\n CLINICAL_ACCESSION",
+    SEQUENCE_SPECIMEN_COLLECTION_DATE = "SEQUENCE_SPECIMEN\n COLLECTION_DATE",
+    SEQUENCE_ACCESSION = "SEQUENCE\n ACCESSION",
+    SEQUENCE_VARIANT_OPEN_TEXT = "SEQUENCE\n VARIANT",
+    Date_Ent_Table = "Collection Date",
+    SCA_Ent_Table = "SEQUENCE\n CLINICAL_ACCESSION"
+  )
+
+
+ft5<- ft4 %>%
+  tab_header(
+    title = md("List of CASE_ID that match <= 30 day collection date match BUT don't match a SCA"),
+  subtitle = "Compares Sequencing info from submitters to matched event in WDRS_Entire")%>%
+  tab_options(
+    heading.background.color = "#c6dbef",
+    column_labels.background.color = "#edf8fb",
+    table.width = "60%"
+    
+  )
+
+
+ft5
+}else{
+  print("No Records found - Move on!")
+}
+
+```
+
+## 3.   Data with No Match to positive test date or SCA
+
+_Details:_
+
+For these ones, we will have to create a new event in WDRS.
+
+These records did not match because they either:
+
+1.    Don't have a positive test in WDRS or, 
+2.    May have a positive test but it's out of the date range of the new seq date 
+
+_How to Fix:_
+
+*   **Either way, we need to create a new seq field with that seq information, even though it's not attached to a positive test**
+*   Or we could reach out to labs if you think that is necessary. 
+
+```{r,warning=FALSE}
+addressed_data<- bind_rows(fuzzy_date_SCA,fuzzy_noSCA) %>%
+  distinct(CASE_ID)
+
+  
+stillnomatch<-anti_join(NoMatchToWDRS,addressed_data,by="CASE_ID") 
+
+# Take out records that may have different case Id's for the same person as they will appear in 2 different tabs
+stillnomatch_dedup <- stillnomatch %>%
+  filter(!stillnomatch$NAME_WDRS %in% fuzzy_date_SCA$NAME_WDRS & !stillnomatch$SEQUENCE_ACCESSION %in% fuzzy_date_SCA$SEQUENCE_ACCESSION)
+
+
+
+# if(nrow(stillnomatch)!=0){
+# stillnomatch %>%
+#   kbl(caption = "List of CASE_ID that need a new sequencing event")%>%
+#   kable_styling()
+# }else{
+#   print("No records found - You're done! Go take a break:)")
+# }
+
+```
+
+```{r,warning=FALSE}
+if(nrow(stillnomatch_dedup)!=0){
+  fuzzy_table3 <- stillnomatch_dedup %>%
+    select(CASE_ID,NAME_WDRS,SEQUENCE_ACCESSION, SEQUENCE_CLINICAL_ACCESSION,SEQUENCE_VARIANT_OPEN_TEXT,SEQUENCE_SPECIMEN_COLLECTION_DATE,COLLECTION_DATE_WDRS)%>%
+    gt(rowname_col ="NAME_WDRS")
+  
+  ft2 <- fuzzy_table3 %>% 
+    tab_spanner(
+      label = "Sequence Info",
+      columns = c(NAME_WDRS,SEQUENCE_CLINICAL_ACCESSION,
+                  SEQUENCE_SPECIMEN_COLLECTION_DATE,SEQUENCE_ACCESSION,SEQUENCE_VARIANT_OPEN_TEXT)
+    )%>%
+    tab_spanner(
+      label = "Entire Table",
+      columns = c(COLLECTION_DATE_WDRS)
+    ) 
+  
+  
+  ft3<- ft2 %>%
+    tab_style(style = list(cell_text(font = "Oswald",
+                                     align = "left")),
+              locations = list(cells_body(
+                columns = c(everything())
+              ))) %>%
+    cols_label(
+      SEQUENCE_CLINICAL_ACCESSION = "SEQUENCE\n CLINICAL_ACCESSION",
+      SEQUENCE_SPECIMEN_COLLECTION_DATE = "SEQUENCE_SPECIMEN\n COLLECTION_DATE",
+      SEQUENCE_ACCESSION = "SEQUENCE\n ACCESSION",
+      SEQUENCE_VARIANT_OPEN_TEXT = "SEQUENCE\n VARIANT",
+      COLLECTION_DATE_WDRS = "COLLECTION DATE\n WDRS"
+    )
+  
+  
+  ft4<- ft3 %>%
+    tab_header(
+      title = md("List of CASE_ID that do not match a SCA or an event date"),
+      subtitle = "Compares Sequencing info from submitters to matched event in WDRS_Entire")%>%
+  tab_options(
+    heading.background.color = "#c6dbef",
+    column_labels.background.color = "#edf8fb",
+    table.width = "60%"
+    
+  )
+
+  
+  ft4
+}else{
+  print("No records found - You're done! Go take a break:)")
+}
+```
+
+
+```{r,warning=FALSE}
+# Combine rough matches as these already have appropriate events in WDRS and will both need a new sequencing field as a fix. Same fix, different match
+
+create_new_seq<- bind_rows(fuzzy_date_SCA,fuzzy_noSCA)
+  
+
+#Create an excel file with all the combined data if there are both unmatch and matched
+if(nrow(NoMatchToWDRS)!=0){
+  library(writexl)
+sheets <- list("All Data Combined" = date_mismatch, "Delete these rows" = to_delete, "Create New Seq Field" = create_new_seq, "Create New Event" = stillnomatch_dedup) 
+write_xlsx(sheets, paste0("",
+    "fuzzy_date_mismatches_",
+    today(), ".xlsx"
+  ))
+}else{
+  print("There's no data OR somethin' ain't right")
+}
+```

@@ -1,0 +1,364 @@
+---
+title: "read_all_data"
+author: "Frank Aragona"
+date: "6/10/2022"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(purrr)
+library(vroom)
+library(rio)
+library(DBI)
+library(odbc)
+library(lubridate)
+library(tidyverse)
+library(readxl)
+library(here)
+library(fs)
+library(data.table)
+options("install.lock"=FALSE)
+#library(splitstackshape)
+library(gt)
+library(viridis)
+library(kableExtra)
+library(ggplot2)
+library(ggthemes)
+library(janitor)
+library(furrr)
+library(pins)
+
+project_folder <- ""
+
+board <- board_folder("",versioned = FALSE)
+
+```
+
+# BE AWARE!
+Running these files may take a super duper long time.
+
+## Functions
+
+*process_file* will import a file using `rio`. rio will read in whatever file type it is and choose the most appropriate (ie, fread, read_csv,read_xlsx, etc)
+
+*safer_process_file* will use `purrr::possibly` to run all files even if there's an error. It will flag any file with an error and move on
+
+*split_gisaid_id* will take a gisaid_id and split it into the components mentioned above
+
+*match_gisaid_id* will take the gisaid_id (and its split components) and try to match those components to another dataset. At the end of the match, the variable `MATCH` will give 1 of 3 outputs; _Full Match_, _Partial Match_, and _No Match_. This process will be more sensitive and call Full or Partial matches a match. 
+```{r}
+process_file <- function(myfile){
+  if(str_detect(myfile,"xlsx")){
+    read_xlsx(myfile,col_types = "text")
+  }else if(str_detect(myfile,"csv")){
+    vroom::vroom(myfile,col_types = "c",altrep = TRUE)
+    # fread(myfile,colClasses = "character",fill=T)
+  }else if(str_detect(myfile,"tsv")){
+    read_tsv(myfile,col_types = "text")
+  }else{
+    rio::import(myfile)
+  }
+}
+
+safer_process_file <- purrr::possibly(process_file,otherwise = "Error in this file my dude")
+
+```
+
+
+# Read in Keep_NA files
+
+This includes all data that is archived (deleted data from over 60 days will be included here)
+```{r}
+# There is no csv that has 2020 in the name for keep na
+keep_na <- fs::dir_ls(file.path(project_folder, "keep_na\\"),
+                          recurse = TRUE, type = "file"
+)
+
+keep_na_all_list<- future_map(keep_na,safer_process_file)
+
+#Take only the files that don't have an error
+keep_na_all_list_valid_files <- keep(keep_na_all_list, ~!inherits(.x, 'character'))
+
+# convert all columns to character so we can convert to a dataframe
+temp <- rapply(keep_na_all_list_valid_files, as.character, how = "replace")
+
+# convert to dataframe and keep the file name the record comes from
+keep_na_all_list_bind <- bind_rows(temp,.id = "file_name")
+
+
+keep_na_all_clean <- keep_na_all_list_bind %>%
+  # Some records don't have SEQUENCE_ACCESSION numbers because it was deleted.. so, take the SCA as well
+  distinct(SEQUENCE_ACCESSION,SEQUENCE_CLINICAL_ACCESSION,.keep_all = T) %>%
+  mutate(SEQUENCE_VARIANT_OPEN_TEXT = if_else(!is.na(SEQUENCE_VARIANT),SEQUENCE_VARIANT,SEQUENCE_VARIANT_OPEN_TEXT))%>%
+  mutate(SEQUENCE_ACCESSION = str_trim(SEQUENCE_ACCESSION)) %>%
+  filter(!is.na(SEQUENCE_ACCESSION)) %>%
+  select(-SEQUENCE_VARIANT)
+
+board %>% pin_write(keep_na_all_clean,
+                    name = "Keep NA",
+                    type = "rds",
+                    versioned = TRUE,
+                    metadata = list(
+                      "author" = "Frank Aragona",
+                      "team" = "DIQA",
+                      "subteam" = "Trash Pandas",
+                      "commit" = "Adding the SEQUENCE_ACCESSION numbers that were previously deleted by PHL"
+                    ))
+```
+
+
+# Read in completed submissions
+
+If you need to run this whole file, run it in an RDP.
+
+There are saved completed submissions lists and dataframes so instead of running all of this code with each update we can just run the most recent additions to completed submissions and add them to the objects.
+
+## Read in ALL files in completed submissions
+```{r}
+# # Prep - read in all folders and paths
+submissions <- dir_info(path = file.path(project_folder, "Completed_Submissions"),
+                      recurse = TRUE,
+                      type = "file"
+)
+
+filter_submissions <- submissions %>%
+  mutate(across(!modification_time,as.character)) 
+# %>%
+#   filter(modification_time > '2022-01-01')
+
+
+# now that you have the files, read them in and use setNames to tag which file the record comes from
+# This takes about 10 minutes
+files_recent_list <- future_map(filter_submissions$path,safer_process_file) %>%
+  setNames(filter_submissions$path)
+
+#Take only the files that don't have an error
+result <- keep(files_recent_list, ~!inherits(.x, 'character'))
+
+# convert all columns to character so we can convert to a dataframe
+temp <- rapply(result, as.character, how = "replace")
+```
+
+```{r}
+# Get all the different column names from the completed submissions files
+# We will use this to select only certain columns based on their name
+# We only want to select certain columns because there are so many columns that converting the list to a dataframe might be too much for the computer to handle
+names_temp <- c()
+
+for (i in names(temp)) {
+  test <- names(temp[[i]])
+  names_temp <- c(names_temp,test)
+}
+
+# After deduping, there are about 200k unique column names.. wayyy too much to handle for this process. We'll keep chopping that list down. 
+names_cs_list <- unique(names_temp)
+
+# 1. Get the GISAID_ID column and convert it - 
+# Previous versions of this script contain code that programmatically searched for the column names of interest. Since this script will be retired, I hardcoded this list for GISAID_ID names to make things easier. (the code to find all names is a very large process)
+gisaid_id_names <- c("GISAID_ID",
+                     "Seq ID",
+                     "SEQUENCE_ACCESSION",
+                     "shortname",
+                     "gisaid_virus_name",
+                     "Alt_CoVID",
+                     "altius_sample_identifier",
+                     "virus_name",
+                     "Virus name",
+                     "strain_name",
+                     "GISAID",
+                     "IDs",
+                     "GISAID ID")
+
+
+
+# 2. Get the Accession ID column
+accession_names <- names_cs_list[which(str_detect(toupper(names_cs_list),"ACCESSION|ACC|SPECIMENID|SPECIMEN_ID|SEQUENCE_CLINICAL|ACESSION"))]
+
+# 3. Get date
+date_names <- names_cs_list[which(str_detect(toupper(names_cs_list),"DATE"))]
+
+# 4. Get submitter names
+submitter_names <- names_cs_list[which(str_detect(toupper(names_cs_list),"SUBMITTER|LAB"))]
+
+# combine to get columns I want and exclude the rest
+keep_cols <- c(gisaid_id_names,accession_names,date_names,submitter_names, "SEQUENCE_REASON","SEQUENCE_STATUS","PANGO_LINEAGE","FIRST_NAME","LAST_NAME","MIDDLE_NAME","DOB","ALTERNATIVE_ID")
+```
+
+```{r}
+# Remove trash column names from the raw list. the temp list has all columns, so need to cut it down to make it more managable when converting to a dataframe. If we don't take out bad col names, it will be too large to convert to a dataframe
+
+# Above we created a vector of the specific column names that we want called `keep_cols`. This vector will be used in the select statement to take only those colnames in the `temp` list. If you look in your R environment, you will see that the original `files_recent_list` is giant and now the `all_results_list_clean` list is much smaller and will be easier to convert to a dataframe
+all_results_list_clean <- lapply(temp, function(x) subset(x, select = intersect(keep_cols,colnames(x))))
+```
+
+```{r}
+# First rm() all the objects and wipe the memory so we can have enough to convert the list to a dataframe
+rm(files_recent_list)
+rm(result)
+gc()
+
+# Now convert the list to a dataframe
+completed_submissions_raw <- rbindlist(all_results_list_clean,idcol = "file_name",fill = TRUE)
+```
+
+```{r}
+# Next, we need to convert the columns into their appropriate names. There could be many names for a single column. For example, GISAID_ID in one dataframe could be GISAID.ID or virusname in another. Convert them all to say GISAID_ID.
+
+# The coalesce function below will check the names of `completed_submissions_raw` against the list of names we made above. Then it will convert them into one column
+
+# find all the gisaid_id named columns
+gisaid_cols <- syms(intersect(gisaid_id_names, names(completed_submissions_raw)))
+
+# take out SEQUENCE_ACCESSION and others as they are not clinical accession numbers
+clinical_accession_names <- setdiff(accession_names,c("Link_test_to_parent_accession","SEQUENCE_ACCESSION"))
+
+accession_cols <- syms(intersect(clinical_accession_names, names(completed_submissions_raw)))
+
+# date_cols <- syms(intersect(DATE_names, names(completed_submissions_raw)))
+
+# These records need to be removed - they have been filtered out of the PHL script because they have reason == PT or missing Sequencing Result
+to_remove <- board %>% pin_read("records_to_remove")
+
+completed_submissions_clean <- completed_submissions_raw %>%
+  as_tibble() %>%
+  # coalesce function will take the columns we found above and convert them all to one name. So virusname and GISAID.ID will convert to GISAID_ID, as an example
+  mutate(GISAID_ID = str_trim(coalesce(!!!gisaid_cols))) %>%
+  mutate(LAB_ACCESSION_ID = coalesce(!!!accession_cols)) %>%
+  mutate(SUBMITTING_LAB = case_when(
+    !is.na(SUBMITTING_LAB) ~ SUBMITTING_LAB,
+    !is.na(SEQUENCE_LAB) ~ SEQUENCE_LAB,
+    !is.na(SUBMITTER) ~ SUBMITTER,
+    !is.na(SubmittingLab) ~ SubmittingLab,
+    !is.na(Submitter) ~ Submitter,
+    !is.na(submitting_lab) ~ submitting_lab,
+    TRUE ~ NA_character_
+  )) %>%
+  mutate(SPECIMEN_COLLECTION_DATE = SPECIMEN_COLLECTION_DATE) %>%
+  mutate(file_chopped = str_extract(file_name,"Completed_Submissions.*")) %>%
+  
+   # Convert dates to be in the same format
+  mutate(clean_date = case_when(
+    # Convert date times with T and Z in them - these are datetimes like 01/01/2021T00::00:00Z
+    str_detect(SPECIMEN_COLLECTION_DATE,"T|Z") ~ as.Date(as_datetime(SPECIMEN_COLLECTION_DATE)),
+    # Some date formats don't work, like excel dates, so we'll take care of these differently
+    # convert excel dates
+    str_count(SPECIMEN_COLLECTION_DATE) == 5 ~ as.Date(openxlsx::convertToDate(as.numeric(SPECIMEN_COLLECTION_DATE))),
+    # Anything else, convert based on it's format. If it's in m/d/y format do that, else d/m/y, etc
+    TRUE ~ as.Date( parse_date_time(SPECIMEN_COLLECTION_DATE, orders = c('mdy', 'dmy','ymd','mdy_HMS')))
+    )) %>%
+  select(file_chopped,
+         clean_date,
+         LAB_ACCESSION_ID,
+         GISAID_ID,
+         SPECIMEN_COLLECTION_DATE,
+         SUBMITTING_LAB,
+         SEQUENCE_REASON,
+         SEQUENCE_STATUS,
+         PANGO_LINEAGE,
+         FIRST_NAME,
+         LAST_NAME,
+         MIDDLE_NAME,
+         DOB,
+         ALTERNATIVE_ID) %>%
+  mutate_all(list(~na_if(.,""))) %>%
+  filter(!is.na(GISAID_ID) | GISAID_ID == "N/A") %>%
+  # Need to hardcode some GISAID_IDs. Some IDs from Helix came to us with only a partial ID and they were updated to match what was in GISAID. So, They are in WDRS but the GISAID_ID is a different number in completed submissions. This hardcoding will ensure that the numbers match/link
+  mutate(GISAID_ID = case_when(
+    GISAID_ID == "USA/WA-CDC-STM-0007208/2021" ~ "USA/WA-CDC-STM-000720840/2021",
+    GISAID_ID == "USA/WA-CDC-STM-0007320/2021" ~ "USA/WA-CDC-STM-000732078/2021",
+    GISAID_ID == "USA/WA-CDC-STM-0007147/2021" ~ "USA/WA-CDC-STM-000714732/2021",
+    GISAID_ID == "USA/WA-CDC-STM-0007180/2021" ~ "USA/WA-CDC-STM-000718074/2021",
+    GISAID_ID == "USA/WA-CDC-STM-0007162/2021" ~ "USA/WA-CDC-STM-000716202/2021",
+    GISAID_ID == "USA/WA-CDC-STM-0007146/2021" ~ "USA/WA-CDC-STM-000714611/2021",
+    GISAID_ID == "USA/WA-CDC-STM-0007239/2021" ~ "USA/WA-CDC-STM-000723972/2021",
+    GISAID_ID == "USA/WA-CDC-STM-0007207/2021" ~ "USA/WA-CDC-STM-000720793/2021",
+    GISAID_ID == "USA/WA-CDC-STM-0007241/2021" ~ "USA/WA-CDC-STM-000724170/2021",
+    GISAID_ID == "USA/WA-CDC-STM-0007303/2021" ~ "USA/WA-CDC-STM-000730346/2021",
+    GISAID_ID == "USA/WA-CDC-STM-0007375/2021" ~ "USA/WA-CDC-STM-000737549/2021",
+    GISAID_ID == "USA/WA-CDC-STM-0007392/2021" ~ "USA/WA-CDC-STM-000739231/2021",
+    GISAID_ID == "USA/WA-CDC-STM-0007386/2021" ~ "USA/WA-CDC-STM-000738607/2021",
+    GISAID_ID == "USA/WA-CDC-STM-0007294/2021" ~ "USA/WA-CDC-STM-000729430/2021",
+    GISAID_ID == "USA/WA-CDC-STM-0007295/2021" ~ "USA/WA-CDC-STM-000729561/2021",
+    GISAID_ID == "USA/WA-CDC-STM-0007304/2021" ~ "USA/WA-CDC-STM-000730439/2021",
+    GISAID_ID == "USA/WA-CDC-STM-0007336/2021" ~ "USA/WA-CDC-STM-000733630/2021",
+    GISAID_ID == "USA/WA-CDC-STM-0007370/2021" ~ "USA/WA-CDC-STM-000737060/2021",
+    GISAID_ID == "USA/WA-CDC-STM-0007289/2021" ~ "USA/WA-CDC-STM-000728990/2021",
+    GISAID_ID == "USA/WA-CDC-STM-0007302/2021" ~ "USA/WA-CDC-STM-000730242/2021",
+    GISAID_ID == "USA/WA-CDC-STM-0007442/2021" ~ "USA/WA-CDC-STM-000744202/2021",
+    GISAID_ID == "USA/WA-CDC-STM-0007407/2021" ~ "USA/WA-CDC-STM-000740723/2021",
+    GISAID_ID == "USA/WA-CDC-STM-0007399/2021" ~ "USA/WA-CDC-STM-000739991/2021",
+    GISAID_ID == "USA/WA-CDC-STM-0007434/2021" ~ "USA/WA-CDC-STM-000743454/2021",
+    GISAID_ID == "USA/WA-CDC-STM-0007243/2021" ~ "USA/WA-CDC-STM-000724364/2021",
+    GISAID_ID == "USA/WA-CDC-STM-0007270/2021" ~ "USA/WA-CDC-STM-000727071/2021",
+    GISAID_ID == "USA/WA-CDC-STM-0007228/2021" ~ "USA/WA-CDC-STM-000722870/2021",
+    GISAID_ID == "USA/WA-CDC-STM-0007353/2021" ~ "USA/WA-CDC-STM-000735351/2021",
+    GISAID_ID == "USA/WA-CDC-STM-0000016-H05/2021" ~ "USA/WA-CDC-STM-000001640/2021",
+    GISAID_ID == "USA/WA-CDC-STM-0000031-E07/2021" ~ "USA/WA-CDC-STM-000003153/2021",
+    GISAID_ID == "USA/WA-CDC-STM-0000029-B07/2021" ~ "USA/WA-CDC-STM-000002950/2021",
+    GISAID_ID == "USA/WA-CDC-STM-0000036-B07/2021" ~ "USA/WA-CDC-STM-000003650/2021",
+    GISAID_ID == "USA/WA-CDC-STM-0000041-D05/2021" ~ "USA/WA-CDC-STM-000004136/2021",
+    GISAID_ID == "USA/WA-CDC-STM-0000041-G01/2021" ~ "USA/WA-CDC-STM-000004107/2021",
+    GISAID_ID == "USA/WA-CDC-STM-0000043-E04/2021" ~ "USA/WA-CDC-STM-000004329/2021",
+    GISAID_ID == "USA/WA-CDC-STM-0000050-E03/2021" ~ "USA/WA-CDC-STM-000005021/2021",
+    GISAID_ID == "USA/WA-CDC-STM-0000050-D09/2021" ~ "USA/WA-CDC-STM-000005068/2021",
+    GISAID_ID == "USA/WA-CDC-STM-0000059-F05/2021" ~ "USA/WA-CDC-STM-000005938/2021",
+    GISAID_ID == "STM-0007091-H08" ~ "USA/WA-CDC-STM-000709164/2021",
+    GISAID_ID == "USA/WA-CDC-STM-000709164/2021" ~ "USA/WA-CDC-STM-000709164/2021",
+    GISAID_ID == "USA/WA-AG-B.1.1.7/2021" ~ NA_character_,
+    GISAID_ID == "EPI_ISL_1625679" ~ NA_character_,
+    # This one below has a typo in wdrs - it's a closed case so will need to be opened up in order to fix it
+    # For now, make it match what is in WDRS
+    GISAID_ID == "USA/WA-CDC-STM-000736436/2021" ~ "USA/WA-CDC-STM-000736436/2021/2021",
+    # These records have an extra zero in GISAID and WDRS - therefore, I think there was a typo along the way. Or this is the instance where excel added an extra zero on accident. Either way, im hardcoding them here so we can match it to WDRS
+    GISAID_ID == "LC0002306" ~ "LC00002306",
+    GISAID_ID == "LC0002455" ~ "LC00002455",
+    GISAID_ID == "LC0002463" ~ "LC00002463",
+    GISAID_ID == "SARS-CoV-2/human/USA/WA-CDC-2-3980474/2021" ~ "USA/WA-CDC-2-3980474/2021",
+    GISAID_ID == "SARS-CoV-2/human/USA/WA-CDC-2-3859270/2021" ~ "USA/WA-CDC-2-3859270/2021",
+    GISAID_ID == "SARS-CoV-2/human/USA/WA-CDC-2-3859293/2021" ~ "USA/WA-CDC-2-3859293/2021",
+    TRUE ~ GISAID_ID
+  )) %>%
+  # distinct(GISAID_ID,.keep_all = T) %>%
+  filter(!GISAID_ID %in% to_remove$GISAID_ID)
+
+# completed_submissions_clean %>%
+#   group_by(GISAID_ID) %>%
+#   filter(!duplicated(str_detect(file_chopped, "PHL")) | str_detect(file_chopped,"PHL",negate = T)) %>%
+#   ungroup() %>%
+#   count(file_chopped,GISAID_ID) %>%
+#   view
+
+# Dedup where lab is PHL. PHL outputs the exact same records to completed submissions every roster day, so there are many unnecessary duplicates from them. Leave other duplicates as there could be multiple GISAID_IDs in different files - this will allow us to see all iterations of a record that was sent through our process
+completed_submissions_dedup <- completed_submissions_clean %>%
+  group_by(GISAID_ID) %>%
+  filter(!duplicated(str_detect(file_chopped, "PHL")) | str_detect(file_chopped,"PHL",negate = T)) %>%
+  ungroup()
+
+# Check to see if the dedup process accidentally excluded any GISAID_IDs. All GISAID_IDs should be in the the dedup dataset
+check_dedup <- anti_join(completed_submissions_clean,completed_submissions_dedup, by = "GISAID_ID")
+
+if(dim(check_dedup)[1]>0){
+  print("Dedup process failed. Stop and check the script")
+  stop()
+} else{
+  print("Dedup Success")
+}
+
+```
+
+```{r}
+# Now, save the object. Use the metadata to describe any updates made to the object
+board %>% pin_write(completed_submissions_dedup,
+                       name = "completed_submissions",
+                       type = "rds",
+                       versioned = TRUE,
+                       metadata = list(
+                         "author" = "Frank Aragona",
+                         "team" = "DIQA",
+                         "subteam" = "Trash Pandas",
+                         "commit" = "adding SUBMITTING_LAB and a cleaned up date variable)"
+                       ),
+                       description = paste0("This should be the most complete as of ",Sys.Date()))
+```
+

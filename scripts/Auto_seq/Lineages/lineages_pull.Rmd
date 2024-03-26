@@ -1,0 +1,153 @@
+---
+title: "lineages_pull"
+author: "DSSU/DIQA"
+date: "11/16/2021"
+output: html_document
+---
+
+
+# Load R libraries
+```{r}
+library(reticulate)
+library(tidyverse)
+library(fs)
+library(lubridate)
+library(here)
+library(sendmailR)
+```
+
+# Load python libraries
+```{python}
+import requests
+```
+
+# API Connection
+```{python}
+# API request
+lineages_request = requests.get('https://raw.githubusercontent.com/cov-lineages/pango-designation/master/lineage_notes.txt')
+
+# Grab content of webpage
+lineages_webcontent = lineages_request.content
+
+# Convert to string
+lineages_webcontent_string = str(lineages_webcontent,'utf-8')
+```
+
+```{r}
+# call lineages_webcontent_string from python environment to R environment
+lineages_webcontent_string <- py$lineages_webcontent_string
+
+# split by "\n" to get a list by row, unlist
+lineages_string_by_row <- lineages_webcontent_string %>%
+  str_split("\n") %>%
+  unlist()
+
+# create a matrix from lineages_string_by_row with a second var created from splitting by "\t"
+lineages_mat <- lineages_string_by_row %>%
+  str_split("\t", simplify = TRUE)
+
+# convert lineages_mat to a data frame
+lineages_df <- as.data.frame(lineages_mat)
+
+# rename the var's "lineage_extracted", "description" and remove the first row
+colnames(lineages_df) <- c("lineage_extracted", "description")
+lineages_df <- lineages_df[,  c("lineage_extracted", "description")]
+
+# remove row 1 that contains var names 
+lineages_df_2 <- lineages_df[-1,] 
+
+lineages_df_3 <- lineages_df_2 %>%
+  filter(!(lineages_df_2$lineage_extracted == "" & lineages_df_2$description == ""))
+
+lineages_df_4 <- lineages_df_3 %>%
+  # create a 'status' var that is populated with either withdrawn or active
+  mutate(status = case_when(
+    # when 'withdrawn' is detected in the string then populate status with 'Withdrawn'
+    str_detect(tolower(lineages_df_3$description), "withdrawn") ~ "Withdrawn",
+    # otherwise populate status with 'Active'
+    TRUE ~ "Active"
+  ))
+
+# extract string from beginning up until the first space or end of string and assign as lineage extracted. This steps is at times necessary due to errors in the file pulled. Within each row the lineage and descript should be separated by '\t' (see line 53). However at times a white space is mistakenly entered instead 
+lineages_df_4$lineage_extracted <- str_extract(lineages_df_4$lineage_extracted, ".+?(?=$|[[:SPACE:]])")
+
+# remove '*' from the lineage_extracted variables. Often withdrawn lineages are denoted with a '*' at the beginning
+lineages_df_4$lineage_extracted <- str_remove_all(lineages_df_4$lineage_extracted, "\\*")
+
+# assign lineages_df_4 to lineages_df_5
+lineages_df_5 <- lineages_df_4
+```
+
+# If the pulled lineages file fails QA checks send an email stating so and stop the script.
+```{r}
+# check to make sure that all lineage_extracted follow a pattern of beginning one or more characters followed by zero or more combinations of a period followed by numbers. If there are any values that do not meet this check:
+if(any(!str_detect(lineages_df_5$lineage_extracted, "^[[:upper:]]+(\\.[[:digit:]]+)*$"))) {
+  
+  # send an email stating there are values that do not follow the expected pattern
+  email_from <- ""
+  email_to <- ""
+  email_subj <- "Sequencing - Lineages Output"
+  email_body <- "There are values in the pulled Lineages file that are unexpected. Please check the pulled file and code."
+
+  # send it
+  sendmailR::sendmail(from = email_from,
+                    to = email_to,
+                    subject = email_subj,
+                    msg = email_body,
+                    headers= list("Reply-To" = email_from),
+                    control = list(smtpServer = ""))
+
+print("There are values in the pulled Lineages file that are unexpected. Script has been stopped and rendered up to this point.")  
+}
+
+# # running this line will give you all values that fail the check above
+# lineages_df_5$lineage_extracted[!str_detect(lineages_df_5$lineage_extracted, "^[[:upper:]]+(\\.[[:digit:]]+)*$")]
+```
+
+# Exit run/render of script if there is a value in lineage_extracted  that does not follow a pattern of beginning one or more characters followed by zero or more combinations of a period followed by numbers. When this rmd is ran from a trigger script which uses render() the script will stop here and only render up to this point.
+```{r}
+#  exit if there are values in the pulled Lineages file that are unexpected
+if(any(!str_detect(lineages_df_5$lineage_extracted, "^[[:upper:]]+(\\.[[:digit:]]+)*$"))) {
+  knit_exit()
+  stop("There are values in the pulled Lineages file that are unexpected. Script has been stopped and rendered up to this point.")
+}
+```
+
+# Deduplicate based on repeated lineages. 
+```{r}
+# deduplicate any rows where lineage_extracted and status are the same (description is not a priority)
+lineages_df_6 <- lineages_df_5 %>%
+  distinct(lineage_extracted, status, .keep_all = TRUE)
+
+# if there are any records where lineage_extracted is duplicated but status differs (when this occurs there should only ever be 2 records for each instances where lineage_extracted is duplicated; one with status == "Active" and one with status == "Withdrawn").
+if (any(duplicated(lineages_df_6$lineage_extracted))) {
+  
+  # identify all records where lineage_extracted is duplicated 
+  dup_records <- lineages_df_6[lineages_df_6$lineage_extracted %in% lineages_df_6$lineage_extracted[duplicated(lineages_df_6$lineage_extracted)],]
+  
+  # identify records where status == "Active"
+  dup_records_active <- dup_records %>%
+    filter(status == "Active")
+  
+  # remove records where lineage_extract is duplicated but status = "Active" for final output
+  lineages_df_final <- anti_join(lineages_df_6, dup_records_active)
+  
+  # else if there no records with lineage_extracted is duplicated but status differs
+} else {
+  # lineages_df_6 is the final output
+  lineages_df_final <- lineages_df_6
+}
+
+```
+
+# Output and move files
+```{r}
+# move old file to archive
+
+
+# output file
+
+```
+
+# Send an email when a new lineages file has been dropped into the Lineages folder.
+

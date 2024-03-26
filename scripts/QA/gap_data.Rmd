@@ -1,0 +1,945 @@
+---
+title: "gap_data"
+author: "Special Projects/DSSU/DIQA"
+date: "11/8/2021"
+output: html_document
+---
+
+
+# Load R libraries.
+```{r}
+library(DBI)
+library(odbc)
+library(lubridate)
+library(tidyverse)
+library(here)
+library(fs)
+library(openxlsx)
+library(reticulate)
+library(knitr)
+library(data.table)
+library(R.utils)
+library(gt)
+library(blastula)
+library(keyring)
+library(flextable)
+```
+
+# Read in required data_objects and define objects.
+```{r}
+# read in r_creds.RDS
+r_creds <-readRDS(file.path(Sys.getenv("USERPROFILE"), "Projects/Sequencing/Data_Objects", "r_creds.RDS")) 
+
+# read in 'wa_gisaid_data.tsv'
+wa_gisaid_data <- fread("GISAID Data/wa_gisaid_data.tsv",data.table = FALSE)
+
+# read in 'metadata.tsv.gz'
+gisaid_metadata <- fread("metadata.tsv.gz",data.table = FALSE)
+```
+
+# Check that today's wa_gisaid_data and metadata files have been downloaded and are available. If not, stop the script and send an email.
+```{r}
+# dir containing contaning the metadata.tsv.gz and wa_gisaid_data.tsv file
+gisaid_files_dir <- dir_info("GISAID Data", type = "file")
+
+# if the wa_gisaid_data.tsv is not in the dir, or metadata.tsv.gz is not in the dir, or the last complete date in the WAgisaid_objects.p is not today 
+if (!(any(str_detect(gisaid_files_dir$path, "wa_gisaid_data.tsv$"))) | !(any(str_detect(gisaid_files_dir$path, "metadata.tsv.gz$")))) {
+  
+    # send an email stating the files required to run this process are not output correctly/up to date
+  email_from <- ""
+  email_to <- c("")
+  email_subj <- "Sequencing - Gap Data Output Error Automated Email"
+  email_body <- "The wa_gisaid_data.tsv and/or metadata.tsv.gz file may not be output correctly or is not up to date. Please check the WAgisaid_objects.p file."
+
+  # send it
+  sendmailR::sendmail(from = email_from,
+                    to = email_to,
+                    subject = email_subj,
+                    msg = email_body,
+                    headers= list("Reply-To" = email_from),
+                    control = list(smtpServer = ""))
+  
+print("The wa_gisaid_data.tsv and/or metadata.tsv.gz file may not be output correctly or is not up to date. Please check the WAgisaid_objects.p file. Script has been stopped and rendered up to this point.")
+  
+}
+```
+
+# Exit run/render of script if the wa_gisaid_data.tsv is not in the dir, or metadata.tsv.gz is not in the dir, or the last complete date in the WAgisaid_objects.p is not today . When this rmd is ran from a trigger script which uses render() the script will stop here and only render up to this point.
+```{r}
+# exit if the wa_gisaid_data.tsv is not in the dir, or metadata.tsv.gz is not in the dir, or the last complete date in the WAgisaid_objects.p is not today 
+if (!(any(str_detect(gisaid_files_dir$path, "wa_gisaid_data.tsv$"))) | !(any(str_detect(gisaid_files_dir$path, "metadata.tsv.gz$")))) {
+  knit_exit()
+}
+```
+
+# Cleanup prefix from IDs.
+```{r}
+wa_gisaid_data<- wa_gisaid_data %>% mutate(virus_name_clean=str_replace(`Virus name`,"hCoV-19/", ""))
+```
+
+# Filter metadata on state (WA).
+```{r}
+wa_gisaid_metadata <- gisaid_metadata %>%
+  filter(str_detect(strain, "^USA/WA.*") | division == "Washington")
+```
+
+# Create an R Object with the joined metadata and WA_GISAID data
+```{r}
+wa_gisaid <- wa_gisaid_data %>%
+  left_join(wa_gisaid_metadata, by = c(virus_name_clean = "strain")) %>%
+  mutate(VIRUS_ID_PART1 = sapply(strsplit(`Virus name`, "-"), function(x) rle(x)$value[2])) %>%
+  mutate(VIRUS_ID_PART1 = gsub("[^A-z]", "", VIRUS_ID_PART1)) %>%
+  mutate(VIRUS_ID_PART1 = ifelse(is.na(VIRUS_ID_PART1), "", VIRUS_ID_PART1)) %>%
+  mutate(VIRUS_ID_PART2 = sapply(strsplit(`Virus name`, "-"), function(x) rle(x)$value[3])) %>%
+  mutate(VIRUS_ID_PART2 = ifelse(VIRUS_ID_PART2 == "2", "2", gsub("[^A-z]", "", VIRUS_ID_PART2))) %>%
+  mutate(VIRUS_ID_PART2 = ifelse(is.na(VIRUS_ID_PART2), "", VIRUS_ID_PART2)) %>%
+  mutate(YM_collection = substr(`Collection date`, 1, 7)) %>%
+  select(`Virus name`, virus_name_clean, originating_lab, submitting_lab, date_submitted, YM_collection, everything())
+
+# Virus name isn't easily read into R since there is a space. change it to have a _ instead
+# names(wa_gisaid)<-str_replace_all(names(wa_gisaid), c(" " = "_" , "," = "" ))
+
+# Request from Molec Epi to change date_submitted to character in the wa_gisaid R Object
+wa_gisaid$date_submitted <- as.character(wa_gisaid$date_submitted)
+
+saveRDS(wa_gisaid, "GISAID Data/wa_gisaid.rds")
+```
+
+# If not Monday or Thursday, send email notifying completion of wa_gisaid r object and exit script
+# if Monday or Thursday, continue to Gap Data portion
+```{r}
+# call directory of the gisaid folder
+wa_gisaid_data_dir <- dir_info("GISAID Data", type = "file")
+
+# If not Monday/Thursday, send email wa_gisaid.RDS complete
+if(any(str_detect(wa_gisaid_data_dir$path, paste0("wa_gisaid.rds"))) & (!(wday(today()) == 2 | wday(today()) == 5))) {
+  
+  
+  email_from <- ""
+  email_to <- c("")
+  email_subj <- "Sequencing - Automated Notification - wa_gisaid.rds Complete"
+  email_body <- "There is a new wa_gisaid.rds dropped in the GISAID Data folder."
+
+  # send it
+  sendmailR::sendmail(from = email_from,
+                    to = email_to,
+                    subject = email_subj,
+                    msg = email_body,
+                    headers= list("Reply-To" = email_from),
+                    control = list(smtpServer = ""))
+}
+
+```
+
+# Exit run/render of script if it is not Monday/Thursday. When this rmd is ran from a trigger script which uses render() the script will stop here and only render up to this point.
+```{r}
+# exit if it is not the first Wed of the month 
+if (!(wday(today()) == 2 | wday(today()) == 5)) {
+  print("Not Monday or Thursday, stop script here")
+  knit_exit()
+  stop()
+}
+```
+
+# The remaining code is for the production of the 2x per week Gap Data File
+# The Gap Data file will be produced on Mondays and Thursdays
+# Gap data are sequence accessions in GISAID that are NOT in WDRS, regardless of submission status
+# Gap data may include data that DOH has received, but were unable to match/contain quality errors not yet fixed
+
+# Open connection to WDRS.
+```{r}
+# connect
+connection <- DBI::dbConnect(odbc::odbc(), 
+                             Driver = r_creds$conn_list[1], 
+                             Server = r_creds$conn_list[2], 
+                             Database = r_creds$conn_list[3], 
+                             Trusted_connection = r_creds$conn_list[4], 
+                             ApplicationIntent = r_creds$conn_list[5]
+                             )
+```
+
+# Select cases with accession numbers from sequencing table
+# Only exclude cases that have been soft deleted from WDRS 
+# This will help us catch sequences that may have been "deleted" when a case was soft deleted in WDRS OR when two events were merged and sequencing was not carried over
+```{r}
+wdrs_seq <- dbGetQuery(connection, "
+  SELECT CASE_ID,
+  SEQUENCE_ACCESSION_NUMBER
+  FROM [dbo].[DD_GCD_COVID19_SEQUENCING]
+  WHERE SEQUENCE_ACCESSION_NUMBER IS NOT NULL
+  AND SEQUENCE_ACCESSION_NUMBER <> ''
+  AND CASE_STATUS !='6'
+  ")
+
+# convert from df to vector
+wdrs_seq <- wdrs_seq$SEQUENCE_ACCESSION_NUMBER
+```
+
+# Create a df with all rows from the wa_gisaid_data where the SEQUENCE_ACCESSIONS (strain) that DO NOT EXIST in WDRS.
+```{r}
+gap <- wa_gisaid_data[(!(tolower(wa_gisaid_data$virus_name_clean) %in% tolower(wdrs_seq))), ]
+
+# create altmatch for uw:
+gap <- gap %>% 
+  mutate(altmatch = case_when(
+    nchar(virus_name_clean) == 22 & grepl('WA-UW-', virus_name_clean) ~ 
+      paste0('USA/WA-UW-', format(as.Date(`Collection date`), '%y%m'), gsub('^USA/WA-UW-([0-9]{7}/202[0-9])$', '\\1', virus_name_clean)),
+    nchar(virus_name_clean) == 23 & grepl('WA-CDC-UW', virus_name_clean) ~ 
+      paste0('USA/WA-CDC-UW', format(as.Date(`Collection date`), '%y%m%d'), gsub('^USA/WA-CDC-UW([0-9]{5}/202[0-9])$', '\\1', virus_name_clean)),
+    nchar(virus_name_clean) == 24 & grepl('WA-CDC-UW-', virus_name_clean) ~ 
+      paste0('USA/WA-CDC-UW', format(as.Date(`Collection date`), '%y%m%d'), gsub('^USA/WA-CDC-UW-([0-9]{5}/202[0-9])$', '\\1', virus_name_clean))
+    )
+  )
+
+gap <- gap[is.na(gap$altmatch) | !(tolower(gap$altmatch) %in% tolower(wdrs_seq)), ] #remove matches using created altmatch
+
+gap$altmatch <- NULL #remove temp altmatch column
+  
+gap_gisaid_labs <- gap %>%
+  left_join(wa_gisaid_metadata, by = c(virus_name_clean = "strain")) %>%
+  mutate(VIRUS_ID_PART1 = sapply(strsplit(virus_name_clean, "-"), function(x) rle(x)$value[2])) %>%
+  mutate(VIRUS_ID_PART1 = gsub("[^A-z]", "", VIRUS_ID_PART1)) %>%
+  mutate(VIRUS_ID_PART1 = ifelse(is.na(VIRUS_ID_PART1), "", VIRUS_ID_PART1)) %>%
+  mutate(VIRUS_ID_PART2 = sapply(strsplit(virus_name_clean, "-"), function(x) rle(x)$value[3])) %>%
+  mutate(VIRUS_ID_PART2 = ifelse(VIRUS_ID_PART2 == "2", "2", gsub("[^A-z]", "", VIRUS_ID_PART2))) %>%
+  mutate(VIRUS_ID_PART2 = ifelse(is.na(VIRUS_ID_PART2), "", VIRUS_ID_PART2)) %>%
+  mutate(YM_collection = substr(`Collection date`, 1, 7)) %>%
+  select(virus_name_clean, VIRUS_ID_PART1, VIRUS_ID_PART2, originating_lab, submitting_lab, YM_collection, everything())
+
+# select vars of use
+gap_gisaid_labs_select <- gap_gisaid_labs %>%
+  select(c("virus_name_clean", "VIRUS_ID_PART1", "VIRUS_ID_PART2", "originating_lab", "submitting_lab", "YM_collection", "Collection date", "Location", "Host", "Lineage", "virus", "gisaid_epi_isl", "date",	"region", "country", "division", "location", "pango_lineage")) 
+
+# remove rows where submitting_lab is na and the collection date has at least has the year-month and the year is in 23/24
+# no longer try to actively reach out for/expecting to receive 2020, 2021, or 2022 data
+gap_gisaid_labs_na_rm <- gap_gisaid_labs_select[
+  #!is.na(gap_gisaid_labs_select$submitting_lab) & 
+  str_detect(gap_gisaid_labs_select$YM_collection, "[[:digit:]]{4}-[[:digit:]]{2}(-[[:digit:]]{2})?") & 
+  str_detect(gap_gisaid_labs_select$YM_collection, "^2023|^2024")
+,]
+
+```
+
+# Read in genbank data
+```{r}
+# read in genbank csv
+files <- list.files('GenBank Data/',
+                    pattern = '^wa_genbank_.+csv$',
+                    full.names = T)
+files <- sort(files, decreasing = T)[1]
+genbank <- fread(files, nThread = 2, colClasses = 'character', data.table = FALSE)
+```
+
+# Create a df with all rows from genbank where the SEQUENCE_ACCESSIONS (strain) that DO NOT EXIST in WDRS.
+```{r}
+gap_genbank <- genbank[(!(tolower(genbank$`Isolate Lineage`) %in% tolower(wdrs_seq))), ]
+
+gap_genbank_labs <- gap_genbank %>%
+#  left_join(wa_gisaid_metadata, by = c(virus_name_clean = "strain")) %>%
+  mutate(VIRUS_ID_PART1 = sapply(strsplit(`Isolate Lineage`, "-"), function(x) rle(x)$value[2])) %>%
+  mutate(VIRUS_ID_PART1 = gsub("[^A-z]", "", VIRUS_ID_PART1)) %>%
+  mutate(VIRUS_ID_PART1 = ifelse(is.na(VIRUS_ID_PART1), "", VIRUS_ID_PART1)) %>%
+  mutate(VIRUS_ID_PART2 = sapply(strsplit(`Isolate Lineage`, "-"), function(x) rle(x)$value[3])) %>%
+  mutate(VIRUS_ID_PART2 = ifelse(VIRUS_ID_PART2 == "2", "2", gsub("[^A-z]", "", VIRUS_ID_PART2))) %>%
+  mutate(VIRUS_ID_PART2 = ifelse(is.na(VIRUS_ID_PART2), "", VIRUS_ID_PART2)) %>%
+  mutate(YM_collection = substr(`Isolate Collection date`, 1, 7)) %>%
+  select(`Isolate Lineage`, VIRUS_ID_PART1, VIRUS_ID_PART2, cleaned_lab, YM_collection, everything())
+
+# select vars of use
+gap_genbank_labs_select <- gap_genbank_labs %>%
+  select(c("Isolate Lineage", "VIRUS_ID_PART1", "VIRUS_ID_PART2", "cleaned_lab", "YM_collection", "Isolate Collection date", "Geographic Location", "Host Common Name", "Virus Pangolin Classification", "Accession")) 
+
+# remove rows where submitting_lab is na and the collection date has at least has the year-month and the year is in 23/24
+# no longer try to actively reach out for/expecting to receive 2020, 2021, or 2022 data
+gap_genbank_labs_na_rm <- gap_genbank_labs_select[
+  str_detect(gap_genbank_labs_select$YM_collection, "[[:digit:]]{4}-[[:digit:]]{2}(-[[:digit:]]{2})?") & 
+  str_detect(gap_genbank_labs_select$YM_collection, "^2023|^2024")
+,]
+
+```
+
+# Group labs using VIRUS_ID_PART1 and VIRUS_ID_PART2
+# submitting lab/originating lab often have variations of the same lab name making grouping difficult
+# create a new variable "gap_lab"
+```{r}
+
+gap_gisaid_labs_na_rm <- gap_gisaid_labs_na_rm %>% 
+  mutate(gap_lab = case_when(
+    
+    # ELR Submitters
+    # Aegis -ASC- or -CDC-ASC-
+    VIRUS_ID_PART1 =='ASC' | VIRUS_ID_PART2 =='ASC' ~ "Aegis",
+    # Helix -CDC-STM-
+    VIRUS_ID_PART1 =='CDC' & VIRUS_ID_PART2 =='STM' ~ "Helix",
+    # Helix CDC-VSX-
+    VIRUS_ID_PART1 =='CDC' & VIRUS_ID_PART2 =='VSX' ~ "Helix",
+    # Labcorp -CDC-LC-
+    VIRUS_ID_PART1 =='CDC' & VIRUS_ID_PART2 =='LC' ~ "Labcorp",
+    # Quest -QDX- or -CDC-QDX-
+    VIRUS_ID_PART1 =='QDX' ~ "Quest",
+    VIRUS_ID_PART1 =='CDC' & VIRUS_ID_PART2 =='QDX' ~ "Quest",
+    # UW 3 formats, -UW-, -CDC-UW- and Dr Michael Gale -MG_LHLV_0
+    VIRUS_ID_PART1 =='UW' | VIRUS_ID_PART1 == 'MG_LHLV_O' ~ "UW Virology",
+    VIRUS_ID_PART1 =='CDC' & VIRUS_ID_PART2 =='UW' ~ "UW Virology",
+    
+    # PHL - 2 formats, the classic -PHL- and the CDC format -CDC-2-
+    VIRUS_ID_PART1 =='PHL' ~ "PHL",
+    VIRUS_ID_PART1 =='CDC' & VIRUS_ID_PART2 =='2' ~ "PHL/CDC",
+  
+    # Template Submitters
+    # Arizona State
+    VIRUS_ID_PART1 =='ASU' ~ "ASU",
+    # Curative 
+    VIRUS_ID_PART1 =='Curative' ~ "Curative",
+    # Infinity Biologix
+    VIRUS_ID_PART1 =='CDC' & VIRUS_ID_PART2 =='IBX' ~ "Infinity Biologix",
+    # Lauring Lab - University of Michigan, Vanderbilt Medical Center
+    VIRUS_ID_PART1 =='IVY' ~ "Lauring lab",
+    # Seattle Flu Study
+    VIRUS_ID_PART1 =='S' ~ "Seattle Flu Study",
+    # US Air Force School of Medicine
+    VIRUS_ID_PART1 =='USAFSAM' ~ "USAFSAM",
+    
+    # Other GISAID Labs  
+    # Mako Medical
+    VIRUS_ID_PART1 =='CDC' & VIRUS_ID_PART2 =='MMB' ~ "Mako Medical",
+    # Northwestern Memorial Hospital
+    VIRUS_ID_PART1 =='NM' ~ "NW Memorial Hosp",
+    # Oregon Health and Science University Lab Services Molecular Microbiology Lab
+    VIRUS_ID_PART1 =='OHSU' ~ "OHSU",
+    # Oregon State University TRACE
+    VIRUS_ID_PART1 =='TRACE' ~ "OSU TRACE",
+    # Kansas Health
+    VIRUS_ID_PART1 =='KHEL' ~ "Kansas Health",
+    # Virginia Tech
+    VIRUS_ID_PART1 =='VTVAS' | VIRUS_ID_PART1=='VTVASGSC' ~ "Virginia Tech",
+    # Grubaugh Lab Yale
+    VIRUS_ID_PART1 =='Yale' ~ "Yale",
+    
+    # If -CDC- but no PART2, label CDC
+    VIRUS_ID_PART1 =='CDC' & VIRUS_ID_PART2 =='' ~ originating_lab,
+    
+    # Everything else, list submitting lab
+    TRUE ~ submitting_lab
+    
+  ))
+
+```
+
+
+# Group labs using VIRUS_ID_PART1 and VIRUS_ID_PART2
+# submitting lab/originating lab often have variations of the same lab name making grouping difficult
+# create a new variable "gap_lab"
+```{r}
+
+gap_genbank_labs_na_rm <- gap_genbank_labs_na_rm %>% 
+  mutate(gap_lab = case_when(
+    
+    # ELR Submitters
+    # Aegis -ASC- or -CDC-ASC-
+    VIRUS_ID_PART1 =='ASC' | VIRUS_ID_PART2 =='ASC' ~ "Aegis",
+    # Helix -CDC-STM-
+    VIRUS_ID_PART1 =='CDC' & VIRUS_ID_PART2 =='STM' ~ "Helix",
+    # Helix CDC-VSX-
+    VIRUS_ID_PART1 =='CDC' & VIRUS_ID_PART2 =='VSX' ~ "Helix",
+    # Labcorp -CDC-LC-
+    VIRUS_ID_PART1 =='CDC' & VIRUS_ID_PART2 =='LC' ~ "Labcorp",
+    # Quest -QDX- or -CDC-QDX-
+    VIRUS_ID_PART1 =='QDX' ~ "Quest",
+    VIRUS_ID_PART1 =='CDC' & VIRUS_ID_PART2 =='QDX' ~ "Quest",
+    # UW 3 formats, -UW-, -CDC-UW- and Dr Michael Gale -MG_LHLV_0
+    VIRUS_ID_PART1 =='UW' | VIRUS_ID_PART1 == 'MG_LHLV_O' ~ "UW Virology",
+    VIRUS_ID_PART1 =='CDC' & VIRUS_ID_PART2 =='UW' ~ "UW Virology",
+    
+    # PHL - 2 formats, the classic -PHL- and the CDC format -CDC-2-
+    VIRUS_ID_PART1 =='PHL' ~ "PHL",
+    VIRUS_ID_PART1 =='CDC' & VIRUS_ID_PART2 =='2' ~ "PHL/CDC",
+  
+    # Template Submitters
+    # Arizona State
+    VIRUS_ID_PART1 =='ASU' ~ "ASU",
+    # Curative 
+    VIRUS_ID_PART1 =='Curative' ~ "Curative",
+    # Infinity Biologix
+    VIRUS_ID_PART1 =='CDC' & VIRUS_ID_PART2 =='IBX' ~ "Infinity Biologix",
+    # Lauring Lab - University of Michigan, Vanderbilt Medical Center
+    VIRUS_ID_PART1 =='IVY' ~ "Lauring lab",
+    # Seattle Flu Study
+    VIRUS_ID_PART1 =='S' ~ "Seattle Flu Study",
+    # US Air Force School of Medicine
+    VIRUS_ID_PART1 =='USAFSAM' ~ "USAFSAM",
+    
+    # Other GISAID Labs  
+    # Mako Medical
+    VIRUS_ID_PART1 =='CDC' & VIRUS_ID_PART2 =='MMB' ~ "Mako Medical",
+    # Northwestern Memorial Hospital
+    VIRUS_ID_PART1 =='NM' ~ "NW Memorial Hosp",
+    # Oregon Health and Science University Lab Services Molecular Microbiology Lab
+    VIRUS_ID_PART1 =='OHSU' ~ "OHSU",
+    # Oregon State University TRACE
+    VIRUS_ID_PART1 =='TRACE' ~ "OSU TRACE",
+    # Kansas Health
+    VIRUS_ID_PART1 =='KHEL' ~ "Kansas Health",
+    # Virginia Tech
+    VIRUS_ID_PART1 =='VTVAS' | VIRUS_ID_PART1=='VTVASGSC' ~ "Virginia Tech",
+    # Grubaugh Lab Yale
+    VIRUS_ID_PART1 =='Yale' ~ "Yale",
+    
+    # Everything else, list submitting lab
+    TRUE ~ cleaned_lab
+    
+  ))
+
+```
+
+# Create gap by lab summary table - used for email alert
+```{r}
+# Define today and 30 days ago
+today <- Sys.Date()
+thirty_days <- today - 30
+
+# Filter data to allow a 30 day lag
+gap_gisaid_labs_na_rm <- gap_gisaid_labs_na_rm %>% filter(`Collection date` < thirty_days)
+
+# Filter wa_gisaid to same time period to obtain total records 
+gisaid_2023_beyond <- wa_gisaid %>% filter(str_detect(YM_collection, "^2023|^2024")) %>% filter(`Collection date` < thirty_days)
+
+# Group by lab
+gap_by_lab <- gap_gisaid_labs_na_rm %>% 
+  mutate(gap_lab = case_when(
+         gap_lab == "Kaiser Permanente Washington Health Research Institute" ~ "Kaiser Permanente",
+         TRUE ~ gap_lab),
+         Y_collection = substr(YM_collection, 1, 4)) %>%
+  select(gap_lab, Y_collection) %>% 
+  # Total number of gap records
+  group_by(gap_lab) %>% 
+  mutate(Total = n()) %>% 
+  arrange(desc(Total)) %>% 
+  group_by(gap_lab, Y_collection) %>%
+  mutate(Count = n()) %>%
+  distinct() %>% 
+  ungroup()
+
+# Remove Total column if there is only one year:
+if(all(gap_by_lab$Count == gap_by_lab$Total)) gap_by_lab$Total <- NULL
+
+# Rename NA gap labs:
+gap_by_lab$gap_lab[is.na(gap_by_lab$gap_lab)] <- 'NA'
+
+# Add Total row (one per collection year):
+# Define collection years
+collection_years <- unique(gap_by_lab$Y_collection)
+
+# create an empty Total row for each collection year
+gap_by_lab[(nrow(gap_by_lab)+1):(nrow(gap_by_lab)+length(collection_years)), 'gap_lab'] <- rep('Total', length(collection_years))
+gap_by_lab[gap_by_lab$gap_lab == 'Total', 'Y_collection'] <- collection_years
+
+if(length(collection_years) > 1) {
+  # Calculate running total for all years
+  gap_by_lab[gap_by_lab$gap_lab == 'Total', 'Total'] <- sum(gap_by_lab$Count, na.rm = T)
+}
+
+# Calculate Total for each collection year
+for (year in collection_years) {
+  gap_by_lab[gap_by_lab$gap_lab == 'Total' & gap_by_lab$Y_collection == year, 'Count'] <- 
+    sum(gap_by_lab[gap_by_lab$Y_collection == year, 'Count'], na.rm = T) 
+}
+
+# Add percentage to year columns and convert to string with 'COUNT (PERCENT_OF_GISAID%)' format
+gap_by_lab <- gap_by_lab %>% 
+  rowwise() %>% 
+  mutate(Pct = 100*Count/nrow(gisaid_2023_beyond[substr(gisaid_2023_beyond$YM_collection, 1, 4) == Y_collection, ]),
+         Count = paste0(Count, 
+                        ' (', 
+                        ifelse(Pct < 0.01, '<0.01', format(round(Pct, digits = 2), nsmall = 2)),
+                        '%)'),
+         Pct = NULL) %>% 
+  tidyr::pivot_wider(names_from = Y_collection,
+                     values_from = Count,
+                     values_fill = '0') 
+  
+#reorder columns:
+gap_by_lab <- gap_by_lab %>% select(`Gap Lab` = gap_lab, starts_with('202'), any_of('Total'))
+
+# Adjust table formatting and add footnote
+gap_by_lab_ft <- flextable(gap_by_lab) %>% 
+  theme_vanilla() %>% 
+  width(j = 'Gap Lab',
+                   width = 2.50) %>%
+  width(j = startsWith(names(gap_by_lab), '202'),
+                   width = 1.25) %>% 
+  footnote(i = 1, j = startsWith(names(gap_by_lab), '202'),
+                      value = as_paragraph('n (%) where % is equal to n / Total N of GISAID sequences during the given year'),
+                      ref_symbols = '+',
+                      part = 'header')
+
+if('Total' %in% names(gap_by_lab)) {
+  gap_by_lab_ft <- width(gap_by_lab_ft, j = 'Total', width = 0.75)
+}
+
+# Save gap_by_lab for email summary notification
+save_as_image(gap_by_lab_ft, 
+                         path="Gap_data/email_summaries/gap_by_lab_gisaid_summary.png", 
+                         webshot = "webshot2")
+
+
+```
+
+# Create gap by lab summary table - used for email alert
+```{r}
+# Define today and 30 days ago
+today <- Sys.Date()
+thirty_days <- today - 30
+
+# Filter data to allow a 30 day lag
+gap_genbank_labs_na_rm <- gap_genbank_labs_na_rm %>% 
+  mutate(`Isolate Collection date` = as.Date(`Isolate Collection date`)) %>% 
+  filter(`Isolate Collection date` < thirty_days)
+
+# Filter wa_gisaid to same time period to obtain total records 
+genbank_2023_beyond <- genbank %>% 
+  filter(str_detect(`Isolate Collection date`, "^2023|^2024")) %>% 
+  mutate(`Isolate Collection date` = as.Date(`Isolate Collection date`)) %>% 
+  filter(`Isolate Collection date` < thirty_days)
+
+# Group by lab
+gap_by_lab_genbank <- gap_genbank_labs_na_rm %>% 
+  mutate(gap_lab = case_when(
+         gap_lab == "Kaiser Permanente Washington Health Research Institute" ~ "Kaiser Permanente",
+         TRUE ~ gap_lab),
+         Y_collection = substr(YM_collection, 1, 4)) %>%
+  select(gap_lab, Y_collection) %>% 
+  # Total number of gap records
+  group_by(gap_lab) %>% 
+  mutate(Total = n()) %>% 
+  arrange(desc(Total)) %>% 
+  group_by(gap_lab, Y_collection) %>%
+  mutate(Count = n()) %>%
+  distinct() %>% 
+  ungroup()
+
+# Remove Total column if there is only one year:
+if(all(gap_by_lab_genbank$Count == gap_by_lab_genbank$Total)) gap_by_lab_genbank$Total <- NULL
+
+# Rename NA gap labs:
+gap_by_lab_genbank$gap_lab[is.na(gap_by_lab_genbank$gap_lab)] <- 'NA'
+
+# Add Total row (one per collection year):
+# Define collection years
+collection_years <- unique(gap_by_lab_genbank$Y_collection)
+
+
+# create an empty Total row for each collection year
+gap_by_lab_genbank[(nrow(gap_by_lab_genbank)+1):(nrow(gap_by_lab_genbank)+length(collection_years)), 'gap_lab'] <- rep('Total', length(collection_years))
+gap_by_lab_genbank[gap_by_lab_genbank$gap_lab == 'Total', 'Y_collection'] <- collection_years
+
+if(length(collection_years) > 1) {
+  # Calculate running total for all years
+  gap_by_lab_genbank[gap_by_lab_genbank$gap_lab == 'Total', 'Total'] <- sum(gap_by_lab_genbank$Count, na.rm = T)
+}
+
+# Calculate Total for each collection year
+for (year in collection_years) {
+  gap_by_lab_genbank[gap_by_lab_genbank$gap_lab == 'Total' & gap_by_lab_genbank$Y_collection == year, 'Count'] <- 
+    sum(gap_by_lab_genbank[gap_by_lab_genbank$Y_collection == year, 'Count'], na.rm = T) 
+}
+  
+# Add percentage to year columns and convert to string with 'COUNT (PERCENT_OF_GISAID%)' format
+gap_by_lab_genbank <- gap_by_lab_genbank %>% 
+  rowwise() %>% 
+  mutate(Pct = 100*Count/nrow(genbank_2023_beyond[substr(genbank_2023_beyond$`Isolate Collection date`, 1, 4) == Y_collection, ]),
+         Count = paste0(Count, 
+                        ' (', 
+                        ifelse(Pct < 0.01, '<0.01', format(round(Pct, digits = 2), nsmall = 2)),
+                        '%)'),
+         Pct = NULL) %>% 
+  tidyr::pivot_wider(names_from = Y_collection,
+                     values_from = Count,
+                     values_fill = '0') 
+  
+#reorder columns:
+gap_by_lab_genbank <- gap_by_lab_genbank %>% select(`Gap Lab` = gap_lab, starts_with('202'), any_of('Total'))
+
+# Adjust table formatting and add footnote
+gap_by_lab_genbank_ft <- flextable(gap_by_lab_genbank) %>% 
+  theme_vanilla() %>% 
+  width(j = 'Gap Lab',
+                   width = 2.50) %>%
+  width(j = startsWith(names(gap_by_lab_genbank), '202'),
+                   width = 1.25) %>% 
+  footnote(i = 1, j = startsWith(names(gap_by_lab_genbank), '202'),
+                      value = as_paragraph('n (%) where % is equal to n / Total N of GISAID sequences during the given year'),
+                      ref_symbols = '+',
+                      part = 'header')
+
+if('Total' %in% names(gap_by_lab_genbank)) {
+  gap_by_lab_genbank_ft <-  width(gap_by_lab_genbank_ft, j = 'Total', width = 0.75)
+}
+
+# Save gap_by_lab_genbank for email summary notification
+save_as_image(gap_by_lab_genbank_ft, 
+                         path="Gap_data/email_summaries/gap_by_lab_genbank_summary.png", 
+                         webshot = "webshot2")
+
+
+```
+
+# Create a pivot table from gap_gisaid_labs by proportion.
+```{r}
+# create a pivot table where the observations are submitting_lab, variables are YM_collection, and the values are the proportion of observations
+summ_table_prop <- gap_gisaid_labs_na_rm %>%
+  # select the submitting_lab and YM_collection variables
+  select(gap_lab, YM_collection) %>% 
+  # group by submitting_lab and YM_collection
+  group_by(gap_lab, YM_collection) %>% 
+  # summarise the number of observations
+  summarise(count = n()) %>%
+  # ungroup
+  ungroup() %>%
+  # create new var that contains the total number of records/observations from gap_gisaid_labs_na_rm
+  mutate(total = sum(count)) %>%
+  # create new var that contains the proportion in percent of the count/total for each submitting_lab and YM_collection
+  mutate(proportion = (count/total) * 100) %>%
+  # remove the count and total column
+  select(-c(count, total)) %>%
+  # group by submitting_lab
+  group_by(gap_lab) %>%
+  # create new var that contains the sum of proportions by submitting_lab
+  mutate(Grand_Total = sum(proportion)) %>%
+  # pivot the table wide so that the observations are submitting_lab, variables are YM_collection, and the values are the proportion
+  pivot_wider(
+    names_from = YM_collection,
+    values_from = proportion
+  ) %>%
+  # replace all NA with 0.00
+  # probably an easier way, but this will mutate across all numeric columns and replace_na with 0. Numeric vars are hard to format with 0.00 (could use options(digits=2) but it didn't work for me - FA 2/9/23)
+  mutate(across(where(is.numeric),~replace_na(.,0.00))) %>%
+  #rename submitting_lab as Submitting_Lab
+  rename("lab" = "gap_lab") %>%
+  arrange(desc(Grand_Total))
+
+# initialize an empty df that is 1 row, the same number of variables as summ_table, and the var names as summ_table. This will hold the col sums
+summ_row_init_prop <- as.data.frame(
+  matrix(
+    nrow = 1, 
+    ncol = ncol(summ_table_prop),
+    dimnames = list(
+      c(),
+      names(summ_table_prop))
+  )
+)
+
+# assign 'Grand_Total' to var position 1 this will just denote the row is a summary rather than a Submitting_Lab
+summ_row_init_prop[[1, 1]] <- "Grand_Total"
+# assign the sums of var's 2:X from summ_table to var's 2:ncol(summ_table)
+summ_row_init_prop[1, 2:ncol(summ_row_init_prop)] <- colSums(summ_table_prop[,2:ncol(summ_table_prop)],)
+
+# create a final df summ_table_clean by binding summ_row_init to summ_table and cleaning up the df 
+summ_table_prop_clean <- summ_table_prop  %>%
+  # row bind summ_row_init
+  rbind(summ_row_init_prop[1,]) %>%
+  # reorder var's with Submitting_Lab, followed by the YM_collection (increasing) and Grand_Total
+  select(c("lab", sort(names(summ_table_prop), decreasing = FALSE)[! sort(names(summ_table_prop), decreasing = FALSE) %in% c("NA", "lab", "Grand_Total")], "Grand_Total")) %>%
+  # round all values that are numeric to the 2nd decimal place
+  mutate_if(is.numeric, round, digits = 2)
+```
+
+# Create a pivot table from gap_gisaid_labs by count.
+```{r}
+# create a pivot table where the observations are submitting_lab, variables are YM_collection, and the values are the proportion of observations
+summ_table_count <- gap_gisaid_labs_na_rm %>%
+  # select the submitting_lab and YM_collection variables
+  select(gap_lab, YM_collection) %>% 
+  # group by submitting_lab and YM_collection
+  group_by(gap_lab, YM_collection) %>% 
+  # summarise the number of observations
+  summarise(count = n()) %>%
+  # create new var that contains the sum of proportions by submitting_lab
+  mutate(Grand_Total = sum(count)) %>%
+  # pivot the table wide so that the observations are submitting_lab, variables are YM_collection, and the values are the proportion
+  pivot_wider(
+    names_from = YM_collection,
+    values_from = count
+  ) %>% 
+  # replace all NA with 0.00
+  mutate(across(where(is.numeric),~replace_na(.,0.00))) %>%
+  #rename submitting_lab as Submitting_Lab
+  rename("lab" = "gap_lab") %>%
+  arrange(desc(Grand_Total))
+
+# initialize an empty df that is 1 row, the same number of variables as summ_table, and the var names as summ_table. This will hold the col sums
+summ_row_init_count <- as.data.frame(
+  matrix(
+    nrow = 1, 
+    ncol = ncol(summ_table_count),
+    dimnames = list(
+      c(),
+      names(summ_table_count))
+  )
+)
+
+# assign 'Grand_Total' to var position 1 this will just denote the row is a summary rather than a Submitting_Lab
+summ_row_init_count[[1, 1]] <- "Grand_Total"
+# assign the sums of var's 2:X from summ_table to var's 2:ncol(summ_table)
+summ_row_init_count[1, 2:ncol(summ_row_init_count)] <- colSums(summ_table_count[,2:ncol(summ_table_count)],)
+
+# create a final df summ_table_clean by binding summ_row_init to summ_table and cleaning up the df 
+summ_table_count_clean <- summ_table_count  %>%
+  # row bind summ_row_init
+  rbind(summ_row_init_count[1,]) %>%
+  # reorder var's with Submitting_Lab, followed by the YM_collection (increasing) and Grand_Total
+  select(c("lab", sort(names(summ_table_count), decreasing = FALSE)[! sort(names(summ_table_count), decreasing = FALSE) %in% c("NA", "lab", "Grand_Total")], "Grand_Total")) 
+```
+
+# Create an xlsx workbook, format, and output.
+```{r}
+# create workbook wb
+wb <- createWorkbook()
+
+# add worksheets named 'Summary Proportion', 'Summary Count, 'Details'
+addWorksheet(wb, "Summary Proportion", gridLines = TRUE)
+addWorksheet(wb, "Summary Count", gridLines = TRUE)
+addWorksheet(wb, "Details", gridLines = TRUE)
+
+# write the summ_table_prop_clean df to the 'Summary Proportion' sheet
+writeData(wb, "Summary Proportion", summ_table_prop_clean)
+# write the summ_table_count_clean df to the 'Summary Count' sheet
+writeData(wb, "Summary Count", summ_table_count_clean)
+# write the gap_gisaid_labs df to the 'Details' sheet
+writeData(wb, "Details", gap_gisaid_labs_select)
+
+# set col width of var position 1 from the 'Summary Proportion' sheet to 125
+setColWidths(wb, "Summary Proportion", cols = 1, width = 125)
+# set col width of var position 1 from the 'Summary Count' sheet to 125
+setColWidths(wb, "Summary Count", cols = 1, width = 125)
+
+# create a green, yellow, orange, red, and grey style
+green_style <- createStyle(fontColour = "#000000", bgFill = "#C6EFCE")
+yellow_style <- createStyle(fontColour = "#000000", bgFill = "#FFFF00")
+orange_style <- createStyle(fontColour = "#000000", bgFill = "#FFA500")
+red_style <- createStyle(fontColour = "#000000", bgFill = "#FF0000")
+grey_style <- createStyle(fontColour = "#000000", bgFill = "#D3D3D3")
+
+# format any values in the 'Summary Proportion' sheet in vars 2:ncol(summ_table_clean) and rows 2:nrow(summ_table_clean)+1 that are >=0 with green_style
+conditionalFormatting(
+  wb, 
+  "Summary Proportion", 
+  cols = 2:ncol(summ_table_prop_clean),
+  rows = 1:nrow(summ_table_prop_clean)+1, 
+  rule = ">=0", 
+  style = green_style
+)
+# format any values in the 'Summary Proportion' sheet in vars 2:ncol(summ_table_clean) and rows 2:nrow(summ_table_clean)+1 that are >3 with yellow_style
+conditionalFormatting(
+  wb, 
+  "Summary Proportion", 
+  cols = 2:ncol(summ_table_prop_clean),
+  rows = 1:nrow(summ_table_prop_clean)+1, 
+  rule = ">3", 
+  style = yellow_style 
+)
+# format any values in the 'Summary' sheet in vars 2:ncol(summ_table_clean) and rows 2:nrow(summ_table_clean)+1 that are >5 with orange_style
+conditionalFormatting(
+  wb, 
+  "Summary Proportion", 
+  cols = 2:ncol(summ_table_prop_clean),
+  rows = 1:nrow(summ_table_prop_clean)+1, 
+  rule = ">5", 
+  style = orange_style
+)
+# format any values in the 'Summary Proportion' sheet in vars 2:ncol(summ_table_clean) and rows 2:nrow(summ_table_clean)+1 that are >10 with red_style
+conditionalFormatting(
+  wb, 
+  "Summary Proportion", 
+  cols = 2:ncol(summ_table_prop_clean),
+  rows = 1:nrow(summ_table_prop_clean)+1, 
+  rule = ">10", 
+  style = red_style
+)
+# format any values in the 'Summary Proportion' sheet in vars 1:ncol(summ_table_clean) and row 1 with grey_style (i.e first row)
+conditionalFormatting(
+  wb, 
+  "Summary Proportion", 
+  cols = 1:ncol(summ_table_prop_clean),
+  rows = 1,
+  rule = "!=0", 
+  style = grey_style
+)
+# format any values in the 'Summary Proportion' sheet in vars 1:ncol(summ_table_clean) and rows 2:nrow(summ_table_clean)+1 that contains the string 'Grand_Total' with grey_style (i.e first col)
+conditionalFormatting(
+  wb, 
+  "Summary Proportion", 
+  cols = 1,
+  rows = 1:nrow(summ_table_prop_clean)+1,
+  type = "contains",
+  rule = "Grand_Total", 
+  style = grey_style
+)
+
+# obtain the count corresponding to the 3, 5, 10% proportions used for color coding cells above
+total_count_x <- nrow(gap_gisaid_labs_na_rm)
+# corresponding count for 3%
+yellow_count_x <- (3/100)*total_count_x
+# corresponding count for 5%
+orange_count_x <- (5/100)*total_count_x
+# corresponding count for 10%
+red_count_x <- (10/100)*total_count_x
+
+# format any values in the 'Summary Count' sheet in vars 2:ncol(summ_table_clean) and rows 2:nrow(summ_table_clean)+1 that are >=0 with green_style
+conditionalFormatting(
+  wb, 
+  "Summary Count", 
+  cols = 2:ncol(summ_table_prop_clean),
+  rows = 1:nrow(summ_table_prop_clean)+1, 
+  rule = ">=0", 
+  style = green_style
+)
+# format any values in the 'Summary Count' sheet in vars 2:ncol(summ_table_clean) and rows 2:nrow(summ_table_clean)+1 that are >3 with yellow_style
+conditionalFormatting(
+  wb, 
+  "Summary Count", 
+  cols = 2:ncol(summ_table_prop_clean),
+  rows = 1:nrow(summ_table_prop_clean)+1, 
+  rule = paste0(">", yellow_count_x), 
+  style = yellow_style 
+)
+# format any values in the 'Summary Count' sheet in vars 2:ncol(summ_table_clean) and rows 2:nrow(summ_table_clean)+1 that are >5 with orange_style
+conditionalFormatting(
+  wb, 
+  "Summary Count", 
+  cols = 2:ncol(summ_table_prop_clean),
+  rows = 1:nrow(summ_table_prop_clean)+1, 
+  rule = paste0(">", orange_count_x), 
+  style = orange_style
+)
+# format any values in the 'Summary Count' sheet in vars 2:ncol(summ_table_clean) and rows 2:nrow(summ_table_clean)+1 that are >10 with red_style
+conditionalFormatting(
+  wb, 
+  "Summary Count", 
+  cols = 2:ncol(summ_table_prop_clean),
+  rows = 1:nrow(summ_table_prop_clean)+1, 
+  rule = paste0(">", red_count_x), 
+  style = red_style
+)
+# format any values in the 'Summary Count' sheet in vars 1:ncol(summ_table_clean) and row 1 with grey_style (i.e first row)
+conditionalFormatting(
+  wb, 
+  "Summary Count", 
+  cols = 1:ncol(summ_table_prop_clean),
+  rows = 1,
+  rule = "!=0", 
+  style = grey_style
+)
+# format any values in the 'Summary Count' sheet in vars 1:ncol(summ_table_clean) and rows 2:nrow(summ_table_clean)+1 that contains the string 'Grand_Total' with grey_style (i.e first col)
+conditionalFormatting(
+  wb, 
+  "Summary Count", 
+  cols = 1,
+  rows = 1:nrow(summ_table_prop_clean)+1,
+  type = "contains",
+  rule = "Grand_Total", 
+  style = grey_style
+)
+
+# output wb
+saveWorkbook(wb, 
+             file.path("Gap_data", 
+                       paste0("GAP_GISAID_LABS_", today(), ".xlsx")
+                       ), 
+             TRUE
+             )
+```
+
+# Gap Summary Email
+```{r}
+# Read in HTML
+gap_gisaid_table_email <- add_image("Gap_data/email_summaries/gap_by_lab_gisaid_summary.png", 
+                             width = 800)
+gap_genbank_table_email <- add_image("Gap_data/email_summaries/gap_by_lab_genbank_summary.png", 
+                             width = 800)
+
+# Make the email body - make updates to email here if needed
+message_body <-
+  glue::glue(
+    "Good Morning,
+
+A new wa_gisaid.rds and GAP_GISAID_LABS_{Sys.Date()}.csv are available.
+
+Below is the GENBANK Gap Data Summary for 2023-01-01 to {thirty_days}:
+
+{gap_genbank_table_email}
+
+
+Below is the GISAID Gap Data Summary for 2023-01-01 to {thirty_days}:
+
+{gap_gisaid_table_email}
+
+Thanks,
+
+DIQA
+
+ps - I'm a bot, bleep bloop"
+  )
+email <- blastula::compose_email(body = md(message_body))
+
+# Sending email by SMTP using a credentials file
+ email %>%
+   smtp_send(
+     to = c(""),
+     from = "",
+     subject = "Sequencing - Automated Notification - Gap Data/wa_gisaid.rds Complete",
+     credentials = creds_key(id = "")
+   )
+```
+
+# Exit run/render of script if it is not the first Wed of the month. When this rmd is ran from a trigger script which uses render() the script will stop here and only render up to this point.
+```{r}
+# exit if it is not the first Wed of the month 
+# if (!(wday(today()) == 4 & day(today()) <= 7)) {
+#   knit_exit()
+#   stop("Not the first Wed of the month")
+# }
+```
+
+# Create/select template columns
+```{r}
+# gap_outreach_final <- gap_gisaid_labs_na_rm %>% mutate(LAB_ACCESSION_ID = "",
+#                                                        SEQUENCE_ACCESSION_NUMBER = virus_name_clean,
+#                                                        SPECIMEN_COLLECTION_DATE = `Collection date`,
+#                                                        SUBMITTING_LAB = gap_lab,
+#                                                        ORIGINATING_LAB = originating_lab,
+#                                                        SEQUENCE_REASON = "",
+#                                                        SEQUENCE_STATUS = "",
+#                                                        PANGO_LINEAGE = pango_lineage,
+#                                                        FIRST_NAME = "",
+#                                                        LAST_NAME ="",
+#                                                        DOB = "",
+#                                                        ALTERNATIVE_ID = ""
+#                                                         ) %>%
+#                                                 select('LAB_ACCESSION_ID', 
+#                                                        'SEQUENCE_ACCESSION_NUMBER', 
+#                                                        'SPECIMEN_COLLECTION_DATE', 
+#                                                        'SUBMITTING_LAB',
+#                                                        'ORIGINATING_LAB',
+#                                                        'SEQUENCE_REASON', 
+#                                                        'SEQUENCE_STATUS', 
+#                                                        'PANGO_LINEAGE', 
+#                                                        'FIRST_NAME', 
+#                                                        'LAST_NAME', 
+#                                                        'DOB', 
+#                                                        'ALTERNATIVE_ID'
+#                                                        )
+    
+```
+
+# Produce "monthly" files for lab outreach
+```{r}
+# Will need to read in previously sent files to filter out data for new months files
+# TBD
+
+# Output a file for each lab
+# gap_outreach_final %>%
+#    group_by(SUBMITTING_LAB) %>%
+#    group_walk(~ write.xlsx(.x, paste0("Gap_data/lab_outreach_files/", .y$SUBMITTING_LAB, "_outreach_data_",today(), ".xlsx")), .keep=TRUE)
+
+```

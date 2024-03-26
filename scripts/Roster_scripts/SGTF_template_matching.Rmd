@@ -1,0 +1,632 @@
+---
+title: "sgtf_matching"
+author: "Emily Nebergall & Allie Warren"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+This script reads the COVID sgtf template files from the S-dropout folder in the Sequencing working directory, and finds WDRS matches for the records in the file on id or using demographic data and inexact matching. 
+
+# Setup {.tabset}
+
+## Load Libraries
+
+```{r libraries}
+library(tidyverse)
+library(fuzzyjoin)
+library(here)
+library(lubridate)
+library(readxl)
+library(DBI)
+library(odbc)
+library(dtplyr)
+library(fs)
+library(fastLink)
+```
+
+## Load Shared Functions/Objects
+```{r import shared filter functions and objects}
+# read in r_creds.RDS
+r_creds <-readRDS(file.path(Sys.getenv("USERPROFILE"), "Projects/Sequencing/Data_Objects", "r_creds.RDS")) 
+
+# Read in quality_filters
+source(file.path(Sys.getenv("USERPROFILE"), "Projects/Sequencing/Roster_scripts/quality_filters.R"))
+
+# Read in functions for performing fuzzy matching
+source(file.path(Sys.getenv("USERPROFILE"), "Projects/Sequencing/Roster_scripts/fuzzy_matching_functions.R"))
+
+# shared lab variable lists
+lab_vars <- readRDS("Data_Objects/lab_variables.rds")
+```
+
+# Load Data {.tabset}
+
+## Import SGTF Template Data
+```{r import data, warning = FALSE}
+
+files <- dir_ls("S-Dropouts/Submissions")
+
+# only include xlsx files
+files <- files[str_detect(files, "xlsx")]
+# remove temp/non accessible files
+files <- files[!str_detect(files, "~\\$")]
+
+# expected columns
+col_headers <- c(
+  "LAB_ACCESSION_ID",
+  "SPECIMEN_COLLECTION_DATE",
+  "FIRST_NAME",
+  "LAST_NAME",
+  "MIDDLE_NAME",
+  "DOB")
+
+# read in all files
+these_data <- lapply(files, read_xlsx, sheet = "Linelist", 
+                     col_types = c("text", "date", "text", "text", "text", "date"),
+                     range = cell_cols("A:F"))
+
+# check that files contain expected columns and that data is not all NA in any column
+# check that date columns (specimen collection date and DOB) have expected format
+for(x in names(these_data)) {
+  # check that data has all files
+  if(!all(col_headers %in% colnames(these_data[[x]]))) {
+    print(paste0(str_replace(x, ".*/", ""),
+                 " is missing the column(s): ",
+                 toString(setdiff(col_headers,colnames(these_data[[x]])))))
+  }
+  # check that column order is acceptable
+  col_order <- col_headers != colnames(these_data[[x]])
+  if(any(col_order)) {
+    print(paste0(str_replace(x, ".*/", ""),
+               " columns are ordered: ",
+               toString(colnames(these_data[[x]])), " instead of ", toString(col_headers)))
+  }
+  # check that collection date format is correct
+  collectiOn_date_format <- sapply(these_data[[x]]$SPECIMEN_COLLECTION_DATE,
+                                function(x) detect_date_format(x) | is.na(x))
+  if(any(!collectiOn_date_format)) {
+     print(paste0(str_replace(x, ".*/", ""),
+                 " has the incorrect collection date format in ",
+                 length(which(!collectiOn_date_format)), " rows"))
+  }
+  # check that DOB format is correct
+  dob_date_format <- sapply(these_data[[x]]$DOB,
+                                  function(x) detect_date_format(x) | is.na(x))
+  if(any(!dob_date_format)) {
+     print(paste0(str_replace(x, ".*/", ""),
+                 " has the incorrect DOB format in ",
+                 length(which(!dob_date_format)), " rows"))
+  }
+  # check that column isn't all NA
+  col_na <- apply(these_data[[x]], 2, function(y) all(is.na(y)))
+  if(any(col_na)) {
+    print(paste0(str_replace(x, ".*/", ""),
+                 " has all NAs in the column: ",
+                 names(col_na[col_na])))
+  }
+ 
+}
+
+# bind together all the files
+n <- length(these_data)
+sgtf_data <- bind_rows(these_data[1:n])
+```
+
+## Clean-up Input
+
+```{r clean up input}
+sgtf_data <- sgtf_data %>%
+  mutate(SPECIMEN_COLLECTION_DATE = lubridate::ymd(str_replace(SPECIMEN_COLLECTION_DATE, " .*", "")),
+         DOB = lubridate::ymd(DOB),
+         FIRST_NAME = annihilate(FIRST_NAME),
+         LAST_NAME = annihilate(LAST_NAME))
+
+sgtf_data <- sgtf_data[!duplicated(sgtf_data[,c('LAB_ACCESSION_ID', 'SPECIMEN_COLLECTION_DATE',
+                                                'FIRST_NAME', 'LAST_NAME', 'DOB')]),]
+sgtf_data <-  filter(sgtf_data, rowSums(is.na(sgtf_data)) != ncol(sgtf_data))
+
+sgtf_data$rowid <- seq(1, nrow(sgtf_data))
+
+```
+
+# WDRS Queries {.tabset}
+
+## Open  WDRS Connection 
+
+**IMPORTANT** the variables used to connect to WDRS are held within conn_list.RDS. All .RDS objects in this repository except for VOC.RDS are excluded from Git commits by declaring *.RDS in the .gitignore file because they are often used to hold our "secrets" such as credential and server connections. 
+
+We do not include server connections in code uploaded to GitHub. **WHY?** We have been asked by HTS to ensure our use of GitHub does not raise any security red flags. This server is an internal server containing confidential/restricted PHI. We want to hide this server information to reduce our possible “attack surface”. This connection may seem benign but it tells someone information they can use to "hack" into WDRS. SQL Server Native Client is now deprecated software and version 11 was the last release. Unsupported software is at higher risk of having security breaches. Additionally, someone would know the server name. 
+
+**So: DO NOT alter the code used to open the connection to WDRS in any way that creates a security risk. Continue to treat this connection as a secret and store its variables in a .RDS object (or other external object that is excluded from Git commits) rather than calling them directly here.**
+
+```{r wdrs connection}
+# connect
+connection <- DBI::dbConnect(odbc::odbc(), 
+                             Driver = r_creds$conn_list[1], 
+                             Server = r_creds$conn_list[2], 
+                             Database = r_creds$conn_list[3], 
+                             Trusted_connection = r_creds$conn_list[4], 
+                             ApplicationIntent = r_creds$conn_list[5])
+```
+
+## WDRS Query
+
+WDRS demographics data for sgtf matching
+
+```{r wdrs_entire}
+#wdrs_entire <- xfun::cache_rds({
+  wdrs_entire <- dbGetQuery(
+    connection,
+    "SELECT Distinct CASE_ID,
+                       [PATIENT__FIRSTNAME] as FNAME,
+                       [PATIENT__LASTNAME] as LNAME,
+                       [FILLER__ORDER__NUM] as SpecimenId,
+                       [PATIENT__DATE__OF__BIRTH] as DOB_WDRS,
+                       [SPECIMEN__COLLECTION__DTTM] as COLLECTION_DATE_WDRS,
+                       [FIRST_NAME] as FIRST_NAME,
+                       [LAST_NAME] as LAST_NAME
+  FROM [dbo].[DD_ELR_DD_ENTIRE] WHERE CODE = 'SARS'
+  AND STATUS != '6'
+  AND WDRS__RESULT__SUMMARY != 'NEGATIVE'"
+  ) 
+
+  # clean up WDRS names, remove characters that are not alphanumeric, remove white spaces
+  wdrs_entire <- wdrs_entire %>%
+    mutate(FNAME = annihilate(wdrs_entire$FNAME),
+           LNAME = annihilate(wdrs_entire$LNAME),
+           SpecimenId = as.character(SpecimenId),
+           FIRST_NAME = annihilate(wdrs_entire$FIRST_NAME),
+           LAST_NAME = annihilate(wdrs_entire$LAST_NAME)) %>%
+    unite(NAME_WDRS,
+          c(FNAME, LNAME),
+          remove = TRUE,
+          na.rm = TRUE) %>%
+    unite(ALT_NAME_WDRS,
+          c(FIRST_NAME, LAST_NAME),
+          remove = TRUE,
+          na.rm = TRUE)
+  
+#},
+#rerun = FALSE,
+#file = "sgtf_wdrs_query")
+
+```
+
+## Flattened Table Query
+
+```{r query flattened table}
+
+wdrs_flattened <- dbGetQuery(
+  connection,
+  "SELECT Distinct CASE_ID,
+  [CDC_N_COV_2019_SEQUENCE_SGTF] as SEQUENCE_SGTF,
+  FIRST_NAME,
+  LAST_NAME,
+  BIRTH_DATE
+  FROM [dbo].[DD_GCD_COVID_19_FLATTENED]")
+
+```
+
+
+## WDRS Names
+Create separate records for different versions of the name per person within WDRS to make matching easier
+
+```{r wdrs names}
+# Combine PATIENT NAME and NAME columns
+wdrs_entire <- wdrs_entire %>%
+   mutate(NAME_WDRS = case_when(
+      NAME_WDRS == "" ~ ALT_NAME_WDRS,
+      NAME_WDRS != "" ~ NAME_WDRS)
+      )
+
+# Get records where the PATIENT NAME and NAME columns differ
+alt_wdrs_name <- filter(wdrs_entire, NAME_WDRS != ALT_NAME_WDRS) %>%
+  mutate(NAME_WDRS = ALT_NAME_WDRS)
+
+# Add rows using the alternate name, duplicating the other columns
+wdrs_entire <- rbind.data.frame(wdrs_entire, alt_wdrs_name)
+
+
+```
+
+## WDRS DOB
+Create separate records for different versions of the DOB per person within WDRS to make matching easier
+
+```{r wdrs DOB}
+wdrs_entire <- left_join(wdrs_entire, wdrs_flattened %>% select(-FIRST_NAME, -LAST_NAME), by = 'CASE_ID')
+wdrs_entire <- wdrs_entire %>% 
+  mutate(DOB_WDRS = case_when(is.na(DOB_WDRS) & !is.na(BIRTH_DATE) ~ BIRTH_DATE,
+                              TRUE ~ DOB_WDRS))
+# if the WDRS entire and WDRS flattened table have different DOB, add a duplicate record with the alternate DOB (same method used for alt name)
+# Get records where the DOB_WDRS and BIRTH_DATE columns differ
+alt_wdrs_dob <- filter(wdrs_entire, DOB_WDRS != BIRTH_DATE) %>%
+  mutate(DOB_WDRS = BIRTH_DATE)
+# Add rows using the alternate name, duplicating the other columns, remove unused columns
+wdrs_entire <- rbind.data.frame(wdrs_entire, alt_wdrs_dob) %>% select(-SEQUENCE_SGTF, -BIRTH_DATE)
+
+```
+
+# Join with WDRS
+
+Join the SGTF and WDRS data using Lab AccessionID/Specimen ID
+
+```{r}
+# Join sgtf data with WDRS on lab accession id/specimen id
+sgtf_wdrs <- left_join(sgtf_data, wdrs_entire, by = c("LAB_ACCESSION_ID" ="SpecimenId"), na_matches = "never")
+
+
+
+# list of all perfectly matched specimens
+# add check on DOB match because some matched on ID but demographics were different
+sgtf_matched <- filter(sgtf_wdrs, !is.na(CASE_ID),
+                       DOB == DOB_WDRS)
+
+
+```
+
+# Filter ID Matches {.tabset}
+
+## Filter out cases already in WDRS
+
+The SGTF input files are cumulative, so we check whether a ercord has already been marked as SGTF in WDRS before adding it to the 
+roster of new records
+
+```{r}
+# input data is cumulative, so filter out records that are already SGTF Yes in WDRS
+cur_sgtf_records <- filter(wdrs_flattened, CASE_ID %in% sgtf_matched$CASE_ID & SEQUENCE_SGTF == "Yes")
+
+sgtf_new_matched <- filter(sgtf_matched, !CASE_ID %in% cur_sgtf_records$CASE_ID)
+
+matched_input <- filter(sgtf_matched, !LAB_ACCESSION_ID %in% sgtf_new_matched$LAB_ACCESSION_ID)$LAB_ACCESSION_ID
+```
+
+## Filter out Collection Date Mismatch
+
+```{r filter out collection date mismatch}
+# filter matches on collection date
+# require collection dates to be within 14 days
+sgtf_new_matched <- sgtf_new_matched %>%
+    mutate(int = interval(
+      ymd(SPECIMEN_COLLECTION_DATE),
+      ymd(COLLECTION_DATE_WDRS)
+    ),
+    COLLECTION_DATE_DISTANCE = abs(time_length(int, unit = "day")))
+  
+
+sgtf_date_matched <- filter(sgtf_new_matched, COLLECTION_DATE_DISTANCE <= 14 & !is.na(COLLECTION_DATE_DISTANCE))
+
+# remove duplicate accession/case id pairs
+sgtf_date_matched <- sgtf_date_matched[!duplicated(sgtf_date_matched[,c("LAB_ACCESSION_ID", "CASE_ID")]),]
+
+```
+
+## Write Collection Date Mistmatch to Error File
+
+```{r collection_date_mismatches}
+# write collection date mismatches to a review file
+sgtf_date_mismatch <- filter(sgtf_new_matched, COLLECTION_DATE_DISTANCE > 14 | is.na(COLLECTION_DATE_DISTANCE),
+                            !LAB_ACCESSION_ID %in% sgtf_date_matched$LAB_ACCESSION_ID)
+
+if(nrow(sgtf_date_mismatch) > 0) {
+  sgtf_date_mismatch <- sgtf_date_mismatch %>% select(-int)
+   write_csv(sgtf_date_mismatch, paste0("S-Dropouts//sgtf_Error_Checks/sgtf_collection_date_mismatch_",today(),".csv"))
+}
+
+```
+
+
+# Matching on demographics {.tabset}
+
+## Get records without a match
+```{r}
+# for cases that did not match on ID, use demographic info to match to WDRS
+sgtf_unmatched <- filter(sgtf_wdrs,
+                           !rowid %in% sgtf_matched$rowid) %>%
+  select(-CASE_ID, -NAME_WDRS, -DOB_WDRS, -COLLECTION_DATE_WDRS, -ALT_NAME_WDRS)
+
+```
+
+## Missing Demographics
+
+Write to error file data without name and/or DOB data
+```{r sgtf data missing demographics}
+# if data is lacking DOB or names write to review file,
+# as you do not have necessary fields to match to WDRS
+sgtf_no_dem <- sgtf_unmatched %>%
+  filter(!(detect_date_format(DOB)) | 
+         is.na(DOB) | (is.na(FIRST_NAME) & is.na(LAST_NAME)))
+
+if(nrow(sgtf_no_dem) > 0) {
+  write_csv(
+    sgtf_no_dem %>% select(-rowid),
+    paste0(
+      "S-Dropouts/sgtf_Error_Checks/sgtf_no_demographics_",
+      today(),
+      ".csv"
+    )
+  )
+}
+
+# produce a dataset where all rows contain at least some demographic data
+sgtf_complete_dems <- anti_join(sgtf_unmatched, sgtf_no_dem)
+
+```
+
+## Transform for matching
+```{r transform sgtf template data}
+# Add fields to data to match on
+sgtf_pre_match <- sgtf_complete_dems %>%
+  mutate(
+    NAME_SUBMITTER = paste0(annihilate(FIRST_NAME), "_", annihilate(LAST_NAME)),
+    DOB_SUBMITTER = DOB) %>%
+select(-DOB) %>%
+  unique()
+
+
+```
+
+## Fuzzy Matching
+
+Use fuzzy matching functions to match on first and last name, blocking on DOB.
+Also match on a version of name with the first and last name fields flipped in one
+input to account for such errors.
+
+```{r fuzzy matching}
+wdrs_entire$year <- lubridate::year(wdrs_entire$DOB_WDRS)
+sgtf_pre_match$year <- lubridate::year(sgtf_pre_match$DOB_SUBMITTER)
+
+# Create groups based on DOB year
+sgtf_pre_match <- sgtf_pre_match %>%                                        
+  group_by(year) %>%
+  dplyr::mutate(group_num = cur_group_id())
+# Add second version of the name with first and last name switched to account
+# for switching of fields
+sgtf_pre_match$NAME_SUBMITTER_2 <- paste0(str_replace(sgtf_pre_match$NAME_SUBMITTER, ".*_", ""),
+                                               "_", str_replace(sgtf_pre_match$NAME_SUBMITTER, "_.*", ""))
+# split input records into separate tables per group
+fuzzy_split <- split(sgtf_pre_match, f = sgtf_pre_match$group_num)
+# print size of each group
+lapply(fuzzy_split, dim)
+
+# apply the fuzzy matching function in parallel across 7 of 8 cores. Can use all cores if not performing other tasks. 
+library(parallel)
+numCores  = round(parallel::detectCores() * .85)
+cl <- makePSOCKcluster(numCores)
+# export the necessary elements of the local environment to all the cores
+system.time(clusterExport(
+  cl = cl,
+  varlist = c("fuzzy_split", "wdrs_entire"),
+  envir = .GlobalEnv
+))
+# Run fuzzy matching
+system.time(
+  sgtf_fuzzy_matches <- parLapply(cl, fuzzy_split, fuzzymatch_name_flip) %>%
+    bind_rows()
+)
+stopCluster(cl)
+
+```
+
+# Filter Demographic Matches {.tabset}
+
+## Filter out matches
+```{r filter by DOB match}
+
+dob_match <- filter(sgtf_fuzzy_matches, DOB_SUBMITTER == DOB_WDRS &
+                      !is.na(CASE_ID)) 
+
+sgtf_did_not_match <- filter(sgtf_fuzzy_matches, !LAB_ACCESSION_ID %in% dob_match$LAB_ACCESSION_ID)
+sgtf_did_not_match <- sgtf_did_not_match[!duplicated(sgtf_did_not_match$LAB_ACCESSION_ID),] %>%
+  select(LAB_ACCESSION_ID, SPECIMEN_COLLECTION_DATE, FIRST_NAME, LAST_NAME, MIDDLE_NAME, rowid, DOB_SUBMITTER)
+
+```
+
+## Write no matches to file
+
+```{r no match}
+
+# write to for review file
+if(nrow(sgtf_did_not_match) > 0){
+  write_csv(sgtf_did_not_match %>% select(-rowid), file.path("S-Dropouts/sgtf_Error_Checks", paste0("sgtf_no_match_", today(), ".csv")))
+            
+}
+```
+
+## Filter out matches already in WDRS
+
+```{r}
+# identify SGTF Yes cases in the flattened table
+cur_sgtf_records <- filter(wdrs_flattened, CASE_ID %in% dob_match$CASE_ID & SEQUENCE_SGTF == "Yes")
+
+sgtf_all_new_matches <- filter(dob_match, !CASE_ID %in% cur_sgtf_records$CASE_ID)
+
+matched_input <- union(matched_input, filter(dob_match, !LAB_ACCESSION_ID %in% sgtf_all_new_matches$LAB_ACCESSION_ID)$LAB_ACCESSION_ID)
+```
+
+## Collection Date Mismatches
+
+```{r collect date window filter}
+sgtf_matched_colldate <- sgtf_all_new_matches %>%
+  # calculate the interval in days between collection dates in submitter and wdrs data
+  mutate(int = interval(
+    ymd(SPECIMEN_COLLECTION_DATE),
+    ymd(COLLECTION_DATE_WDRS)
+  ),
+  COLLECTION_DATE_DISTANCE = abs(time_length(int, unit = "day")))
+# for each input record, find that match with the closest collection date
+closest_date_per_record <- ave(sgtf_matched_colldate$COLLECTION_DATE_DISTANCE, sgtf_matched_colldate$rowid, FUN = function(x) min(x, na.rm = T))
+# keep matches with the closest collection date - if multiple matches have the same distance keep all and
+# keep matches even if the distance between the collection dates couldn't be calculated
+fuzzy_sgtf_colldate_filtered <- sgtf_matched_colldate[case_when(is.na(sgtf_matched_colldate$COLLECTION_DATE_DISTANCE) &
+                                                      (is.na(closest_date_per_record) |
+                                                         is.infinite(closest_date_per_record)) ~ TRUE,
+                                                    is.na(sgtf_matched_colldate$COLLECTION_DATE_DISTANCE) ~ FALSE,
+                                                    sgtf_matched_colldate$COLLECTION_DATE_DISTANCE <= closest_date_per_record ~ TRUE,
+                                                    TRUE ~ FALSE),] %>%
+  select(-int)
+```
+
+## Perfect Matches
+```{r sgtf perfect matches}
+
+# get records where the names match exactly (or nearly)
+sgtf_perfect_match <- filter(fuzzy_sgtf_colldate_filtered, distance <= 1,
+                             COLLECTION_DATE_DISTANCE <= 14,
+                             !is.na(COLLECTION_DATE_DISTANCE))
+
+# remove duplicates
+sgtf_perfect_match <- sgtf_perfect_match[!duplicated(sgtf_perfect_match[,c('LAB_ACCESSION_ID', 'CASE_ID')]),]
+
+# remove duplicates that require review
+sgtf_perfect_match_unique <- sgtf_perfect_match[!(duplicated(sgtf_perfect_match$LAB_ACCESSION_ID) | duplicated(sgtf_perfect_match$LAB_ACCESSION_ID, fromLast = T)),]
+
+sgtf_perfect_match_duplicates <- sgtf_perfect_match[(duplicated(sgtf_perfect_match$LAB_ACCESSION_ID) | duplicated(sgtf_perfect_match$LAB_ACCESSION_ID, fromLast = T)),]
+
+# write duplicates to review file
+if(nrow(sgtf_perfect_match_duplicates) > 0) {
+  sgtf_perfect_match_duplicates <- sgtf_perfect_match_duplicates %>%
+    select(LAB_ACCESSION_ID, CASE_ID, NAME_SUBMITTER, NAME_WDRS,
+           DOB_SUBMITTER, DOB_WDRS, SPECIMEN_COLLECTION_DATE, COLLECTION_DATE_WDRS, distance)
+  write_csv(sgtf_perfect_match_duplicates, file.path("S-Dropouts/sgtf_Error_Checks", paste0("sgtf_review_duplicates_", today(), ".csv")))
+}
+
+```
+
+# Output Files {.tabset}
+
+## All perfect matches
+
+Create roster format for all perfect matches on id or name/DOB and write to output file
+```{r write output}
+# combine matches
+sgtf_all_perfect_match <- plyr::rbind.fill(sgtf_date_matched, sgtf_perfect_match_unique)
+
+# Compile exact/high confidence matches in roster format
+sgtf_roster <- 
+    sgtf_all_perfect_match %>%
+    mutate(SEQUENCE_SGTF = 'Yes',
+           SEQUENCE_SPECIMEN = "",
+           SEQUENCE_DATE = "",
+           SEQUENCE_REASON = "",
+           SEQUENCE_LAB = "",
+           SEQUENCE_STATUS = "",
+           SEQUENCE_REPOSITORY = "",
+           SEQUENCE_ACCESSION = "",
+           SEQUENCE_EPI_ISL = "",
+           SEQUENCE_VARIANT_OPEN_TEXT = "",
+           SEQUENCE_CLINICAL_ACCESSION = "",
+           SEQUENCE_SPECIMEN_COLLECTION_DATE = "",
+           SEQUENCE_ROSTER_PREPARE_DATE = "",
+           SEQUENCE_NOTES = "",
+           SEQUENCE_REVIEWED = "",
+           Case.Note = 'External data question package updated by COVID19 Sequencing Roster.') %>%
+    select(CASE_ID,
+           SEQUENCE_SGTF,
+           SEQUENCE_SPECIMEN,
+           SEQUENCE_DATE,
+           SEQUENCE_REASON,
+           SEQUENCE_LAB,
+           SEQUENCE_STATUS,
+           SEQUENCE_REPOSITORY,
+           SEQUENCE_ACCESSION,
+           SEQUENCE_EPI_ISL,
+           SEQUENCE_VARIANT_OPEN_TEXT,
+           SEQUENCE_CLINICAL_ACCESSION,
+           SEQUENCE_SPECIMEN_COLLECTION_DATE,
+           SEQUENCE_ROSTER_PREPARE_DATE,
+           SEQUENCE_NOTES,
+           SEQUENCE_REVIEWED,
+           Case.Note)
+
+# remove duplicate rows
+sgtf_roster <- sgtf_roster[!duplicated(sgtf_roster$CASE_ID),]
+
+# write to output folder
+if(nrow(sgtf_roster) > 0) {
+  write_csv(sgtf_roster, file.path("S-Dropouts/sgtf_template_roster/Archive", paste0("sgtf_template_matched_", today(), ".csv")))
+}
+  
+```
+
+## Matches for review
+
+```{r sgtf review match}
+
+# get records with more distant matches or with collection date mismatch
+sgtf_review_match <- filter(fuzzy_sgtf_colldate_filtered, !rowid %in% sgtf_perfect_match$rowid) %>%
+  select(LAB_ACCESSION_ID, CASE_ID, NAME_SUBMITTER, NAME_WDRS, DOB_SUBMITTER, DOB_WDRS, 
+         SPECIMEN_COLLECTION_DATE, COLLECTION_DATE_WDRS, COLLECTION_DATE_DISTANCE, distance) %>% arrange(LAB_ACCESSION_ID, distance)
+
+# write to for review file
+if(nrow(sgtf_review_match) > 0) {
+  write_csv(sgtf_review_match, file.path("S-Dropouts/sgtf_Error_Checks", paste0("sgtf_review_matches_", today(), ".csv")))
+  }
+
+```
+
+## Write to Data Support
+
+Write to the specified folder
+```{r}
+output_folder <- "WDRS/Rosters/RosterImports_to_Prod/Sequencing"
+
+if(nrow(sgtf_roster) > 0) {
+  write_csv(sgtf_roster, file.path(output_folder, paste0("sgtf_template_matched_", today(), ".csv")))
+}
+
+```
+
+# Email/Output {.tabset}
+
+## Write email
+```{r write email}
+# Get all output files that were written
+all_sgtf_files <- dir_ls("S-Dropouts/sgtf_template_roster") %>% str_subset("sgtf")
+all_sgtf_files <- c(all_sgtf_files, dir_ls("S-Dropouts/sgtf_Error_Checks") %>% str_subset("sgtf"))
+# Updated Data Support Roster location
+all_sgtf_files <- c(all_sgtf_files, dir_ls("WDRS/Rosters/RosterImports_to_Prod/Sequencing") %>% str_subset("sgtf"))
+
+# filter for files written today
+today_sgtf_files <- all_sgtf_files[str_detect(all_sgtf_files, as.character(today()))]
+
+today_sgtf_review_files <- today_sgtf_files %>% str_extract("sgtf_Error_Checks.*") %>% na.omit() %>% as.character()
+today_sgtf_roster_files <- today_sgtf_files %>% str_extract("RosterImports_to_Prod.*") %>% na.omit() %>% as.character()
+
+# initialize message
+sgtf_email_message <- paste("sgtf template submitter files were processed for", format(today(), "%m/%d/%Y"), 
+                                    "and are ready for manual review and/or roster. \n")
+
+
+
+# if there files that are ready to be added to the roster
+if (length(today_sgtf_roster_files) > 0) {
+  today_sgtf_roster_file_names <- paste(unlist(today_sgtf_roster_files), collapse='\n')
+  sgtf_email_message <- paste0(sgtf_email_message,"\n\n" , "There were a total of ", nrow(sgtf_roster), " records(s) today that that could be exactly matched to records in WDRS and are ready to roster.", "\n\n", "The roster for upload is located: ", "\n", today_sgtf_roster_file_names, "\n\n", "Note: this is an updated folder location to be consistent with all sequencing rosters")
+} else {
+   sgtf_email_message <- paste0(sgtf_email_message,"\n\n" , "There were no new SGTF records that are ready for roster.")
+}
+
+# if there files for review
+if (length(today_sgtf_review_files) > 0) {
+    today_sgtf_review_file_names <- paste(unlist(today_sgtf_review_files), collapse='\n')
+  sgtf_email_message <- paste0(sgtf_email_message,"\n\n" , "There were a total of ", length(today_sgtf_review_files), " file(s) written today that require manual review. These files can be found at: ", "\n", today_sgtf_review_file_names)
+}
+
+
+# Finalize message
+sgtf_email_message <- paste0(sgtf_email_message, "\n\n", "Note: This is an automated message. Please enable your outlook to include extra line breaks to view this message in its proper format.", "\n\n", "This message is in development, and will be updated. If you see any errors reach out to DIQA. Thanks!")
+```
+
+
+## Send email
+
+```{r send email}
+# send email notifying that sgtf matching has completed
+sendmailR::sendmail(from = "",
+                        to = c(""),
+                        subject = "COVID sgtf template submitters script complete",
+                        msg = sgtf_email_message,
+                        headers= list("Reply-To" = ""),
+                        control = list(smtpServer = ""))
+```
+

@@ -1,0 +1,300 @@
+---
+title: "rosters_wdrs"
+author: "Cory"
+date: "5/27/2021"
+params: 
+  test_mode: FALSE 
+output: html_document
+---
+
+# Load libraries.
+```{r}
+library(DBI)
+library(odbc)
+library(lubridate)
+library(tidyverse)
+library(readxl)
+library(here)
+library(fs)
+```
+
+# Set the directory to either the net Drive or local test envionment
+```{r}
+# By default set the project folder to the current R project folder
+project_folder <- here()
+
+# If running production mode, read from and write to the net drive folder
+if(!params$test_mode) {
+  project_folder <- readRDS(file.path(project_folder, "Data_Objects/dir_object.RDS"))
+}
+
+```
+
+# Read in required data_objects and assign filepaths.
+```{r}
+# read in email_list.rds
+email_list <- readRDS(file.path(project_folder, "Data_Objects/rosters_wdrs/email_list.RDS"))
+# read in connection information stored in'conn_list.RDS'
+conn_list <- readRDS(file.path(project_folder, "Data_Objects/conn_list.RDS"))
+```
+
+# Open connection to WDRS.
+```{r}
+# connect
+connection <- DBI::dbConnect(odbc::odbc(), 
+  Driver = conn_list[[1]], 
+  Server = conn_list[[2]], 
+  Database = conn_list[[3]], 
+  Trusted_connection = conn_list[[4]], 
+  ApplicationIntent = conn_list[[5]]
+)
+```
+
+# Queries for WDRS.
+```{r}
+# pull all SEQUENCE_ACCESSION and SEQUENCE_CLINICAL_ACCESSION from the [DD_GCD_COVID_19_FLATTENED] table. (these are specimens that have already been rostered)
+wdrs_flat <- dbGetQuery(connection, "
+  SELECT DISTINCT CASE_ID,
+    CDC_N_COV_2019_SEQUENCE_ACCESSION_NUMBER,
+    CDC_N_COV_2019_SEQUENCE_CLINICAL_ACCESSION_NUMBER,
+    CDC_N_COV_2019_SEQUENCE_SPECIMEN,
+    STATUS
+  FROM [dbo].[DD_GCD_COVID_19_FLATTENED]
+  WHERE CDC_N_COV_2019_SEQUENCE_SPECIMEN LIKE '%Yes%'
+")
+```
+
+# Clean and transform the queried wdrs_flat.
+```{r}
+# separate comma separate values, rename, and trim whitespace. Filter to records where CDC_N_COV_2019_SEQUENCE_SPECIMEN is not "No".
+wdrs_flat_clean <- wdrs_flat %>% 
+  separate_rows(CDC_N_COV_2019_SEQUENCE_SPECIMEN, 
+                CDC_N_COV_2019_SEQUENCE_ACCESSION_NUMBER, 
+                CDC_N_COV_2019_SEQUENCE_CLINICAL_ACCESSION_NUMBER, 
+                sep = ','
+                ) %>%
+  mutate(CDC_N_COV_2019_SEQUENCE_SPECIMEN = str_trim(CDC_N_COV_2019_SEQUENCE_SPECIMEN, side= "both")) %>%
+  mutate(CDC_N_COV_2019_SEQUENCE_ACCESSION_NUMBER = str_trim(CDC_N_COV_2019_SEQUENCE_ACCESSION_NUMBER, side= "both")) %>%
+  mutate(CDC_N_COV_2019_SEQUENCE_CLINICAL_ACCESSION_NUMBER = str_trim(CDC_N_COV_2019_SEQUENCE_CLINICAL_ACCESSION_NUMBER, side = "both")) %>%
+  filter(CDC_N_COV_2019_SEQUENCE_SPECIMEN != "No")
+```
+
+# Extracting file names of  previously output compiled rosters.
+```{r}
+list_rosters <- dir_ls(path = file.path(project_folder, "write_roster_here/Archive"),
+                            recurse = TRUE, 
+                            type = "file", 
+                            regexp = "Compiled_Roster.*csv")
+```
+
+# Exclude compiled rosters from today as they may not be in WDRS yet.
+```{r}
+list_rosters_excl_today <- list_rosters[!str_detect(list_rosters, paste0("Compiled_Roster.*", today()))]
+```
+
+# Extracting file names of record previously identified abd ouput as being missing.
+```{r}
+previously_missing <- dir_ls(path = file.path(project_folder, "For_Review/WDRS_Missing/Archive"),
+                          recurse=TRUE, 
+                          type = "file",
+                          regexp = "WDRS_Missing.*csv")
+
+```
+
+<!-- # Extracting file names of record previously identified and output as being deleted. -->
+<!-- ```{r} -->
+<!-- previously_deleted <- dir_ls(path = here("For_Review/WDRS_Missing/Archive"), -->
+<!--   recurse=TRUE, -->
+<!--   type = "file", -->
+<!--   regexp = "WDRS_Deleted.*csv" -->
+<!-- ) -->
+<!-- ``` -->
+
+# Creates a single df of all compiled rosters.
+```{r}
+
+compiled_roster_df <- list_rosters_excl_today %>% 
+  map_if(str_sub(., -4, -1) == ".csv", 
+    function(x) read_csv(x, col_types = cols(.default = "c"), na = c("", "NA", "N/A"))
+  )
+
+compiled_roster_df_bind <- bind_rows(compiled_roster_df, .id = "column_label") 
+
+# arranges vars in the correct order
+compiled_roster_df_clean <- compiled_roster_df_bind %>%
+  select(c(column_label,
+         CASE_ID,
+         SEQUENCE_SGTF, 
+         SEQUENCE_SPECIMEN, 
+         SEQUENCE_REASON, 
+         SEQUENCE_DATE,
+         SEQUENCE_LAB, 
+         SEQUENCE_STATUS,
+         SEQUENCE_REPOSITORY, 
+         SEQUENCE_ACCESSION, 
+         SEQUENCE_VARIANT, 
+         SEQUENCE_CLINICAL_ACCESSION, 
+         SEQUENCE_SPECIMEN_COLLECTION_DATE,
+         SEQUENCE_NOTES, 
+         SEQUENCE_REVIEWED, 
+         Case.Note
+         ))
+```
+
+# Creates a single df of all rosters containing previously missing records.
+```{r}
+
+compiled_missing_df <- previously_missing %>% 
+  map_if(str_sub(., -4, -1) == ".csv", 
+    function(x) read_csv(x, col_types = cols(.default = "c"), na = c("", "NA", "N/A"))
+  )
+
+compiled_missing_df_bind <- bind_rows(compiled_missing_df, .id = "column_label") 
+
+# arranges vars in the correct order
+compiled_missing_df_clean <- compiled_missing_df_bind %>%
+  select(c(column_label,
+         CASE_ID,
+         SEQUENCE_SGTF, 
+         SEQUENCE_SPECIMEN, 
+         SEQUENCE_REASON, 
+         SEQUENCE_DATE,
+         SEQUENCE_LAB, 
+         SEQUENCE_STATUS,
+         SEQUENCE_REPOSITORY, 
+         SEQUENCE_ACCESSION, 
+         SEQUENCE_VARIANT, 
+         SEQUENCE_CLINICAL_ACCESSION, 
+         SEQUENCE_SPECIMEN_COLLECTION_DATE,
+         SEQUENCE_NOTES, 
+         SEQUENCE_REVIEWED, 
+         Case.Note
+         ))
+```
+
+<!-- # Creates a single df of all rosters containing previously deleted records. -->
+<!-- ```{r} -->
+<!-- compiled_deletions_df <- previously_deleted %>% -->
+<!--   map_if(str_sub(., -4, -1) == ".csv", -->
+<!--     function(x) read_csv(x, col_types = cols(.default = "c"), na = c("", "NA", "N/A")) -->
+<!--   ) -->
+
+<!-- compiled_deletions_df_bind <- bind_rows(compiled_deletions_df, .id = "column_label") -->
+
+<!-- # arranges vars in the correct order -->
+<!-- compiled_deletions_df_clean <- compiled_deletions_df_bind %>% -->
+<!--   select(c(column_label, -->
+<!--          CASE_ID, -->
+<!--          SEQUENCE_SGTF, -->
+<!--          SEQUENCE_SPECIMEN, -->
+<!--          SEQUENCE_REASON, -->
+<!--          SEQUENCE_DATE, -->
+<!--          SEQUENCE_LAB, -->
+<!--          SEQUENCE_STATUS, -->
+<!--          SEQUENCE_REPOSITORY, -->
+<!--          SEQUENCE_ACCESSION, -->
+<!--          SEQUENCE_VARIANT, -->
+<!--          SEQUENCE_CLINICAL_ACCESSION, -->
+<!--          SEQUENCE_SPECIMEN_COLLECTION_DATE, -->
+<!--          SEQUENCE_NOTES, -->
+<!--          SEQUENCE_REVIEWED, -->
+<!--          Case.Note -->
+<!--          )) -->
+<!-- ``` -->
+
+# Identify all records missing/deleted from WDRS. Filter and clean.
+```{r}
+# filter down records from compiled_roster_df_clean to those where SEQUENCE_ACCESSION is not NA.
+seq_acc_not_na <- compiled_roster_df_clean %>%
+  filter(!is.na(SEQUENCE_ACCESSION))
+
+# filter down records from compiled_roster_df_clean to those where SEQUENCE_ACCESSION is NA
+seq_acc_na <- compiled_roster_df_clean %>%
+  filter(is.na(SEQUENCE_ACCESSION))
+
+# subset all records not missing a SEQUENCE_ACCESSION but the SEQUENCE_ACCESSION is not in WDRS_FLATTENED. (This is done using the SEQUENCE_ACCESSION)
+missing_deleted_seq_acc_not_na <- seq_acc_not_na[(!seq_acc_not_na$SEQUENCE_ACCESSION %in% wdrs_flat_clean$CDC_N_COV_2019_SEQUENCE_ACCESSION_NUMBER), ]
+
+# subset all records (missing a SEQ_ACC) where the SEQUENCE_CLINICAL_ACCESSION is not in WDRS. (This is done using the SEQUENCE_CLINICAL_ACCESSION as the SEQUENCE_ACCESSION is NA)
+missing_deleted_seq_acc_na <- seq_acc_na[(!seq_acc_na$SEQUENCE_CLINICAL_ACCESSION %in% wdrs_flat_clean$CDC_N_COV_2019_SEQUENCE_CLINICAL_ACCESSION_NUMBER),]
+
+# join together all missing/deleted records
+all_missing_deleted <- full_join(missing_deleted_seq_acc_not_na, missing_deleted_seq_acc_na)
+
+# deduplicate on all missing/deleted records
+missing_deleted_roster <- unique(all_missing_deleted)
+```
+
+# filter down all 
+```{r}
+# filter on STATUS to find all events that were manually deleted (assigned STATUS == 6)
+deleted_events <- wdrs_flat%>%
+  filter(STATUS == 6)
+
+# df of all missing records that are not due to being manually deleted (assigned STATUS == 6) by filtering on deleted_events (missing: reason unknown)
+missing_unfiltered <- missing_deleted_roster %>%
+  filter(!CASE_ID %in% deleted_events$CASE_ID)
+  
+missing_filtered <- anti_join(missing_unfiltered, compiled_missing_df_clean, by = c("CASE_ID", "SEQUENCE_SGTF", "SEQUENCE_SPECIMEN", "SEQUENCE_REASON", "SEQUENCE_DATE", "SEQUENCE_LAB", "SEQUENCE_STATUS", "SEQUENCE_REPOSITORY", "SEQUENCE_ACCESSION", "SEQUENCE_VARIANT", "SEQUENCE_CLINICAL_ACCESSION", "SEQUENCE_SPECIMEN_COLLECTION_DATE", "SEQUENCE_NOTES", "SEQUENCE_REVIEWED", "Case.Note"))
+
+# # df all missing records that are due to being manually deleted in the past by filtering on deleted_events
+# deleted_unfiltered <- missing_deleted_roster %>%
+#   filter(CASE_ID %in% deleted_events$CASE_ID)
+# 
+# deleted_filtered <- anti_join(deleted_unfiltered, compiled_deletions_df_clean, by = c("CASE_ID", "SEQUENCE_SGTF", "SEQUENCE_SPECIMEN", "SEQUENCE_REASON", "SEQUENCE_DATE", "SEQUENCE_LAB", "SEQUENCE_STATUS", "SEQUENCE_REPOSITORY", "SEQUENCE_ACCESSION", "SEQUENCE_VARIANT", "SEQUENCE_CLINICAL_ACCESSION", "SEQUENCE_SPECIMEN_COLLECTION_DATE", "SEQUENCE_NOTES", "SEQUENCE_REVIEWED", "Case.Note"))
+
+```
+
+# output list of missing/deleted records to be reviewed
+```{r}
+# output all missing records
+missing_filtered %>%
+  write_csv(., file.path(project_folder, "For_Review/WDRS_Missing", paste0("WDRS_Missing_", today(), ".csv")), na = "")
+
+# # output all deleted records
+# deleted_filtered %>%
+#   write_csv(., paste0(here("For_Review/WDRS_Missing"), "/", "WDRS_Deleted_", today(), ".csv"), na = "")
+#
+# # create a copy of all missing records in the archive
+# file_copy(paste0(here("For_Review/WDRS_Missing"), "/", "WDRS_Missing_", today(), ".csv"),
+#           here("For_Review/WDRS_Missing/Archive"))
+#
+# # create a copy of all deleted records in the archive
+# file_copy(paste0(here("For_Review/WDRS_Missing"), "/", "WDRS_Deleted_", today(), ".csv"),
+#           here("For_Review/WDRS_Missing/Archive"))
+```
+
+# Send an email 
+```{r}
+if (nrow(missing_filtered > 0)) {
+# check if the filename does not already exist (not downloaded before/is new). If a new file is available send an email stating so.
+  email_from <- ""
+  email_to <- email_list
+  email_subj <- "SEQUENCING (Compiled Rosters/WDRS) - Deleted/Missing Records from WDRS for Review"
+  email_body <- "There are new records for review that have been submitted for upload in rosters prior but are missing from WDRS, please review. This script will run on the first wednesday of the month."
+  
+# send it
+sendmailR::sendmail(from = email_from,
+                    to = email_to,
+                    subject = email_subj,
+                    msg = email_body,
+                    headers= list("Reply-To" = email_from),
+                    control = list(smtpServer = ""))
+} else {
+
+# check if the filename does not already exist (not downloaded before/is new). If a new file is available send an email stating so.
+  email_from <- ""
+  email_to <- email_list
+  email_subj <- "SEQUENCING (Compiled Rosters/WDRS) - Deleted/Missing Records from WDRS for Review"
+  email_body <- "There are no new records that are missing from WDRS. This script will run on the first wednesday of the month."
+  
+# send it
+sendmailR::sendmail(from = email_from,
+                    to = email_to,
+                    subject = email_subj,
+                    msg = email_body,
+                    headers= list("Reply-To" = email_from),
+                    control = list(smtpServer = ""))
+}
+
+```

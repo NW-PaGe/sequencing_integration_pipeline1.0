@@ -1,44 +1,46 @@
 ---
 title: Data Integration and Quality Assurance of Sequencing Metadata in Washington State
-affiliations: 
-  - id: doh
-    name: Washington State Department of Health
-    city: Tacoma
-    state: WA
+# affiliations: 
+#   - id: doh
+#     name: Washington State Department of Health
+#     city: Tacoma
+#     state: WA
 authors:
   - name: Frank Aragona
-    affiliations:
-      - ref: doh
     roles: 
       - Data Integration
       - Quality Assurance
       - Software
   - name: Cory Yun
-    affiliations:
-      - ref: doh
     roles: 
       - Data Integration
       - Quality Assurance
       - Software
   - name: Philip Crain
-    affiliations:
-      - ref: doh
     roles: 
       - Data Integration
       - Quality Assurance
       - Software
   - name: Paul Lloyd
-    affiliations:
-      - ref: doh
+    # affiliations:
+    #   - ref: doh
     roles: 
       - Data Integration
       - Quality Assurance
       - Software
-    corresponding: true
   - name: Emily Nebergall
-    affiliations:
-      - ref: doh
-    corresponding: true
+  - name: Cameron Ashton
+  - name: Peter J Gibson
+  - name: Marcela Torres
+  - name: Lauren Frisbie
+  - name: Allison Warren
+  - name: Laura Beilsmith
+  - name: Xichi Zhang
+  - name: Allison Thibodeau
+  - name: Sarah Menz
+  - name: Topias Lemetyinen
+  - name: Alli Black
+  - name: Alex Cox
 date: 3-4-2024
 date-modified: today
 notebook-links: true

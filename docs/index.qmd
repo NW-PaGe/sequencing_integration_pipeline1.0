@@ -38,6 +38,7 @@ authors:
   - name: Xichi Zhang
   - name: Allison Thibodeau
   - name: Sarah Jinsiwale
+  - name: Yunpeng Yu
   - name: Topias Lemetyinen
   - name: Alli Black
   - name: Alex Cox

@@ -37,7 +37,7 @@ authors:
   - name: Laura Beilsmith
   - name: Xichi Zhang
   - name: Allison Thibodeau
-  - name: Sarah Menz
+  - name: Sarah Jinsiwale
   - name: Topias Lemetyinen
   - name: Alli Black
   - name: Alex Cox

@@ -1,6 +1,6 @@
 ---
 title: "Keep NA Roster Script"
-author: "Yunpeng Yu and Sarah Menz"
+author: "Yunpeng Yu and Sarah Jinsiwale"
 date: "`r Sys.Date()`"
 output: html_document
 

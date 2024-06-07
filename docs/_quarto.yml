@@ -20,17 +20,32 @@ format:
     notebook-links: true
   docx: default
   jats: default
-  pdf: 
-    output-file: "diqa-sequencing-pipeline"
-    output-ext:  "pdf"
-    margin-width: 10px
-    gutter-width: 1.5rem
-    fig-pos: "H" # this makes sure that the figures output where they're supposed to in pdf 
-    toc: true
+  typst: 
+    columns: 1
+    template-partials:
+      - assets/typst-template.typ
+      - assets/typst-show.typ
     number-sections: true
-    number-depth: 2
-    include-in-header:
-       - "assets/styles.tex"
+# format-links:
+#   - html
+#   - docx
+#   - jats
+#   - format: typst
+#     text: pdf
+
+  #  pdf: 
+    #    output-file: "diqa-sequencing-pipeline"
+    #    output-ext:  "pdf"
+    #    margin-width: 10px
+    #    gutter-width: 1.5rem
+    #    fig-pos: "H" # this makes sure that the figures output where they're supposed to in pdf 
+    #    toc: true
+    #    number-sections: true
+    #    number-depth: 2
+    #    include-in-header:
+      #       - "assets/styles.tex"
+  
+
   # pdf: 
   #   output-file: "idk"
   # agu-pdf:

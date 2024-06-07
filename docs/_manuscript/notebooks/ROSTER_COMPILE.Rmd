@@ -1,6 +1,6 @@
 ---
 title: "Roster Compile"
-author: "Emily Nebergall and Sarah Menz"
+author: "Emily Nebergall and Sarah Jinsiwale"
 date: "`r Sys.Date()`"
 output: html_document
 ---

@@ -1,7 +1,6 @@
 ---
 title: "PHL Script"
 author: "Emily Nebergall and Allie Warren"
-date: "`r Sys.Date()`"
 output: html_document
 ---
 
@@ -26,7 +25,7 @@ Rows that contain a sequence accession number already found in WDRS are removed 
 
 This is a detailed summary of the logic in this script. Note that you can click on the image and zoom in. 
 
-![](../assets/phl_1-0.drawio.svg){#fig-phlworkflow}
+![](../assets/phl_1-0.drawio.svg)
 
 # Setup {.tabset}
 ```{r source}

@@ -38,6 +38,7 @@ authors:
   - name: Xichi Zhang
   - name: Allison Thibodeau
   - name: Sarah Jinsiwale
+  - name: Yunpeng Yu
   - name: Topias Lemetyinen
   - name: Alli Black
   - name: Alex Cox
@@ -124,7 +125,7 @@ Through various contracts and collaboration with external agencies the DOH recei
 
 Prior to any processing of sequencing data received from submitters there are numerous data pulls and external dependencies that must be completed. Below is a brief description of each process @fig-pulls.
 
-![](assets/external_pulls.jpg){#fig-pulls fig-align="center"}
+![External Data Pulls](assets/external_pulls.jpg){#fig-pulls fig-align="center"}
 
 The scripts below are responsible for pulling submissions from their corresponding locations and dropping a file into the submissions folder in the Network Drive so that it can be picked up by the roster scripts and processed into WDRS.
 
@@ -138,7 +139,7 @@ The scripts below are responsible for pulling submissions from their correspondi
 
 **wa_cdc_pull.Rmd** performs the task of pulling data from the CDC for specimens sequenced by laboratories under the CDC for the state of Washington so that it can be picked up by multiple QA scripts and utilized by other other stakeholders.
 
-**lineages_main.py** performs the task of pulling data from a .txt in a GitHub repository containing the latest Covid Lineages and dropping them in the lineages folder in the network drive so that it can be picked up by multiple scripts and utilized by other stakeholders. The .txt file in the repository is the same file used update the Cov-Lineages site (<https://cov-lineages.org/lineage_list.html>).
+**lineages_main.py** performs the task of pulling data from a .txt in a GitHub repository containing the latest Covid Lineages and dropping them in the lineages folder in the network drive so that it can be picked up by multiple scripts and utilized by other stakeholders. The .txt file in the repository is the same file used update the Cov-Lineages site (https://cov-lineages.org/lineage_list.html).
 
 #### SGTF
 
@@ -169,29 +170,29 @@ In 2021, data was sent from sequencing labs to us via tabular files. There were 
 
 : example of tabular datasets sent to the Department of Health from sequencing labs in 2021 {#tbl-tabdata1}
 
-| Variable               | Description                                           |
+| Variable | Description |
 |--------------------------|----------------------------------------------|
-| LIMS                   | the laboratory information management system (LIMS)   |
-| Project                | the reason for sequencing                             |
-| Investigator_sample_id | an identifier to the sample                           |
-| collection_date        | the specimen collection date                          |
-| age                    | patient age                                           |
-| county                 | patient county                                        |
-| sex                    | patient sex                                           |
-| specimen_id            | the identifier linking to the original PCR covid test |
-| submitting_lab         | the lab submitting the sequence                       |
-| note                   | free text note field                                  |
+| LIMS | the laboratory information management system (LIMS) |
+| Project | the reason for sequencing |
+| Investigator_sample_id | an identifier to the sample |
+| collection_date | the specimen collection date |
+| age | patient age |
+| county | patient county |
+| sex | patient sex |
+| specimen_id | the identifier linking to the original PCR covid test |
+| submitting_lab | the lab submitting the sequence |
+| note | free text note field |
 
 : example of tabular datasets sent to the Department of Health from a Public Health Lab (PHL) during 2021 {#tbl-tabdata2}
 
-| Variable        | Description                                                                                |
+| Variable | Description |
 |--------------------------|----------------------------------------------|
-| uwnum           | the identifier of the sequence that links to GISAID                                        |
-| acc_num         | the accession number linking to the positive covid PCR test                                |
-| collection date | specimen collection date                                                                   |
-| loc_state       | patient state                                                                              |
-| fullname        | the full GISAID identifier name, such as HCoV19-USA/WA-#####/2021 (not the patient's name) |
-| shortname       | a partial GISAID identifier name, such as WA-#######                                       |
+| uwnum | the identifier of the sequence that links to GISAID |
+| acc_num | the accession number linking to the positive covid PCR test |
+| collection date | specimen collection date |
+| loc_state | patient state |
+| fullname | the full GISAID identifier name, such as HCoV19-USA/WA-#####/2021 (not the patient's name) |
+| shortname | a partial GISAID identifier name, such as WA-####### |
 
 : example of tabluar datasets sent to the Department of Health by UW Virology during 2021 {#tbl-tabdata3}
 
@@ -207,7 +208,7 @@ Once a record has been matched to an event it will undergo transformation to cle
 
 Records are then put through a series of quality filters to check for QA issues. All records that pass this series of QA checks will then populated into a final roster then outputted to be picked up by the roster compile script @sec-rostercompile and sent to data support for upload to WDRS.
 
-![](assets/roster.jpg){#fig-roster fig-align="center"}
+![Roster Compile](assets/roster.jpg){#fig-roster fig-align="center"}
 
 ## Roster Scripts {#sec-ecosystem}
 
@@ -302,20 +303,20 @@ There are still labs that cannot send us data via ELR or PHL and could only send
 -   Scrape the site and download the `.csv` files for each lab​
 -   Format, find a match based on `FILLER_ORDER_NUM` or demographics
 
-| Variable                 | Description                          | Example               |
-|-----------------------------|-------------------------|------------------|
-| LAB_ACCESSION_ID         | id matching a sequence to a PCR test | alphanumeric string   |
-| GISAID_ID                | identifier of sequence in GISAID     | USA/WA-X/2020         |
-| SPECIMEN_COLLECTION_DATE | collection date of specimen          | mm-dd-yyyy            |
-| SUBMITTING_LAB           | lab name                             | UW Virology           |
-| SEQUENCE_REASON          | reason for sequencing                | SENTINEL SURVEILLANCE |
-| SEQUENCE_STATUS          | complete or failed sequence          | COMPLETE              |
-| PANGO_LINEAGE            | lineage call in GISAID               | BA.1                  |
-| FIRST_NAME               | patient first name                   |                       |
-| LAST_NAME                | patient last name                    |                       |
-| MIDDLE_NAME              | patient middle name                  |                       |
-| DOB                      | date of birth                        |                       |
-| ALTERNATIVE_ID           | alternative identifier               | alphanumeric string   |
+| Variable | Description | Example |
+|-----------------------------|-------------------------|-------------------|
+| LAB_ACCESSION_ID | id matching a sequence to a PCR test | alphanumeric string |
+| GISAID_ID | identifier of sequence in GISAID | USA/WA-X/2020 |
+| SPECIMEN_COLLECTION_DATE | collection date of specimen | mm-dd-yyyy |
+| SUBMITTING_LAB | lab name | UW Virology |
+| SEQUENCE_REASON | reason for sequencing | SENTINEL SURVEILLANCE |
+| SEQUENCE_STATUS | complete or failed sequence | COMPLETE |
+| PANGO_LINEAGE | lineage call in GISAID | BA.1 |
+| FIRST_NAME | patient first name |  |
+| LAST_NAME | patient last name |  |
+| MIDDLE_NAME | patient middle name |  |
+| DOB | date of birth |  |
+| ALTERNATIVE_ID | alternative identifier | alphanumeric string |
 
 : Template Data Variables {#tbl-template}
 
@@ -341,27 +342,27 @@ There are still labs that cannot send us data via ELR or PHL and could only send
 
 After the Template, PHL, and ELR scripts run, they all output a `.csv` file into a folder called `write_roster_here` in our network drive. The [Roster Compile](ROSTER_COMPILE.Rmd) script reads in all of these files, combines them, and runs additional QA checks on them before outputting the results into one file for output to the WDRS database. Then our Data Support team will upload the file into WDRS where it will update the results into the flattened table. Each row will match a `CASE_ID` in WDRS and the sequencing event is added to the cases external data as seen below in @fig-examplewdrs.
 
-![](assets/example_qp_frontend.png){#fig-examplewdrs fig-align="center"}
+![WDRS Front End](assets/example_qp_frontend.png){#fig-examplewdrs fig-align="center"}
 
 ## For Review
 
 The pipeline attempts to link sequencing data to cases in WDRS. Some records have quality issues and cannot be processed in our system. These data are tagged and saved in a separate folder where our team reviews them and attempts to fix and re-process them. @tbl-review is an example of the sort of issues that get tagged in our pipeline:
 
-| Variable         | Description                                                 |
+| Variable | Description |
 |------------------------------------|------------------------------------|
-| QA_CASE_ID       | Missing CASE_ID from WDRS                                   |
-| QA_SCA_NA        | Clinical Accession identifier is missing                    |
-| QA_SCA_INT_DUPE  | Clinical Accession duplicate in file                        |
-| QA_SCA_WDRS_DUPE | Clinical Accession duplicate found in WDRS                  |
-| QA_SA_INT_DUPE   | Accession duplicate in file                                 |
-| QA_SA_WDRS_DUPE  | Accession duplicate found in WDRS                           |
-| QA_SEQ_VARIANT   | Variant not in list of VOC                                  |
-| QA_SEQ_STAT      | Status error (labeled complete sequence when it was failed) |
-| QA_SEQ_REASON    | Unknown sequence reason                                     |
-| QA_SEQ_NOTES     | Sequence note not formatted                                 |
-| QA_COLLECT_DATE  | Match found but collection dates \>14 days                  |
-| QA_OTHER         | Other formatting issues                                     |
-| sum              | Total number of errors found                                |
+| QA_CASE_ID | Missing CASE_ID from WDRS |
+| QA_SCA_NA | Clinical Accession identifier is missing |
+| QA_SCA_INT_DUPE | Clinical Accession duplicate in file |
+| QA_SCA_WDRS_DUPE | Clinical Accession duplicate found in WDRS |
+| QA_SA_INT_DUPE | Accession duplicate in file |
+| QA_SA_WDRS_DUPE | Accession duplicate found in WDRS |
+| QA_SEQ_VARIANT | Variant not in list of VOC |
+| QA_SEQ_STAT | Status error (labeled complete sequence when it was failed) |
+| QA_SEQ_REASON | Unknown sequence reason |
+| QA_SEQ_NOTES | Sequence note not formatted |
+| QA_COLLECT_DATE | Match found but collection dates \>14 days |
+| QA_OTHER | Other formatting issues |
+| sum | Total number of errors found |
 
 : For review quality issue tags {#tbl-review}
 
@@ -398,22 +399,22 @@ This output is utilized by Data Support and other stakeholders for two main reas
 
 `wdrs_logic_checks.R` pulls the sequencing data from our database and runs checks on them to confirm that there are no issues with the data uploaded. See @tbl-qachecks below for more info.
 
-| QA Check                                                                               | Description                                                                                    |
+| QA Check | Description |
 |--------------------------------------|----------------------------------|
-| SEQUENCE_REASON is NULL                                                                | The reason for sequencing is used to determine sentinel surveillance counts and cannot be null |
-| SEQUENCE_REASON not standardized                                                       | If the reason has a typo or unexpected value                                                   |
-| SEQUENCE_VARIANT_OPEN_TEXT filled but SEQUENCE_STATUS is not COMPLETE                  | Status must be complete when the variant is filled                                             |
-| SEQUENCE_ACCESSION number NULL but status not FAILED/LOW QUALITY                       | A sequence identifier must be provided for complete sequences                                  |
-| SEQUENCE_VARIANT_OPEN_TEXT exists but SEQUENCE_ACCESION number is null                 | A sequence identifier must be provided for sequences with lineage calls                        |
-| SEQUENCE_VARIANT not of concern/interest - check or update list                        | Lineage has a typo or not a variant of concern                                                 |
-| SEQUENCE_LAB not standardized - check or update list                                   | The lab name is not standardized to our database standards                                     |
-| SEQUENCE_SPECIMEN_COLLECTION_DATE out of range. Before 1/05/2020 or after today's date | The sequence collection date is in the future or before 2020 (invalid)                         |
-| SEQUENCE_SPECIMEN = 'No' but sequencing data attatched                                 | Database error                                                                                 |
-| SEQUENCE_ACCESSION number and SEQUENCE_CLINICAL_ACCESSION numbers missing              | A sequence needs the identifiers attached                                                      |
-| Unexpected characters in a column                                                      | Database or submitter error (usually typos or wrong value in a column)                         |
-| Lineage found in SEQUENCE_NOTES but SEQUENCE_VARIANT_OPEN_TEXT is NULL                 | Database error                                                                                 |
-| SEQUENCE_STATUS = 'Complete' and SEQUENCE_VARIANT_OPEN_TEXT is NULL                    | Sequence needs a lineage call if status is complete                                            |
-| Duplicate - SCA, SA and Variant duplicated                                             | Duplicate identifier values found in database                                                  |
+| SEQUENCE_REASON is NULL | The reason for sequencing is used to determine sentinel surveillance counts and cannot be null |
+| SEQUENCE_REASON not standardized | If the reason has a typo or unexpected value |
+| SEQUENCE_VARIANT_OPEN_TEXT filled but SEQUENCE_STATUS is not COMPLETE | Status must be complete when the variant is filled |
+| SEQUENCE_ACCESSION number NULL but status not FAILED/LOW QUALITY | A sequence identifier must be provided for complete sequences |
+| SEQUENCE_VARIANT_OPEN_TEXT exists but SEQUENCE_ACCESION number is null | A sequence identifier must be provided for sequences with lineage calls |
+| SEQUENCE_VARIANT not of concern/interest - check or update list | Lineage has a typo or not a variant of concern |
+| SEQUENCE_LAB not standardized - check or update list | The lab name is not standardized to our database standards |
+| SEQUENCE_SPECIMEN_COLLECTION_DATE out of range. Before 1/05/2020 or after today's date | The sequence collection date is in the future or before 2020 (invalid) |
+| SEQUENCE_SPECIMEN = 'No' but sequencing data attatched | Database error |
+| SEQUENCE_ACCESSION number and SEQUENCE_CLINICAL_ACCESSION numbers missing | A sequence needs the identifiers attached |
+| Unexpected characters in a column | Database or submitter error (usually typos or wrong value in a column) |
+| Lineage found in SEQUENCE_NOTES but SEQUENCE_VARIANT_OPEN_TEXT is NULL | Database error |
+| SEQUENCE_STATUS = 'Complete' and SEQUENCE_VARIANT_OPEN_TEXT is NULL | Sequence needs a lineage call if status is complete |
+| Duplicate - SCA, SA and Variant duplicated | Duplicate identifier values found in database |
 
 : WDRS QA Checks {#tbl-qachecks}
 

@@ -209,6 +209,7 @@
 <meta name="citation_author" content="Xichi Zhang">
 <meta name="citation_author" content="Allison Thibodeau">
 <meta name="citation_author" content="Sarah Jinsiwale">
+<meta name="citation_author" content="Yunpeng Yu">
 <meta name="citation_author" content="Topias Lemetyinen">
 <meta name="citation_author" content="Alli Black">
 <meta name="citation_author" content="Alex Cox">
@@ -260,6 +261,7 @@
                         <p>Xichi Zhang </p>
                         <p>Allison Thibodeau </p>
                         <p>Sarah Jinsiwale </p>
+                        <p>Yunpeng Yu </p>
                         <p>Topias Lemetyinen </p>
                         <p>Alli Black </p>
                         <p>Alex Cox </p>
@@ -276,7 +278,7 @@
                 <div>
             <div class="quarto-title-meta-heading">Modified</div>
             <div class="quarto-title-meta-contents">
-              <p class="date-modified">April 2, 2024</p>
+              <p class="date-modified">June 8, 2024</p>
             </div>
           </div>
                 
@@ -438,10 +440,10 @@ Figure&nbsp;2: Sequence submissions should match WDRS and GISAID
 <div id="fig-pulls" class="quarto-figure quarto-figure-center quarto-float anchored" data-fig-align="center">
 <figure class="quarto-float quarto-float-fig figure">
 <div aria-describedby="fig-pulls-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-<a href="assets/external_pulls.jpg" class="lightbox" data-gallery="quarto-lightbox-gallery-3" title="Figure&nbsp;3: "><img src="assets/external_pulls.jpg" id="fig-pulls" class="img-fluid quarto-figure quarto-figure-center anchored figure-img"></a>
+<a href="assets/external_pulls.jpg" class="lightbox" data-gallery="quarto-lightbox-gallery-3" title="Figure&nbsp;3: External Data Pulls"><img src="assets/external_pulls.jpg" class="img-fluid quarto-figure quarto-figure-center figure-img"></a>
 </div>
-<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig quarto-uncaptioned" id="fig-pulls-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-Figure&nbsp;3
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-pulls-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;3: External Data Pulls
 </figcaption>
 </figure>
 </div>
@@ -454,7 +456,7 @@ Figure&nbsp;3
 <section id="external-processes" class="level3">
 <h3 class="anchored" data-anchor-id="external-processes">External Processes</h3>
 <p><strong>wa_cdc_pull.Rmd</strong> performs the task of pulling data from the CDC for specimens sequenced by laboratories under the CDC for the state of Washington so that it can be picked up by multiple QA scripts and utilized by other other stakeholders.</p>
-<p><strong>lineages_main.py</strong> performs the task of pulling data from a .txt in a GitHub repository containing the latest Covid Lineages and dropping them in the lineages folder in the network drive so that it can be picked up by multiple scripts and utilized by other stakeholders. The .txt file in the repository is the same file used update the Cov-Lineages site (<a href="https://cov-lineages.org/lineage_list.html" class="uri">https://cov-lineages.org/lineage_list.html</a>).</p>
+<p><strong>lineages_main.py</strong> performs the task of pulling data from a .txt in a GitHub repository containing the latest Covid Lineages and dropping them in the lineages folder in the network drive so that it can be picked up by multiple scripts and utilized by other stakeholders. The .txt file in the repository is the same file used update the Cov-Lineages site (https://cov-lineages.org/lineage_list.html).</p>
 <section id="sgtf" class="level4">
 <h4 class="anchored" data-anchor-id="sgtf">SGTF</h4>
 <p>To assist with the monitoring of Omicron, five labs are submitting S-gene target failures (SGTF) data to WADOH via Redcap or GitHub (UW only). These submissions are standardized and compiled each day to calculate % SGTF by epidemiological week.</p>
@@ -659,10 +661,10 @@ Table&nbsp;3: example of tabluar datasets sent to the Department of Health by UW
 <div id="fig-roster" class="quarto-figure quarto-figure-center quarto-float anchored" data-fig-align="center">
 <figure class="quarto-float quarto-float-fig figure">
 <div aria-describedby="fig-roster-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-<a href="assets/roster.jpg" class="lightbox" data-gallery="quarto-lightbox-gallery-4" title="Figure&nbsp;4: "><img src="assets/roster.jpg" id="fig-roster" class="img-fluid quarto-figure quarto-figure-center anchored figure-img"></a>
+<a href="assets/roster.jpg" class="lightbox" data-gallery="quarto-lightbox-gallery-4" title="Figure&nbsp;4: Roster Compile"><img src="assets/roster.jpg" class="img-fluid quarto-figure quarto-figure-center figure-img"></a>
 </div>
-<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig quarto-uncaptioned" id="fig-roster-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-Figure&nbsp;4
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-roster-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;4: Roster Compile
 </figcaption>
 </figure>
 </div>
@@ -804,9 +806,9 @@ Table&nbsp;4: Template Data Variables
 <div aria-describedby="tbl-template-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
 <table class="table">
 <colgroup>
-<col style="width: 40%">
+<col style="width: 39%">
 <col style="width: 34%">
-<col style="width: 25%">
+<col style="width: 26%">
 </colgroup>
 <thead>
 <tr class="header">
@@ -916,10 +918,10 @@ Figure&nbsp;7: Template submission to WDRS workflow
 <div id="fig-examplewdrs" class="quarto-figure quarto-figure-center quarto-float anchored" data-fig-align="center">
 <figure class="quarto-float quarto-float-fig figure">
 <div aria-describedby="fig-examplewdrs-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-<a href="assets/example_qp_frontend.png" class="lightbox" data-gallery="quarto-lightbox-gallery-5" title="Figure&nbsp;8: "><img src="assets/example_qp_frontend.png" id="fig-examplewdrs" class="img-fluid quarto-figure quarto-figure-center anchored figure-img"></a>
+<a href="assets/example_qp_frontend.png" class="lightbox" data-gallery="quarto-lightbox-gallery-5" title="Figure&nbsp;8: WDRS Front End"><img src="assets/example_qp_frontend.png" class="img-fluid quarto-figure quarto-figure-center figure-img"></a>
 </div>
-<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig quarto-uncaptioned" id="fig-examplewdrs-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-Figure&nbsp;8
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-examplewdrs-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;8: WDRS Front End
 </figcaption>
 </figure>
 </div>
@@ -2993,7 +2995,7 @@ window.document.addEventListener("DOMContentLoaded", function (event) {
     }
   }
 });
-</script>  </div> <!-- /content -->  <script>var lightboxQuarto = GLightbox({"descPosition":"bottom","selector":".lightbox","closeEffect":"zoom","openEffect":"zoom","loop":false});
+</script>  </div> <!-- /content -->  <script>var lightboxQuarto = GLightbox({"loop":false,"openEffect":"zoom","descPosition":"bottom","closeEffect":"zoom","selector":".lightbox"});
 window.onload = () => {
   lightboxQuarto.on('slide_before_load', (data) => {
     const { slideIndex, slideNode, slideConfig, player, trigger } = data;

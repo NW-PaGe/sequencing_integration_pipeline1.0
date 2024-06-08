@@ -6,7 +6,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
     <meta name="author" content="Emily Nebergall and Allie Warren">
-    <meta name="dcterms.date" content="2024-03-05">
 
     <title>PHL Script</title>
     <style>
@@ -197,12 +196,6 @@
                       </div>
           </div>
                 
-                <div>
-            <div class="quarto-title-meta-heading">Published</div>
-            <div class="quarto-title-meta-contents">
-              <p class="date">March 5, 2024</p>
-            </div>
-          </div>
           
                 
               </div>
@@ -310,16 +303,7 @@
 <section id="flowchart" class="level1">
 <h1>Flowchart</h1>
 <p>This is a detailed summary of the logic in this script. Note that you can click on the image and zoom in.</p>
-<div id="fig-phlworkflow" class="quarto-figure quarto-figure-center quarto-float anchored">
-<figure class="quarto-float quarto-float-fig figure">
-<div aria-describedby="fig-phlworkflow-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-<a href="../assets/phl_1-0.drawio.svg" class="lightbox" data-gallery="quarto-lightbox-gallery-1" title="Figure&nbsp;1: "><img src="../assets/phl_1-0.drawio.svg" id="fig-phlworkflow" class="img-fluid figure-img"></a>
-</div>
-<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig quarto-uncaptioned" id="fig-phlworkflow-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-Figure&nbsp;1
-</figcaption>
-</figure>
-</div>
+<p><a href="../assets/phl_1-0.drawio.svg" class="lightbox" data-gallery="quarto-lightbox-gallery-1"><img src="../assets/phl_1-0.drawio.svg" class="img-fluid"></a></p>
 </section>
 <section id="setup" class="level1 tabset">
 <h1 class="tabset">Setup</h1>
@@ -1319,7 +1303,7 @@ Figure&nbsp;1
 <span id="cb38-4"><a href="#cb38-4" aria-hidden="true" tabindex="-1"></a>email_subject <span class="ot">&lt;-</span> <span class="fu">paste0</span>(<span class="st">"SEQUENCING - PHL Dashboard Run Summary Automated Email"</span>, <span class="fu">month</span>(<span class="fu">today</span>()), <span class="st">"/"</span>, <span class="fu">day</span>(<span class="fu">today</span>()))</span>
 <span id="cb38-5"><a href="#cb38-5" aria-hidden="true" tabindex="-1"></a>email_body <span class="ot">&lt;-</span> <span class="fu">paste0</span>(<span class="st">"The PHL Submission(s) have been processed for "</span>, <span class="fu">today</span>(), <span class="st">". "</span>, <span class="st">"See below for a summary.</span><span class="sc">\n\n</span><span class="st">"</span>, PHL_message)</span>
 <span id="cb38-6"><a href="#cb38-6" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb38-7"><a href="#cb38-7" aria-hidden="true" tabindex="-1"></a><span class="co"># send it only if running in production mode, where data is read from and written to the Y drive</span></span>
+<span id="cb38-7"><a href="#cb38-7" aria-hidden="true" tabindex="-1"></a><span class="co"># send it only if running in production mode, where data is read from and written to the net drive</span></span>
 <span id="cb38-8"><a href="#cb38-8" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb38-9"><a href="#cb38-9" aria-hidden="true" tabindex="-1"></a>sendmailR<span class="sc">::</span><span class="fu">sendmail</span>(<span class="at">from =</span> email_from,</span>
 <span id="cb38-10"><a href="#cb38-10" aria-hidden="true" tabindex="-1"></a>                    <span class="at">to =</span> email_to,</span>
@@ -1740,7 +1724,7 @@ window.document.addEventListener("DOMContentLoaded", function (event) {
     }
   }
 });
-</script>  </div> <!-- /content -->  <script>var lightboxQuarto = GLightbox({"descPosition":"bottom","loop":false,"openEffect":"zoom","selector":".lightbox","closeEffect":"zoom"});
+</script>  </div> <!-- /content -->  <script>var lightboxQuarto = GLightbox({"openEffect":"zoom","loop":false,"descPosition":"bottom","closeEffect":"zoom","selector":".lightbox"});
 window.onload = () => {
   lightboxQuarto.on('slide_before_load', (data) => {
     const { slideIndex, slideNode, slideConfig, player, trigger } = data;

@@ -1,0 +1,12 @@
+# renv is taking way too long to find dependencies
+# tell it to ignore all files except for scripts and qmds
+
+# Ignore everything
+*
+
+# But not these files:
+!.gitignore
+!docs/notebooks/*
+!scripts/*
+!index.qmd
+!.Rprofile

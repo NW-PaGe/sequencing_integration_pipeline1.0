@@ -26,12 +26,11 @@ format:
       - assets/typst-template.typ
       - assets/typst-show.typ
     number-sections: true
-# format-links:
-#   - html
-#   - docx
-#   - jats
-#   - format: typst
-#     text: pdf
+format-links:
+  - html
+  - docx
+  - format: typst
+    text: PDF
 
   #  pdf: 
     #    output-file: "diqa-sequencing-pipeline"

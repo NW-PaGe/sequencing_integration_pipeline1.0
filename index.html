@@ -2,7 +2,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
 
 <meta charset="utf-8">
-<meta name="generator" content="quarto-1.5.22">
+<meta name="generator" content="quarto-1.6.37">
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
@@ -51,10 +51,10 @@ div.csl-indent {
 <script src="site_libs/quarto-html/tippy.umd.min.js"></script>
 <script src="site_libs/quarto-html/anchor.min.js"></script>
 <link href="site_libs/quarto-html/tippy.css" rel="stylesheet">
-<link href="site_libs/quarto-html/quarto-syntax-highlighting.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<link href="site_libs/quarto-html/quarto-syntax-highlighting-29e2c20b02301cfff04dc8050bf30c7e.css" rel="stylesheet" id="quarto-text-highlighting-styles">
 <script src="site_libs/bootstrap/bootstrap.min.js"></script>
 <link href="site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
-<link href="site_libs/bootstrap/bootstrap.min.css" rel="stylesheet" id="quarto-bootstrap" data-mode="light">
+<link href="site_libs/bootstrap/bootstrap-a5e92929936548ece8858722a26d2119.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
 <script src="site_libs/quarto-contrib/glightbox/glightbox.min.js"></script>
 <link href="site_libs/quarto-contrib/glightbox/glightbox.min.css" rel="stylesheet">
 <link href="site_libs/quarto-contrib/glightbox/lightbox.css" rel="stylesheet">
@@ -152,14 +152,14 @@ div.csl-indent {
                 <div>
             <div class="quarto-title-meta-heading">Modified</div>
             <div class="quarto-title-meta-contents">
-              <p class="date-modified">June 18, 2024</p>
+              <p class="date-modified">December 10, 2024</p>
             </div>
           </div>
                 
               </div>
       </div>
       <div class="quarto-title-meta-column-end quarto-other-formats-target">
-      <div class="quarto-alternate-formats"><div class="quarto-title-meta-heading">Other Formats</div><div class="quarto-title-meta-contents"><p><a href="index.docx"><i class="bi bi-file-word"></i>MS Word</a></p></div><div class="quarto-title-meta-contents"><p><a href="index.pdf"><i class="bi bi-file-pdf"></i>PDF</a></p></div><div class="quarto-title-meta-contents"><p><a href="index-meca.zip" data-meca-link="true"><i class="bi bi-archive"></i>MECA Bundle</a></p></div></div></div>
+      <div class="quarto-alternate-formats"><div class="quarto-title-meta-heading">Other Formats</div><div class="quarto-title-meta-contents"><p><a href="index.docx"><i class="bi bi-file-word"></i>MS Word</a></p></div><div class="quarto-title-meta-contents"><p><a href="agu.pdf"><i class="bi bi-file-pdf"></i>PDF (agu)</a></p></div><div class="quarto-title-meta-contents"><p><a href="index-meca.zip" data-meca-link="true"><i class="bi bi-archive"></i>MECA Bundle</a></p></div></div></div>
     </div>
 
     <div>
@@ -218,7 +218,7 @@ div.csl-indent {
   </ul></li>
   <li><a href="#results" id="toc-results" class="nav-link" data-scroll-target="#results">Results</a></li>
   </ul>
-<div class="quarto-alternate-notebooks"><h2>Notebooks</h2><ul><li><a href="index-preview.html"><i class="bi bi-journal-code"></i>Article Notebook</a></li><li><a href="notebooks/elr-preview.html"><i class="bi bi-journal-code"></i>ELR Script</a></li><li><a href="notebooks/fuzzy-preview.html"><i class="bi bi-journal-code"></i>Fuzzy Matching Script</a></li><li><a href="notebooks/KEEP_NA_ROSTER_SECOND_IN_PROGRESS-preview.html"><i class="bi bi-journal-code"></i>Keep NA Roster Script</a></li><li><a href="notebooks/phl-preview.html"><i class="bi bi-journal-code"></i>PHL Script</a></li><li><a href="notebooks/pipeline_counts-preview.html"><i class="bi bi-journal-code"></i>Pipeline Counts</a></li><li><a href="notebooks/ROSTER_COMPILE-preview.html"><i class="bi bi-journal-code"></i>Roster Compile</a></li><li><a href="notebooks/template_submitters-preview.html"><i class="bi bi-journal-code"></i>Template Submitters Script</a></li></ul></div></nav>
+<div class="quarto-alternate-notebooks"><h2>Notebooks</h2><ul><li><a href="index-preview.html"><i class="bi bi-journal-code"></i>Article Notebook</a></li><li><a href="notebooks\elr-preview.html"><i class="bi bi-journal-code"></i>ELR Script</a></li><li><a href="notebooks\fuzzy-preview.html"><i class="bi bi-journal-code"></i>Fuzzy Matching Script</a></li><li><a href="notebooks\KEEP_NA_ROSTER_SECOND_IN_PROGRESS-preview.html"><i class="bi bi-journal-code"></i>Keep NA Roster Script</a></li><li><a href="notebooks\phl-preview.html"><i class="bi bi-journal-code"></i>PHL Script</a></li><li><a href="notebooks\pipeline_counts-preview.html"><i class="bi bi-journal-code"></i>Pipeline Counts</a></li><li><a href="notebooks\ROSTER_COMPILE-preview.html"><i class="bi bi-journal-code"></i>Roster Compile</a></li><li><a href="notebooks\template_submitters-preview.html"><i class="bi bi-journal-code"></i>Template Submitters Script</a></li></ul></div></nav>
 </div>
 <div id="quarto-margin-sidebar" class="sidebar margin-sidebar zindex-bottom">
 </div>
@@ -287,7 +287,7 @@ div.csl-indent {
 <p>First, the <a href="@sec-template">Template Submitters</a> script processes the majority of data received by external submitters. Sequencing data from external submitters are received via <code>.csv</code> files in a template format which they uploaded to our secure file transfer (SFT) portal.</p>
 <p>Second, the The <a href="@sec-phl">PHL Roster</a> script processes the data received from PHL (Public Health Laboratory), our internal laboratory. Sequencing data from PHL is pulled from an internal dashboard, ‘StarLIMS’. The logic for both processes are similar. There is an attempt to link the sequencing data to the patient-level data using a <code>SEQUENCE_CLINICAL_ACCESSION</code>; an accession ID that should match between the patient-level data and the specimen sequenced by laboratories (note: while the terms ‘Laboratory’ and ‘Submitter’ may be used interchangeably at times they are not the same). In many cases, this accession ID is unable to match. This may be due to multiple reasons ranging from lag times to data quality issues. In this case, if demographics have been provided by the submitter an attempt will be made to match based on these demographic variables (name, date of birth, etc.).</p>
 <p>Lastly, the <a href="@sec-elr">ELR Roster</a> script processes the data from external submitters that have been received via HL7 messages and populated in the table in WDRS named <code>[dbo].[DD_ELR_DD_ENTIRE]</code>. In this case, the ELR (electronic laboratory reporting) process performs the matching of sequencing data to the patient-level data. Since the sequencing data and patient-level data are already tied for these records received via ELR, the logic for the ELR Roster script is predominately transformation to a format acceptable for import into the <code>[dbo].[DD_GCD_COVID_19_FLATTENED]</code> table. All records, regardless of the process through which they are received/processed are uploaded to the <code>[dbo].[DD_GCD_COVID_19_FLATTENED]</code> table via .csv files in a roster format. These rosters are the end product and output of all three processes.</p>
-<div id="fig-overview" class="quarto-figure quarto-figure-center quarto-float anchored" data-fig-align="center">
+<div id="fig-overview" class="quarto-float quarto-figure quarto-figure-center anchored" data-fig-align="center">
 <figure class="quarto-float quarto-float-fig figure">
 <div aria-describedby="fig-overview-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
 <a href="assets/overview.jpg" class="lightbox" data-gallery="quarto-lightbox-gallery-1" title="Figure&nbsp;1: Overview of sequencing pipeline"><img src="assets/overview.jpg" class="img-fluid quarto-figure quarto-figure-center figure-img"></a>
@@ -298,7 +298,7 @@ Figure&nbsp;1: Overview of sequencing pipeline
 </figure>
 </div>
 <p>In addition to sequencing data submissions and WDRS, there is a third component; GISAID (Global Initiative on Sharing Avian Influenza Data). GISAID is an initiative that provides open-access to genomic data of influenza viruses and more importantly for the purposes of this project, SARS-CoV-2; coronavirus responsible for the COVID-19 pandemic). This database is available online to the public and holds genomic data of sequenced specimens from across the globe. In theory, submitters should be sending their sequencing data to the DOH and GISAID. When this happens there is consistency between both databases and the data received from submitters <a href="#fig-gisaid" class="quarto-xref">Figure&nbsp;2</a></p>
-<div id="fig-gisaid" class="quarto-figure quarto-figure-center quarto-float anchored" data-fig-align="center">
+<div id="fig-gisaid" class="quarto-float quarto-figure quarto-figure-center anchored" data-fig-align="center">
 <figure class="quarto-float quarto-float-fig figure">
 <div aria-describedby="fig-gisaid-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
 <a href="assets/gisaidflow.jpg" class="lightbox" data-gallery="quarto-lightbox-gallery-2" title="Figure&nbsp;2: Sequence submissions should match WDRS and GISAID"><img src="assets/gisaidflow.jpg" class="img-fluid quarto-figure quarto-figure-center figure-img"></a>
@@ -316,7 +316,7 @@ Figure&nbsp;2: Sequence submissions should match WDRS and GISAID
 <section id="external-dependencies-and-data-pulls" class="level2">
 <h2 class="anchored" data-anchor-id="external-dependencies-and-data-pulls">External Dependencies and Data Pulls</h2>
 <p>Prior to any processing of sequencing data received from submitters there are numerous data pulls and external dependencies that must be completed. Below is a brief description of each process <a href="#fig-pulls" class="quarto-xref">Figure&nbsp;3</a>.</p>
-<div id="fig-pulls" class="quarto-figure quarto-figure-center quarto-float anchored" data-fig-align="center">
+<div id="fig-pulls" class="quarto-float quarto-figure quarto-figure-center anchored" data-fig-align="center">
 <figure class="quarto-float quarto-float-fig figure">
 <div aria-describedby="fig-pulls-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
 <a href="assets/external_pulls.jpg" class="lightbox" data-gallery="quarto-lightbox-gallery-3" title="Figure&nbsp;3: External Data Pulls"><img src="assets/external_pulls.jpg" class="img-fluid quarto-figure quarto-figure-center figure-img"></a>
@@ -347,13 +347,13 @@ Figure&nbsp;3: External Data Pulls
 <section id="example-datasets" class="level2">
 <h2 class="anchored" data-anchor-id="example-datasets">Example Datasets</h2>
 <p>In 2021, data was sent from sequencing labs to us via tabular files. There were no standards between submitting labs, and for a given submitter the format of the tabular files would often change between each submission as well​. It was impossible to process these data without editing scripts each time to account for a varying format. Initially, all data was received via non-standardized tabular files, including data sent from our public health lab (PHL). We did not have access to their starLIMS database at the time. <a href="#tbl-tabdata1" class="quarto-xref">Table&nbsp;1</a> below is an example of the data sent to us in tabular format. <a href="#tbl-tabdata2" class="quarto-xref">Table&nbsp;2</a> shows data sent in tabular form from our public health laboratory (PHL) and <a href="#tbl-tabdata3" class="quarto-xref">Table&nbsp;3</a> is an example of data sent from the University of Washington Virology Lab (UW Virology).</p>
-<div id="tbl-tabdata1" class="quarto-float anchored">
+<div id="tbl-tabdata1" class="quarto-float quarto-figure quarto-figure-center anchored">
 <figure class="quarto-float quarto-float-tbl figure">
 <figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-tbl" id="tbl-tabdata1-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
 Table&nbsp;1: example of tabular datasets sent to the Department of Health from sequencing labs in 2021
 </figcaption>
 <div aria-describedby="tbl-tabdata1-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-<table class="table">
+<table class="caption-top table">
 <colgroup>
 <col style="width: 31%">
 <col style="width: 68%">
@@ -418,13 +418,13 @@ Table&nbsp;1: example of tabular datasets sent to the Department of Health from 
 </div>
 </figure>
 </div>
-<div id="tbl-tabdata2" class="quarto-float anchored">
+<div id="tbl-tabdata2" class="quarto-float quarto-figure quarto-figure-center anchored">
 <figure class="quarto-float quarto-float-tbl figure">
 <figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-tbl" id="tbl-tabdata2-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
 Table&nbsp;2: example of tabular datasets sent to the Department of Health from a Public Health Lab (PHL) during 2021
 </figcaption>
 <div aria-describedby="tbl-tabdata2-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-<table class="table">
+<table class="caption-top table">
 <colgroup>
 <col style="width: 36%">
 <col style="width: 63%">
@@ -481,13 +481,13 @@ Table&nbsp;2: example of tabular datasets sent to the Department of Health from 
 </div>
 </figure>
 </div>
-<div id="tbl-tabdata3" class="quarto-float anchored">
+<div id="tbl-tabdata3" class="quarto-float quarto-figure quarto-figure-center anchored">
 <figure class="quarto-float quarto-float-tbl figure">
 <figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-tbl" id="tbl-tabdata3-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
 Table&nbsp;3: example of tabluar datasets sent to the Department of Health by UW Virology during 2021
 </figcaption>
 <div aria-describedby="tbl-tabdata3-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-<table class="table">
+<table class="caption-top table">
 <colgroup>
 <col style="width: 36%">
 <col style="width: 63%">
@@ -537,7 +537,7 @@ Table&nbsp;3: example of tabluar datasets sent to the Department of Health by UW
 <p>The <code>SEQUENCE_CLINICAL_ACCESSION</code> variable is used to find a matching event within the <code>[dbo].[DD_ELR_DD_ENTIRE]</code> table. The <code>CASE_ID</code> (WDRS variable that is an identifier for a disease case, not a person) for that event is pulled then assigned to the corresponding record. At this point, if an event using the accession ID cannot be found for a record it will be routed to two different processes depending on if the sequencing data received has patient demographics attached to it; FIRST_NAME, LAST_NAME, MIDDLE_NAME, DOB. If the record received contains patient demographic it is routed to the <a href="./notebooks/fuzzy-preview.html">fuzzy matching process</a>, an attempt to match to the correct event will be made using the demographic information. If the record received contains no patient demographic it is routed to the keep na process (<a href="#sec-keepna" class="quarto-xref">Section&nbsp;3.4</a>), the record will be retained and an attempt to match via the accession ID will regularly be made in case the corresponding event populates in WDRS later on.</p>
 <p>Once a record has been matched to an event it will undergo transformation to clean and standardize the matched data into a roster format. Some submitters do not provide the full <code>GISAID_ID</code> in the submission. In this case, the <code>SEQUENCE_ACCESSION</code> can be constructed from their internal accession is inputted into the <code>GISAID_ID</code> column. This happens during the transformation process and the resulting <code>SEQUENCE_ACCESSION</code> should match to what is in GISAID.</p>
 <p>Records are then put through a series of quality filters to check for QA issues. All records that pass this series of QA checks will then populated into a final roster then outputted to be picked up by the roster compile script <a href="#sec-rostercompile" class="quarto-xref">Section&nbsp;3.1.4</a> and sent to data support for upload to WDRS.</p>
-<div id="fig-roster" class="quarto-figure quarto-figure-center quarto-float anchored" data-fig-align="center">
+<div id="fig-roster" class="quarto-float quarto-figure quarto-figure-center anchored" data-fig-align="center">
 <figure class="quarto-float quarto-float-fig figure">
 <div aria-describedby="fig-roster-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
 <a href="assets/roster.jpg" class="lightbox" data-gallery="quarto-lightbox-gallery-4" title="Figure&nbsp;4: Roster Compile"><img src="assets/roster.jpg" class="img-fluid quarto-figure quarto-figure-center figure-img"></a>
@@ -596,7 +596,7 @@ flowchart TD
 </ul>
 <div class="cell" data-fig-width="3" data-layout-align="default">
 <div class="cell-output-display">
-<div id="fig-elrflow" class="quarto-figure quarto-figure-center quarto-float anchored">
+<div id="fig-elrflow" class="quarto-float quarto-figure quarto-figure-center anchored">
 <figure class="quarto-float quarto-float-fig figure">
 <div aria-describedby="fig-elrflow-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
 <div>
@@ -639,7 +639,7 @@ Figure&nbsp;5: ELR submission to WDRS workflow
 </ul>
 <div class="cell" data-fig-width="3" data-layout-align="default">
 <div class="cell-output-display">
-<div id="fig-phlflow" class="quarto-figure quarto-figure-center quarto-float anchored">
+<div id="fig-phlflow" class="quarto-float quarto-figure quarto-figure-center anchored">
 <figure class="quarto-float quarto-float-fig figure">
 <div aria-describedby="fig-phlflow-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
 <div>
@@ -677,13 +677,13 @@ Figure&nbsp;6: PHL submission to WDRS workflow
 <li>Scrape the site and download the <code>.csv</code> files for each lab​</li>
 <li>Format, find a match based on <code>FILLER_ORDER_NUM</code> or demographics</li>
 </ul>
-<div id="tbl-template" class="quarto-float anchored">
+<div id="tbl-template" class="quarto-float quarto-figure quarto-figure-center anchored">
 <figure class="quarto-float quarto-float-tbl figure">
 <figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-tbl" id="tbl-template-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
 Table&nbsp;4: Template Data Variables
 </figcaption>
 <div aria-describedby="tbl-template-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-<table class="table">
+<table class="caption-top table">
 <colgroup>
 <col style="width: 39%">
 <col style="width: 34%">
@@ -764,7 +764,7 @@ Table&nbsp;4: Template Data Variables
 </div>
 <div class="cell" data-fig-width="3" data-layout-align="default">
 <div class="cell-output-display">
-<div id="fig-templateflow" class="quarto-figure quarto-figure-center quarto-float anchored">
+<div id="fig-templateflow" class="quarto-float quarto-figure quarto-figure-center anchored">
 <figure class="quarto-float quarto-float-fig figure">
 <div aria-describedby="fig-templateflow-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
 <div>
@@ -794,7 +794,7 @@ Figure&nbsp;7: Template submission to WDRS workflow
 <section id="sec-rostercompile" class="level3">
 <h3 class="anchored" data-anchor-id="sec-rostercompile">Roster Compile</h3>
 <p>After the Template, PHL, and ELR scripts run, they all output a <code>.csv</code> file into a folder called <code>write_roster_here</code> in our network drive. The <a href="ROSTER_COMPILE.Rmd">Roster Compile</a> script reads in all of these files, combines them, and runs additional QA checks on them before outputting the results into one file for output to the WDRS database. Then our Data Support team will upload the file into WDRS where it will update the results into the flattened table. Each row will match a <code>CASE_ID</code> in WDRS and the sequencing event is added to the cases external data as seen below in <a href="#fig-examplewdrs" class="quarto-xref">Figure&nbsp;8</a>.</p>
-<div id="fig-examplewdrs" class="quarto-figure quarto-figure-center quarto-float anchored" data-fig-align="center">
+<div id="fig-examplewdrs" class="quarto-float quarto-figure quarto-figure-center anchored" data-fig-align="center">
 <figure class="quarto-float quarto-float-fig figure">
 <div aria-describedby="fig-examplewdrs-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
 <a href="assets/example_qp_frontend.png" class="lightbox" data-gallery="quarto-lightbox-gallery-5" title="Figure&nbsp;8: WDRS Front End"><img src="assets/example_qp_frontend.png" class="img-fluid quarto-figure quarto-figure-center figure-img"></a>
@@ -809,13 +809,13 @@ Figure&nbsp;8: WDRS Front End
 <section id="for-review" class="level2">
 <h2 class="anchored" data-anchor-id="for-review">For Review</h2>
 <p>The pipeline attempts to link sequencing data to cases in WDRS. Some records have quality issues and cannot be processed in our system. These data are tagged and saved in a separate folder where our team reviews them and attempts to fix and re-process them. <a href="#tbl-review" class="quarto-xref">Table&nbsp;5</a> is an example of the sort of issues that get tagged in our pipeline:</p>
-<div id="tbl-review" class="quarto-float anchored">
+<div id="tbl-review" class="quarto-float quarto-figure quarto-figure-center anchored">
 <figure class="quarto-float quarto-float-tbl figure">
 <figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-tbl" id="tbl-review-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
 Table&nbsp;5: For review quality issue tags
 </figcaption>
 <div aria-describedby="tbl-review-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-<table class="table">
+<table class="caption-top table">
 <colgroup>
 <col style="width: 50%">
 <col style="width: 50%">
@@ -889,13 +889,13 @@ Table&nbsp;5: For review quality issue tags
 <h2 class="anchored" data-anchor-id="fuzzy-matching-review">Fuzzy Matching Review</h2>
 <p>When records cannot be linked via accession identifier the pipeline attempts to match a sequence to a PCR test in WDRS via demographics (first name, last name, date of birth, and collection date). The <a href="notebook/fuzzy.Rmd">fuzzy matching script</a> uses <a href="https://github.com/markvanderloo/stringdist">string distances</a> to match names from a submitter to names in WDRS and determine the highest likelihood of a correct link.</p>
 <p>There may be quality issues with the demographics and the fuzzy matching script tags issues and outputs them into a fuzzy matching review folder where our team will manually review the errors and re-process the files. <a href="#tbl-fuzzyreview" class="quarto-xref">Table&nbsp;6</a> is an example of the files the fuzzy matching process outputs:</p>
-<div id="tbl-fuzzyreview" class="quarto-float anchored">
+<div id="tbl-fuzzyreview" class="quarto-float quarto-figure quarto-figure-center anchored">
 <figure class="quarto-float quarto-float-tbl figure">
 <figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-tbl" id="tbl-fuzzyreview-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
 Table&nbsp;6: Fuzzy matching review quality issue tags
 </figcaption>
 <div aria-describedby="tbl-fuzzyreview-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-<table class="table">
+<table class="caption-top table">
 <thead>
 <tr class="header">
 <th>File</th>
@@ -948,13 +948,13 @@ Table&nbsp;6: Fuzzy matching review quality issue tags
 <section id="wdrs-logic-checks" class="level2">
 <h2 class="anchored" data-anchor-id="wdrs-logic-checks">WDRS Logic Checks</h2>
 <p><code>wdrs_logic_checks.R</code> pulls the sequencing data from our database and runs checks on them to confirm that there are no issues with the data uploaded. See <a href="#tbl-qachecks" class="quarto-xref">Table&nbsp;7</a> below for more info.</p>
-<div id="tbl-qachecks" class="quarto-float anchored">
+<div id="tbl-qachecks" class="quarto-float quarto-figure quarto-figure-center anchored">
 <figure class="quarto-float quarto-float-tbl figure">
 <figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-tbl" id="tbl-qachecks-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
 Table&nbsp;7: WDRS QA Checks
 </figcaption>
 <div aria-describedby="tbl-qachecks-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-<table class="table">
+<table class="caption-top table">
 <colgroup>
 <col style="width: 52%">
 <col style="width: 47%">
@@ -1035,7 +1035,7 @@ Table&nbsp;7: WDRS QA Checks
 <div class="quarto-embed-nb-cell">
 <div id="cell-fig-countprop" class="cell">
 <div class="cell-output cell-output-display">
-<div id="fig-countprop" class="quarto-figure quarto-figure-center quarto-float anchored">
+<div id="fig-countprop" class="quarto-float quarto-figure quarto-figure-center anchored">
 <figure class="quarto-float quarto-float-fig figure">
 <div aria-describedby="fig-countprop-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
 <a href="index_files/figure-html/notebooks-pipeline_counts-fig-countprop-output-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-6" title="Figure&nbsp;9: Count and proportion of sequencing metadata submissions by mode"><img src="index_files/figure-html/notebooks-pipeline_counts-fig-countprop-output-1.png" width="672" height="480" class="figure-img"></a>
@@ -1051,14 +1051,13 @@ Figure&nbsp;9: Count and proportion of sequencing metadata submissions by mode
 <p>96% of those sequences were successfully matched to a case in WDRS, while 3% had no match. Less than 1% of the records had quality issues that could not be resolved and are still archived in our for review process. See <a href="#tbl-counts" class="quarto-xref">Table&nbsp;8</a> for more details.</p>
 <div class="quarto-embed-nb-cell">
 <div class="cell">
-<div id="tbl-counts" class="cell quarto-float anchored">
+<div id="tbl-counts" class="cell quarto-float quarto-figure quarto-figure-center anchored">
 <figure class="quarto-float quarto-float-tbl figure">
 <figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-tbl" id="tbl-counts-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
 Table&nbsp;8: Count of sequences matching to WDRS cases
 </figcaption>
 <div aria-describedby="tbl-counts-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
 <div class="cell-output cell-output-display">
-<div>
 <div id="gzagugjuxk" style="padding-left:0px;padding-right:0px;padding-top:10px;padding-bottom:10px;overflow-x:auto;overflow-y:auto;width:auto;height:auto;">
 <style>@import url("https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap");
 #gzagugjuxk table {
@@ -1501,12 +1500,12 @@ Table&nbsp;8: Count of sequences matching to WDRS cases
 }
 </style>
 
-<table class="gt_table do-not-create-environment cell table table-sm table-striped small" data-quarto-postprocess="true" data-quarto-disable-processing="false" data-quarto-bootstrap="false">
+<table class="gt_table do-not-create-environment cell caption-top table table-sm table-striped small" data-quarto-postprocess="true" data-quarto-disable-processing="false" data-quarto-bootstrap="false">
 <thead>
-<tr class="header gt_heading">
+<tr class="gt_heading header">
 <th colspan="2" class="gt_heading gt_title gt_font_normal gt_bottom_border">Covid Sequencing Pipeline Counts</th>
 </tr>
-<tr class="odd gt_col_headings">
+<tr class="gt_col_headings even">
 <th id="Location" class="gt_col_heading gt_columns_bottom_border gt_left" data-quarto-table-cell-role="th" style="border-bottom-width: 3px; border-bottom-style: solid; border-bottom-color: black" scope="col">Location</th>
 <th id="Count" class="gt_col_heading gt_columns_bottom_border gt_left" data-quarto-table-cell-role="th" style="border-bottom-width: 3px; border-bottom-style: solid; border-bottom-color: black" scope="col">Count</th>
 </tr>
@@ -1538,7 +1537,6 @@ Table&nbsp;8: Count of sequences matching to WDRS cases
 </div>
 </div>
 </div>
-</div>
 </figure>
 </div>
 </div>
@@ -1546,14 +1544,13 @@ Table&nbsp;8: Count of sequences matching to WDRS cases
 <p>When stratifying by lab/submitter in <a href="#tbl-labcount" class="quarto-xref">Table&nbsp;9</a>, we can see that most of the sequences were submitted by 4 labs. Over 40% of the sequences were submitted by University of Washington Virology Lab, followed by our own PHL with 19%, Labcorp with 15% and Northwest Genomics with 11%.</p>
 <div class="quarto-embed-nb-cell">
 <div class="cell">
-<div id="tbl-labcount" class="cell quarto-float anchored">
+<div id="tbl-labcount" class="cell quarto-float quarto-figure quarto-figure-center anchored">
 <figure class="quarto-float quarto-float-tbl figure">
 <figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-tbl" id="tbl-labcount-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
 Table&nbsp;9: Count of sequences by lab and status during the sequencing pipeline 1.0 phase
 </figcaption>
 <div aria-describedby="tbl-labcount-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
 <div class="cell-output cell-output-display">
-<div>
 <div id="itithtszcp" style="padding-left:0px;padding-right:0px;padding-top:10px;padding-bottom:10px;overflow-x:auto;overflow-y:auto;width:auto;height:auto;">
 <style>@import url("https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap");
 #itithtszcp table {
@@ -1996,15 +1993,15 @@ Table&nbsp;9: Count of sequences by lab and status during the sequencing pipelin
 }
 </style>
 
-<table class="gt_table do-not-create-environment cell table table-sm table-striped small" data-quarto-postprocess="true" data-quarto-disable-processing="false" data-quarto-bootstrap="false">
+<table class="gt_table do-not-create-environment cell caption-top table table-sm table-striped small" data-quarto-postprocess="true" data-quarto-disable-processing="false" data-quarto-bootstrap="false">
 <thead>
-<tr class="header gt_heading">
+<tr class="gt_heading header">
 <th colspan="3" class="gt_heading gt_title gt_font_normal">Number of Sequences by Lab</th>
 </tr>
-<tr class="odd gt_heading">
+<tr class="gt_heading even">
 <th colspan="3" class="gt_heading gt_subtitle gt_font_normal gt_bottom_border">Before 2023-06-01 switch to 2.0 pipeline</th>
 </tr>
-<tr class="header gt_col_headings">
+<tr class="gt_col_headings header">
 <th id="Sequencing Lab" class="gt_col_heading gt_columns_bottom_border gt_left" data-quarto-table-cell-role="th" style="border-bottom-width: 3px; border-bottom-style: solid; border-bottom-color: black" scope="col">Sequencing Lab</th>
 <th id="Count" class="gt_col_heading gt_columns_bottom_border gt_right" data-quarto-table-cell-role="th" style="border-bottom-width: 3px; border-bottom-style: solid; border-bottom-color: black" scope="col">Count</th>
 <th id="Percent of Total Sequences" class="gt_col_heading gt_columns_bottom_border gt_left" data-quarto-table-cell-role="th" style="border-bottom-width: 3px; border-bottom-style: solid; border-bottom-color: black" scope="col">Percent of Total Sequences</th>
@@ -2359,7 +2356,6 @@ Table&nbsp;9: Count of sequences by lab and status during the sequencing pipelin
 </div>
 </div>
 </div>
-</div>
 </figure>
 </div>
 </div>
@@ -2449,18 +2445,7 @@ window.document.addEventListener("DOMContentLoaded", function (event) {
     }
     return false;
   }
-  const clipboard = new window.ClipboardJS('.code-copy-button', {
-    text: function(trigger) {
-      const codeEl = trigger.previousElementSibling.cloneNode(true);
-      for (const childEl of codeEl.children) {
-        if (isCodeAnnotation(childEl)) {
-          childEl.remove();
-        }
-      }
-      return codeEl.innerText;
-    }
-  });
-  clipboard.on('success', function(e) {
+  const onCopySuccess = function(e) {
     // button target
     const button = e.trigger;
     // don't keep focus
@@ -2492,7 +2477,27 @@ window.document.addEventListener("DOMContentLoaded", function (event) {
     }, 1000);
     // clear code selection
     e.clearSelection();
+  }
+  const getTextToCopy = function(trigger) {
+      const codeEl = trigger.previousElementSibling.cloneNode(true);
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+  }
+  const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+    text: getTextToCopy
   });
+  clipboard.on('success', onCopySuccess);
+  if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+    const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+      text: getTextToCopy,
+      container: window.document.getElementById('quarto-embedded-source-code-modal')
+    });
+    clipboardModal.on('success', onCopySuccess);
+  }
     var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
     var mailtoRegex = new RegExp(/^mailto:/);
       var filterRegex = new RegExp('/' + window.location.host + '/');
@@ -2500,7 +2505,7 @@ window.document.addEventListener("DOMContentLoaded", function (event) {
         return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
     }
     // Inspect non-navigation links and adorn them if external
- 	var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool)');
+ 	var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
     for (var i=0; i<links.length; i++) {
       const link = links[i];
       if (!isInternal(link.href)) {
@@ -2597,7 +2602,6 @@ window.document.addEventListener("DOMContentLoaded", function (event) {
       if (window.Quarto?.typesetMath) {
         window.Quarto.typesetMath(note);
       }
-      // TODO in 1.5, we should make sure this works without a callout special case
       if (note.classList.contains("callout")) {
         return note.outerHTML;
       } else {
@@ -2824,30 +2828,37 @@ window.document.addEventListener("DOMContentLoaded", function (event) {
 });
 </script>
 </div> <!-- /content -->
-<script>var lightboxQuarto = GLightbox({"openEffect":"zoom","closeEffect":"zoom","selector":".lightbox","loop":false,"descPosition":"bottom"});
-window.onload = () => {
-  lightboxQuarto.on('slide_before_load', (data) => {
-    const { slideIndex, slideNode, slideConfig, player, trigger } = data;
-    const href = trigger.getAttribute('href');
-    if (href !== null) {
-      const imgEl = window.document.querySelector(`a[href="${href}"] img`);
-      if (imgEl !== null) {
-        const srcAttr = imgEl.getAttribute("src");
-        if (srcAttr && srcAttr.startsWith("data:")) {
-          slideConfig.href = srcAttr;
-        }
-      }
-    } 
-  });
-
-  lightboxQuarto.on('slide_after_load', (data) => {
-    const { slideIndex, slideNode, slideConfig, player, trigger } = data;
-    if (window.Quarto?.typesetMath) {
-      window.Quarto.typesetMath(slideNode);
+<script>var lightboxQuarto = GLightbox({"closeEffect":"zoom","descPosition":"bottom","loop":false,"openEffect":"zoom","selector":".lightbox"});
+(function() {
+  let previousOnload = window.onload;
+  window.onload = () => {
+    if (previousOnload) {
+      previousOnload();
     }
-  });
-
-};
+    lightboxQuarto.on('slide_before_load', (data) => {
+      const { slideIndex, slideNode, slideConfig, player, trigger } = data;
+      const href = trigger.getAttribute('href');
+      if (href !== null) {
+        const imgEl = window.document.querySelector(`a[href="${href}"] img`);
+        if (imgEl !== null) {
+          const srcAttr = imgEl.getAttribute("src");
+          if (srcAttr && srcAttr.startsWith("data:")) {
+            slideConfig.href = srcAttr;
+          }
+        }
+      } 
+    });
+  
+    lightboxQuarto.on('slide_after_load', (data) => {
+      const { slideIndex, slideNode, slideConfig, player, trigger } = data;
+      if (window.Quarto?.typesetMath) {
+        window.Quarto.typesetMath(slideNode);
+      }
+    });
+  
+  };
+  
+})();
           </script>
 
 

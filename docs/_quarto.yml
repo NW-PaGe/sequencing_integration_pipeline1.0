@@ -16,21 +16,21 @@ format:
     toc: true
     toc-location: left
     title-block-style: manuscript
-    format-links: [pdf, docx]
+    # format-links: [pdf, docx]
     notebook-links: true
   docx: default
   jats: default
-  typst: 
-    columns: 1
-    template-partials:
-      - assets/typst-template.typ
-      - assets/typst-show.typ
-    number-sections: true
-format-links:
-  - html
-  - docx
-  - format: typst
-    text: PDF
+  # typst: 
+  #   columns: 1
+  #   template-partials:
+  #     - assets/typst-template.typ
+  #     - assets/typst-show.typ
+  #   number-sections: true
+# format-links:
+#   - html
+#   - docx
+#   - format: typst
+#     text: PDF
 
   #  pdf: 
     #    output-file: "diqa-sequencing-pipeline"
@@ -47,8 +47,8 @@ format-links:
 
   # pdf: 
   #   output-file: "idk"
-  # agu-pdf:
-  #   output-file: "agu"
+  agu-pdf:
+    output-file: "agu"
   # jasa-pdf:
   #   output-file: "jasa"
 
